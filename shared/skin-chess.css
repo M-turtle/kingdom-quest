@@ -1,0 +1,62 @@
+/* Kingdom Quest — the chess hall in the unified "royal glass" skin (loaded after skin.css on the chess pages only).
+   The hall keeps its own 3D board, pieces and kingdoms; its dialogs, drawer and HUD take the same glass, gold and type as the
+   rest of the kingdom. The palette variables are re-mapped with !important so every board kingdom (oak, marble, dragon,
+   ice, forest) keeps its accent while the panels stay glass. */
+body, body[data-kingdom]{
+  --paper:rgba(24,20,38,.78) !important; --paper-2:rgba(255,255,255,.06) !important; --paper-3:rgba(255,255,255,.12) !important; --paper-line:rgba(255,222,160,.22) !important;
+  --ink:#f6efe2 !important; --ink-2:#e4d8c4 !important; --muted:rgba(246,239,226,.64) !important;
+  --btn:#3a2e4a !important; --btn-ink:#f6efe2 !important;
+  --hud:rgba(14,12,24,.62) !important; --hud-line:rgba(255,222,160,.34) !important;
+  --font-display:"Cinzel", Georgia, serif !important; --font-label:"Rubik", system-ui, sans-serif !important; --font-body:"Rubik", system-ui, sans-serif !important;
+}
+:root[lang="he"] body, :root[lang="he"] body[data-kingdom]{ --font-display:"Assistant", "Rubik", sans-serif !important; --font-label:"Assistant", "Rubik", sans-serif !important; --font-body:"Assistant", "Rubik", sans-serif !important; }
+body{background:#0b0912}
+
+/* dialogs */
+.overlay{background:rgba(6,5,12,.6) !important; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px)}
+.scroll{background:linear-gradient(180deg, rgba(38,32,60,.9), rgba(15,12,26,.94)) !important; border:0 !important; border-radius:24px !important; box-shadow:0 40px 100px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.08) !important; color:var(--ink)}
+.scroll h2,.title .head h2{background:linear-gradient(180deg,#fff7da 0%,#f0cf78 52%,#b8862b 100%); -webkit-background-clip:text; background-clip:text; color:transparent !important; font-family:var(--font-display) !important; letter-spacing:.06em; filter:drop-shadow(0 2px 10px rgba(0,0,0,.5))}
+.title .crest{color:var(--gold) !important}
+.title .sub{color:var(--muted) !important; font-family:var(--font-label) !important}
+.sec{color:var(--gold-3) !important; font-family:var(--font-display) !important}
+.sec::after{background:linear-gradient(90deg, rgba(255,222,160,.45), transparent) !important}
+.xbtn,.dhead .close{background:var(--hud) !important; border:0 !important; color:var(--ink) !important; box-shadow:inset 0 0 0 1px var(--hud-line)}
+
+/* the drawer */
+.drawer{background:linear-gradient(180deg, rgba(26,21,42,.92), rgba(12,10,20,.95)) !important; color:var(--ink); -webkit-backdrop-filter:blur(18px); backdrop-filter:blur(18px)}
+.dhead .ribbon{clip-path:none !important; background:none !important; box-shadow:none !important; padding:4px 0 !important}
+.dhead h1{background:linear-gradient(180deg,#fff7da,#e9c46a 55%,#b8862b); -webkit-background-clip:text; background-clip:text; color:transparent !important}
+.card{background:linear-gradient(180deg, rgba(36,30,56,.7), rgba(16,13,27,.76)) !important; border:0 !important; border-radius:18px !important; box-shadow:0 16px 40px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.07) !important; color:var(--ink)}
+.card h2{background:none !important; box-shadow:none !important; border:0 !important; margin:0 0 12px !important; padding:0 !important; color:var(--gold-3) !important; font:700 12px var(--font-display) !important; letter-spacing:.18em; text-transform:uppercase}
+
+/* buttons, choices, fields */
+.btn{border-radius:999px !important; border:0 !important; color:var(--ink) !important; background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05)) !important; box-shadow:inset 0 0 0 1px rgba(255,222,160,.22), inset 0 1px 0 rgba(255,255,255,.14), 0 8px 22px rgba(0,0,0,.3) !important; font-family:var(--font-label) !important; font-weight:700 !important}
+.btn:hover{box-shadow:inset 0 0 0 1px rgba(255,222,160,.5), 0 10px 26px rgba(0,0,0,.36) !important}
+.btn.gold{background:linear-gradient(180deg,#fbe8ac 0%,#e8bb5a 46%,#b8862b 100%) !important; color:#211405 !important; box-shadow:inset 0 0 0 1px rgba(255,244,210,.7), 0 10px 26px rgba(200,140,40,.3) !important}
+.btn.crimson{background:linear-gradient(180deg,#d8475c,#8e1f34) !important; color:#fff5f0 !important; box-shadow:inset 0 0 0 1px rgba(255,190,190,.45), 0 10px 26px rgba(140,20,40,.35) !important}
+.langs button{background:rgba(255,255,255,.06) !important; border:0 !important; color:var(--ink-2) !important; box-shadow:inset 0 0 0 1px rgba(255,222,160,.2)}
+.langs button.on{background:linear-gradient(180deg,#fbe8ac,#e8bb5a 46%,#b8862b) !important; color:#211405 !important}
+.player,.opp label,.kingdoms button,.pieces button,.pchips button,.kqstrip,.trainer,.now,.ledger li,.report .pl,.meta span,.promo button,.moves .san.cur{
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)) !important; border:1px solid rgba(255,222,160,.14) !important; color:var(--ink) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.opp label:has(input:checked),.kingdoms button.on,.pchips button.on,.report .pl.win{border-color:var(--gold) !important; box-shadow:0 0 0 1px rgba(233,196,106,.5), 0 0 22px rgba(233,196,106,.2) !important; background:linear-gradient(180deg, rgba(233,196,106,.2), rgba(255,255,255,.04)) !important}
+.kingdoms button .e .kq-i,.pieces button .kq-i{width:40px; height:40px}
+select,input[type=text]{background:rgba(0,0,0,.3) !important; color:var(--ink) !important; border:1px solid rgba(255,222,160,.22) !important; border-radius:12px !important}
+select option{background:#1b1628; color:var(--ink)}
+.opp input[type=radio],.check input,input[type=range]{accent-color:#e9c46a !important}
+.score .num,.report .vs{background:linear-gradient(180deg,#fff7da,#e9c46a 55%,#b8862b); -webkit-background-clip:text; background-clip:text; color:transparent !important}
+.trainer .bar{background:rgba(255,255,255,.1) !important}
+.avatars button{background:rgba(255,255,255,.06) !important}
+.avatars button.on{border-color:var(--gold) !important}
+
+/* the HUD over the board */
+.pill,.chip,.rpInfo,.stage-tip{background:rgba(14,12,24,.62) !important; border:0 !important; box-shadow:inset 0 0 0 1px rgba(255,222,160,.32), 0 8px 22px rgba(0,0,0,.4) !important; color:var(--gold-3) !important; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); font-family:var(--font-label) !important}
+.pill.primary{background:linear-gradient(180deg,#fbe8ac 0%,#e8bb5a 46%,#b8862b 100%) !important; color:#211405 !important}
+.ibtn{background:rgba(14,12,24,.62) !important; border:0 !important; box-shadow:inset 0 0 0 1px rgba(255,222,160,.32), 0 8px 22px rgba(0,0,0,.4) !important; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px)}
+.ibtn.on{background:linear-gradient(180deg,#fbe8ac,#e8bb5a 46%,#b8862b) !important; color:#211405 !important}
+.strip,.herald{background:linear-gradient(180deg, rgba(20,17,32,.78), rgba(10,9,18,.72)) !important; border:0 !important; border-radius:16px !important; box-shadow:inset 0 0 0 1px rgba(255,222,160,.28), 0 12px 30px rgba(0,0,0,.45) !important; -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px)}
+.herald .who{color:var(--gold) !important}
+.herald .portrait{background:radial-gradient(circle at 50% 40%, #fbe7c2, #c8963e) !important}
+.loading{background:#0b0912 !important; color:var(--gold-3) !important}
+.langs{background:none !important; box-shadow:none !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important}
+.title .head h2{font-size:clamp(30px,6.4vw,48px) !important}
+.banner h1{background:linear-gradient(180deg,#fff7da 0%,#f0cf78 52%,#b8862b 100%); -webkit-background-clip:text; background-clip:text; color:transparent !important; text-shadow:none !important; filter:drop-shadow(0 2px 10px rgba(0,0,0,.55))}

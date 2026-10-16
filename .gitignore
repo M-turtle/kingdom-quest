@@ -1,0 +1,7 @@
+art-src/
+assets/
+tools/
+tts-worker/
+.claude/
+.DS_Store
+*.bak*

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Heart Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Frank+Ruhl+Libre:wght@700;900&family=Assistant:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#c0396b; --accent-2:#6a1438; }
+.hgp{display:grid; gap:16px}
+.hgp .card{padding:18px}
+.hgp h2{margin:0 0 6px}
+.hg-wrap{position:relative; margin:8px 0}
+.hg-empty{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:min(86%,460px); padding:14px 18px; border-radius:16px; background:rgba(255,255,255,.82); font:800 18px/1.4 var(--font-body); color:#1f4a1c; text-align:center}
+.hg-hint{text-align:center; font:700 15px/1.4 var(--font-body); opacity:.9; margin-top:4px}
+.hg-count{font:800 18px var(--font-body)}
+.hg-actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
+.hg-faces2{display:flex; gap:12px; flex-wrap:wrap; justify-content:center} .hg-faces2 button{display:grid; justify-items:center; gap:6px; padding:10px; border-radius:18px; border:2px solid rgba(255,255,255,.3); background:rgba(255,255,255,.08); color:inherit; font:800 15px var(--font-body); cursor:pointer} .hg-faces2 .hg-face{width:84px; height:84px}
+.hg-why{line-height:1.6; opacity:.92}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header><main class="play hgp" style="margin-top:18px"></main></div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { hp_title: 'Heart Garden', hp_sub: 'Feelings and kindness. Every kind choice makes a flower bloom.', hp_garden: 'My garden', hp_count: '{n} flowers', hp_empty: 'Your garden is waiting. Every level you pass plants a seed here.', hp_visit: 'Plant a flower now', hp_feelings: 'Feelings corner', hp_feelSub: 'Tap a face to hear the feeling.', hp_why: 'Passing any level, in any world, plants a seed here: the next game starts with one short Heart Garden scene. Nothing here is scored, and nobody is compared with anybody else.', hp_age: 'Scenes for ages', hp_young: '4–7', hp_old: '8 and up' },
+    he: { hp_title: 'גן הלב', hp_sub: 'רגשות וטוב לב. כל בחירה טובה מפריחה פרח.', hp_garden: 'הגן שלי', hp_count: '{n} פרחים', hp_empty: 'הגן שלכם מחכה. כל שלב שעוברים שותל כאן זרע.', hp_visit: 'שותלים פרח עכשיו', hp_feelings: 'פינת הרגשות', hp_feelSub: 'לוחצים על פרצוף כדי לשמוע את הרגש.', hp_why: 'כל שלב שעוברים, בכל עולם, שותל כאן זרע: המשחק הבא מתחיל בסצנה קצרה מגן הלב. שום דבר כאן לא מקבל ציון, ואף אחד לא מושווה לאף אחד אחר.', hp_age: 'סצנות לגילים', hp_young: '4–7', hp_old: '8 ומעלה' }
+  });
+  const { t, ui } = KQ, el = ui.el;
+  const profile = KQ.requireProfile('../index.html'); if (!profile) return;
+  const main = document.querySelector('main.play');
+  let band = (KQ.ladder && KQ.ladder.band ? KQ.ladder.band(profile.id, 'reading', [1, 2, 3, 4, 5, 6]) : 1) || 1;
+  let gd = null;
+  function draw() {
+    ui.header({ title: t('hp_title'), sub: t('hp_sub'), homeHref: '../index.html' }); main.replaceChildren();
+    const g = el('section', 'card'); g.appendChild(el('h2', null, t('hp_garden'))); const flowers = KQHeart.garden(profile.id); g.appendChild(el('div', 'hg-count', t('hp_count', { n: flowers.length })));
+    /* the living garden (shared/flora.js): every flower painted and swaying; it grows new things as it fills. A flower that is new since the last visit blooms on arrival */
+    if (gd) gd.stop(); const field = el('div', 'hg-wrap'); g.appendChild(field); const hs = (KQ.state().heart || {})[profile.id] || {}; const fresh = flowers.length > (hs.shown || 0); hs.shown = flowers.length; try { KQ.save(); } catch (e) {}
+    gd = KQFlora.garden(field, flowers.slice(-60), { bloomLast: fresh }); if (!flowers.length) field.appendChild(el('div', 'hg-empty', t('hp_empty')));
+    const nx = KQFlora.next(flowers.length); if (flowers.length) g.appendChild(el('div', 'hg-hint', t('fl_tapGarden'))); if (nx) g.appendChild(el('div', 'hg-hint', nx === 1 ? t('fl_next1') : t('fl_next', { n: nx })));
+    const act = el('div', 'hg-actions'); const age = el('div', 'hg-actions'); age.appendChild(el('span', null, t('hp_age'))); for (const [k, b] of [['hp_young', 1], ['hp_old', 3]]) { const bt = el('button', 'btn ' + ((band <= 2) === (b <= 2) ? 'gold' : 'ghost'), t(k)); bt.type = 'button'; bt.onclick = () => { band = b; draw(); }; age.appendChild(bt); } g.appendChild(age);
+    const v = el('button', 'btn gold', t('hp_visit')); v.type = 'button'; v.onclick = () => KQHeart.open({ band, practice: true }, draw); act.appendChild(v); g.appendChild(act);
+    g.appendChild(el('p', 'hg-why', t('hp_why'))); main.appendChild(g);
+    const fc = el('section', 'card'); fc.appendChild(el('h2', null, t('hp_feelings'))); fc.appendChild(el('p', null, t('hp_feelSub')));
+    const row = el('div', 'hg-faces2'); ['happy', 'sad', 'angry', 'scared', 'lonely'].forEach(f => { const b = el('button'); b.type = 'button'; b.appendChild(KQHeart.face(f)); b.appendChild(el('span', null, t('f_' + f))); b.onclick = () => KQ.speak(t('f_' + f), null, { force: true }); row.appendChild(b); }); fc.appendChild(row); main.appendChild(fc);
+  }
+  draw(); KQ.i18n.apply(); document.addEventListener('kq:lang', draw);
+  window.__heart = { draw };
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('fairy');</script>
+</body>
+</html>

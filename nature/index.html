@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nature Trail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Frank+Ruhl+Libre:wght@700;900&family=Assistant:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#3f8a3a; --accent-2:#1f4a1c; }
+.bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:600px){ .bands{grid-template-columns:1fr} }
+.nq{display:grid; gap:12px; justify-items:center; width:100%}
+.nq .hero .kq-i{width:min(34vw,150px); height:min(34vw,150px)}
+.nq .choices{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; width:100%}
+.nq .choice{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:56px; font-weight:800}
+.nq .choice .kq-i{width:58px; height:58px}
+.nq .choice.ok{outline:4px solid #3ecf7a} .nq .choice.bad{outline:4px solid #ff5a6a; opacity:.8}
+.nq .chain{display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center} .nq .chain .kq-i{width:70px; height:70px} .nq .chain .arr{font:900 28px var(--font-body); opacity:.8}
+.nq .chain .q{width:70px; height:70px; border-radius:16px; border:3px dashed rgba(255,255,255,.6); display:grid; place-items:center; font:900 34px var(--font-body)}
+.nq .diagram{width:min(92vw,420px)} .nq .diagram svg{width:100%; height:auto; display:block}
+.nq .order{display:flex; gap:10px; justify-content:center; flex-wrap:wrap} .nq .order button{width:96px; height:96px; border-radius:18px; border:2px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); display:grid; place-items:center; cursor:pointer; position:relative}
+.nq .order .kq-i{width:70px; height:70px} .nq .order button.done{opacity:.35} .nq .slot{width:96px; height:96px; border-radius:18px; border:3px dashed rgba(255,255,255,.4); display:grid; place-items:center} .nq .slot .kq-i{width:70px; height:70px}
+.nq .order button b{position:absolute; top:4px; inset-inline-start:8px; font:900 15px var(--font-body); color:#ffe08a}
+.fg-card{display:flex; align-items:center; gap:14px; width:100%; margin:0 0 12px; padding:12px 14px; border-radius:18px; cursor:pointer; text-align:start; border:1px solid rgba(190,255,170,.55); background:linear-gradient(135deg,rgba(63,138,58,.4),rgba(30,90,120,.3)); color:inherit; font:inherit}
+.fg-card .thumbs{display:flex; gap:2px} .fg-card .kq-i{width:44px; height:44px} .fg-card b{display:block; font:800 20px/1.1 Cinzel, 'Frank Ruhl Libre', serif} .fg-card span{font-size:14px; opacity:.85}
+.fg{position:fixed; inset:0; z-index:40; overflow:auto; padding:calc(14px + env(safe-area-inset-top,0px)) 16px 24px; background:radial-gradient(120% 90% at 50% 0%, #1f4a2a, #0a160c 70%); color:#f2ffe8; display:flex; flex-direction:column; gap:12px}
+.fg > *{flex-shrink:0} .fg-head{display:flex; align-items:center; gap:12px} .fg-head h2{margin:0; flex:1; font:900 clamp(22px,4vw,32px) Cinzel, 'Frank Ruhl Libre', serif; color:#d8ffb8}
+.fg-x{width:44px; height:44px; border-radius:50%; border:0; background:rgba(255,255,255,.14); color:#fff; font:400 28px/1 sans-serif; cursor:pointer}
+.fg-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px}
+.fg-item{display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:center; padding:10px; border-radius:16px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12)} .fg-item .kq-i{width:64px; height:64px}
+.fg-item b{font-size:18px} .fg-item small{display:block; opacity:.85; line-height:1.4}
+.nq .hero .gp.big{width:min(72vw,360px); aspect-ratio:1/1; border-radius:12px; box-shadow:0 0 0 1px #e2d6bb}
+/* the question page as a page of the field guide (Yoni 2026-10-10: 'fix all that page including the answers'): cream paper, serif type,
+   painted answers, the painting beside the answers on a wide screen */
+body #round .qcard{background:#f4ecdb !important; background-image:none !important; color:#231c13; box-shadow:0 30px 80px rgba(0,0,0,.5) !important; border-radius:18px !important; padding:26px clamp(14px,3vw,34px) 22px !important; max-width:1120px; margin-inline:auto}
+body #round .qcard::before{display:none !important}
+body #round .prompt{font:600 clamp(24px,3.2vw,38px)/1.2 'Fraunces','Frank Ruhl Libre',serif !important; color:#231c13 !important; text-shadow:none !important; letter-spacing:0 !important; margin:4px 0 20px !important}
+body #round .feedback{color:#3a3024 !important; text-shadow:none !important; font:700 20px 'Fraunces','Frank Ruhl Libre',serif !important}
+body #round .feedback.ok{color:#2f6a2a !important} body #round .feedback.bad{color:#a8361f !important}
+body #round .choice{background:#efe5cf !important; color:#231c13 !important; border-radius:14px !important; box-shadow:inset 0 0 0 1px #d2c39f, 0 2px 0 rgba(90,60,20,.12) !important; font:600 clamp(16px,1.9vw,21px)/1.2 'Fraunces','Frank Ruhl Libre',serif !important; padding:10px !important; min-height:60px; text-shadow:none !important; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px}
+body #round .choice:hover{box-shadow:inset 0 0 0 2px #b8892e, 0 4px 12px rgba(90,60,20,.18) !important}
+body #round .choice.ok{background:#dcebd3 !important; box-shadow:inset 0 0 0 2px #3d6b35 !important}
+body #round .choice.bad{background:#f3dccf !important; box-shadow:inset 0 0 0 2px #b0442a !important}
+body #round .qtools .btn{text-shadow:none}
+body #round .howto{background:#efe5cf !important; box-shadow:inset 0 0 0 1px #d6c7a5 !important; color:#231c13 !important}
+body #round .howto .lbl{color:#9c3d22 !important}
+body #round .step{background:#f8f1e2 !important; border:1px solid #e0d3b4 !important; color:#231c13 !important}
+body #round .step::before{background:#9c3d22 !important; color:#fff !important}
+body #round .step .txt{color:#231c13 !important; font-family:'Fraunces','Frank Ruhl Libre',serif; font-weight:600; line-height:1.35} body #round .step .txt.big{color:#7a2f1a !important; font-size:clamp(19px,2.2vw,24px)}
+@media (min-width:860px){ .nq.withpic{display:grid; grid-template-columns:minmax(240px,360px) minmax(0,1fr); align-items:center; gap:30px} .nq.withpic .hero{justify-self:stretch; display:flex; justify-content:center} .nq.withpic .choices{grid-template-columns:repeat(2,minmax(0,1fr))} .nq.withpic .hero .gp.big{width:100%; max-width:400px} body.focus .play, body.focus main{max-width:1100px !important} }
+.nq .choice .gp.th{width:108px; height:108px; border-radius:10px} .nq .chain .gp.th{width:84px; height:84px; border-radius:12px} .fg-card .gp.tn{width:44px; height:44px; border-radius:8px}
+.wq-clues{display:flex; flex-direction:column; gap:8px; width:100%; max-width:640px}
+.wq-clue{display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:12px; background:#efe5cf; border:1px solid #d6c7a5; color:#231c13; font:italic 600 clamp(18px,3vw,22px)/1.35 'Fraunces','Frank Ruhl Libre',serif; text-align:start}
+.wq-clue b{font:800 13px var(--font-body); color:#9c3d22; padding-top:4px; font-style:normal} .wq-more{min-height:44px; background:transparent !important; color:#5c4f3d !important; border:1px solid #b9aa8b !important; box-shadow:none !important; text-shadow:none !important}
+.ww-pair{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; width:100%; max-width:640px}
+.ww-card{display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px; border-radius:16px; border:1px solid #d6c7a5; background:#efe5cf; color:#231c13; cursor:pointer; font:inherit}
+.ww-card .gp{width:100%; aspect-ratio:1/1} .ww-card b{font:600 19px 'Fraunces','Frank Ruhl Libre',serif} .ww-val{font-weight:700; color:#9c3d22} .ww-card.ok{outline:3px solid #3d6b35} .ww-card.bad{outline:3px solid #b0442a}
+.nq .choices.pics .choice{min-height:150px; padding:10px 8px; gap:8px} .nq .choices.pics .choice .gp.th{width:112px; height:112px} .nq .choices.pics .choice span, .nq .choices.small .choice span{font-size:clamp(14px,1.8vw,18px); line-height:1.25; overflow-wrap:anywhere}
+.pw-card{max-width:620px; padding:16px 18px; border-radius:14px; background:#efe5cf; border:1px solid #d6c7a5; color:#231c13; text-align:start} .pw-card b{font:600 22px 'Fraunces','Frank Ruhl Libre',serif} .pw-card p{margin:6px 0 0; font-size:17px; line-height:1.5}
+.nq .order button{background:#efe5cf !important; border:1px solid #d6c7a5 !important} .nq .order .gp.th{width:104px; height:104px; border-radius:10px} .nq .slot{border-color:#b9aa8b !important; min-width:116px; min-height:116px} .nq .slot .gp.th{width:104px; height:104px; border-radius:10px} .nq .order button b{color:#9c3d22}
+.nq .chain .arr{color:#6f604a} .nq .chain .q{border-color:#b9aa8b !important; color:#6f604a}
+.nq .plate{position:relative; width:100%; max-width:400px; justify-self:center; margin-inline:auto} .nq .plate.wide{max-width:620px} .nq .plate .gp{width:100%; border-radius:12px; background-size:cover; box-shadow:0 0 0 1px #e2d6bb} .nq .plate svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none}
+.nq .plate .ring{animation:plring 1.6s ease-in-out infinite; transform-box:fill-box; transform-origin:center} @keyframes plring{50%{opacity:.45; transform:scale(1.06)}}
+.nq .plate .flow{animation:plflow 1.1s linear infinite} @keyframes plflow{to{stroke-dashoffset:-44}}
+@media (min-width:860px){ .nq.withpic .plate{width:100%} .nq.withpic:has(.plate.wide){grid-template-columns:minmax(0,1.5fr) minmax(230px,1fr)} .nq.withpic:has(.plate.wide) .choices{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){ .nq .plate .ring, .nq .plate .flow{animation:none} }
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header><main class="play" style="margin-top:18px"></main></div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script src="../shared/quest.js?v=18"></script>
+<script src="../shared/music_map.js?v=4"></script>
+<script src="../shared/music.js?v=5"></script>
+<script src="../shared/meditate.js?v=3"></script>
+<script src="guide-data.js?v=2"></script>
+<script src="guide.js?v=3"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { nt_title: 'Nature Trail', nt_sub: 'Animals, plants, weather and the living world.',
+      s_home: 'Where does it live?', s_eat: 'What does it eat?', s_weather: 'Dress for the weather', s_seasons: 'Seasons', s_lifecycle: 'Life cycles', s_eaters: 'Plant-eaters and meat-eaters', s_classify: 'Animal groups', s_plantparts: 'Parts of a plant', s_foodchain: 'Food chains', s_water: 'The water cycle', s_adapt: 'Animal superpowers', s_ecosystem: 'Who does what in nature?', s_photo: 'How plants make food',
+      q_home: 'Where does this animal live?', q_eat: 'What does this animal like to eat?', q_weather: 'What do you need in this weather?', q_season: 'Which season is this?', q_life: 'Tap the pictures in order: what comes first?', q_eaters: 'What does this animal eat?', q_classify: 'Which group does this animal belong to?', q_part: 'Which part of the plant is glowing?', q_chain: 'What comes next in this food chain?', q_water: 'What is happening at the glowing arrow?', q_eco: 'What is its job in nature?',
+      h_ocean: 'Ocean', h_forest: 'Forest', h_ice: 'Ice and snow', h_farm: 'Farm', h_pond: 'Pond', h_savanna: 'Grasslands', h_rainforest: 'Rainforest',
+      w_rain: 'It is raining!', w_snow: 'It is snowing!', w_sun: 'It is hot and sunny!', g_umbrella: 'Umbrella', g_gloves: 'Warm gloves', g_cap: 'Sun hat',
+      se_winter: 'Winter', se_spring: 'Spring', se_summer: 'Summer', se_autumn: 'Autumn',
+      d_herb: 'Plants', d_carn: 'Other animals', d_omni: 'Plants and animals',
+      c_mammal: 'Mammal', c_bird: 'Bird', c_fish: 'Fish', c_reptile: 'Reptile', c_amphibian: 'Amphibian', c_insect: 'Insect',
+      p_root: 'Root', p_stem: 'Stem', p_leaf: 'Leaf', p_flower: 'Flower', p_seed: 'Seed',
+      wc_evap: 'Evaporation', wc_cond: 'Condensation', wc_prec: 'Precipitation', wc_coll: 'Collection',
+      e_producer: 'Producer (makes its own food)', e_consumer: 'Consumer (eats other living things)', e_decomposer: 'Decomposer (breaks down dead things)',
+      x_home: 'The {a} lives {h}.', hp_ocean: 'in the ocean', hp_forest: 'in the forest', hp_ice: 'in the ice and snow', hp_farm: 'on a farm', hp_pond: 'in a pond', hp_savanna: 'in the grasslands', hp_rainforest: 'in the rainforest', gx_umbrella: 'an umbrella', gx_gloves: 'warm gloves', gx_cap: 'a sun hat', x_eat: 'The {a} likes {f}.', x_weather: '{w} Take {g}.', x_season: 'This picture shows {s}.', x_life: 'First {a}, then {b}, then {c}.', x_eaters: 'The {a} eats {d}.', x_classify: 'The {a} is a {c}. {why}', x_part: 'The {p}: {what}', x_chain: 'Energy passes along the chain: {chain}.', x_water: '{n}: {what}', x_eco: '{a}: {e}.',
+      why_mammal: 'Mammals have hair or fur and feed their babies milk.', why_bird: 'Birds have feathers and lay eggs.', why_fish: 'Fish live in water and breathe with gills.', why_reptile: 'Reptiles have dry, scaly skin.', why_amphibian: 'Amphibians start life in water and later live on land too.', why_insect: 'Insects have six legs and three body parts.',
+      pw_root: 'it holds the plant in the ground and drinks water from the soil.', pw_stem: 'it holds the plant up and carries water to the leaves.', pw_leaf: 'it catches sunlight to make the plant’s food.', pw_flower: 'it attracts bees and makes the seeds.', pw_seed: 'a new plant can grow from it.',
+      ww_evap: 'the sun warms the water and it rises into the air as vapour.', ww_cond: 'the vapour cools high up and turns into tiny drops: clouds.', ww_prec: 'the drops get heavy and fall as rain or snow.', ww_coll: 'the water gathers in seas, lakes and rivers, and the cycle starts again.',
+      s_whoami: 'Who am I?', s_whowins: 'Who wins?', s_myth: 'Myth or fact?', s_power: 'Whose superpower?', s_status: 'Saving animals', s_tree: 'The tree of life', q_whoami: 'Who am I? Guess with as few clues as you can.', q_moreClue: 'Another clue', q_ww_weight: 'Which one is heavier?', q_ww_speed: 'Which one is faster?', q_ww_wingspan: 'Whose wings are wider, tip to tip?', q_ww_length: 'Which one is longer?', q_myth: 'Myth or fact?', a_myth: 'Myth', a_fact: 'Fact', q_power: 'Which animal has this superpower?', q_status: 'How safe is the {a} in the wild?', q_tree: 'Which branch of the tree of life does the {a} belong to?', x_ww: '{a}: {va}. {b}: {vb}.', x_myth: '{v} {why}', x_power: '{a}. {title}: {text}', x_status: '{a}: {s}. {note}', x_tree: '{chain}', x_who: 'It was the {a}.', x_g: '{a}: {text}', why_mollusc: 'Molluscs have soft bodies; many, like snails, have a shell, and octopuses have none.', why_crustacean: 'Crustaceans have a hard outer shell, jointed legs and two pairs of antennae.', h_desert: 'Desert', fg_card: 'Field Guide', fg_cardSub: 'Every animal of the trail, painted: find them, read their pages, earn gold seals.', fg_lives: 'Lives in: {h}', fg_eats: 'Eats: {d}', fg_group: 'Group: {c}' },
+    he: { nt_title: 'שביל הטבע', nt_sub: 'בעלי חיים, צמחים, מזג אוויר והעולם החי.',
+      s_home: 'איפה הוא גר?', s_eat: 'מה הוא אוכל?', s_weather: 'מתלבשים לפי מזג האוויר', s_seasons: 'עונות השנה', s_lifecycle: 'מחזורי חיים', s_eaters: 'אוכלי צמחים ואוכלי בשר', s_classify: 'קבוצות בעלי חיים', s_plantparts: 'חלקי הצמח', s_foodchain: 'שרשראות מזון', s_water: 'מחזור המים', s_adapt: 'כוחות־העל של בעלי החיים', s_ecosystem: 'מי עושה מה בטבע?', s_photo: 'איך צמחים מכינים מזון',
+      q_home: 'איפה החיה הזאת גרה?', q_eat: 'מה החיה הזאת אוהבת לאכול?', q_weather: 'מה צריך במזג האוויר הזה?', q_season: 'איזו עונה זאת?', q_life: 'לוחצים על התמונות לפי הסדר: מה בא קודם?', q_eaters: 'מה החיה הזאת אוכלת?', q_classify: 'לאיזו קבוצה החיה הזאת שייכת?', q_part: 'איזה חלק של הצמח זוהר?', q_chain: 'מה בא אחר כך בשרשרת המזון?', q_water: 'מה קורה בחץ הזוהר?', q_eco: 'מה התפקיד שלו בטבע?',
+      h_ocean: 'אוקיינוס', h_forest: 'יער', h_ice: 'קרח ושלג', h_farm: 'חווה', h_pond: 'ברכה', h_savanna: 'ערבות', h_rainforest: 'יער גשם',
+      w_rain: 'יורד גשם!', w_snow: 'יורד שלג!', w_sun: 'חם ושמשי!', g_umbrella: 'מטרייה', g_gloves: 'כפפות חמות', g_cap: 'כובע שמש',
+      se_winter: 'חורף', se_spring: 'אביב', se_summer: 'קיץ', se_autumn: 'סתיו',
+      d_herb: 'צמחים', d_carn: 'בעלי חיים אחרים', d_omni: 'גם צמחים וגם בעלי חיים',
+      c_mammal: 'יונק', c_bird: 'עוף', c_fish: 'דג', c_reptile: 'זוחל', c_amphibian: 'דו־חי', c_insect: 'חרק',
+      p_root: 'שורש', p_stem: 'גבעול', p_leaf: 'עלה', p_flower: 'פרח', p_seed: 'זרע',
+      wc_evap: 'התאדות', wc_cond: 'התעבות', wc_prec: 'משקעים', wc_coll: 'איסוף',
+      e_producer: 'יצרן (מכין את המזון שלו)', e_consumer: 'צרכן (אוכל יצורים אחרים)', e_decomposer: 'מפרק (מפרק דברים מתים)',
+      x_home: 'ה{a} גר {h}.', hp_ocean: 'באוקיינוס', hp_forest: 'ביער', hp_ice: 'בקרח ובשלג', hp_farm: 'בחווה', hp_pond: 'בברכה', hp_savanna: 'בערבות', hp_rainforest: 'ביער הגשם', gx_umbrella: 'מטרייה', gx_gloves: 'כפפות חמות', gx_cap: 'כובע שמש', x_eat: 'ה{a} אוהב {f}.', x_weather: '{w} צריך: {g}.', x_season: 'בתמונה רואים {s}.', x_life: 'קודם {a}, אחר כך {b}, ואז {c}.', x_eaters: 'ה{a} אוכל {d}.', x_classify: 'ה{a} הוא {c}. {why}', x_part: '{p}: {what}', x_chain: 'האנרגיה עוברת לאורך השרשרת: {chain}.', x_water: '{n}: {what}', x_eco: '{a}: {e}.',
+      why_mammal: 'ליונקים יש שיער או פרווה, והם מניקים את הגורים בחלב.', why_bird: 'לעופות יש נוצות והם מטילים ביצים.', why_fish: 'דגים חיים במים ונושמים בזימים.', why_reptile: 'לזוחלים יש עור יבש עם קשקשים.', why_amphibian: 'דו־חיים מתחילים את חייהם במים, ואחר כך חיים גם ביבשה.', why_insect: 'לחרקים יש שש רגליים ושלושה חלקי גוף.',
+      pw_root: 'הוא מחזיק את הצמח באדמה ושותה מים מהקרקע.', pw_stem: 'הוא מחזיק את הצמח זקוף ומוביל מים אל העלים.', pw_leaf: 'הוא קולט אור שמש כדי להכין מזון לצמח.', pw_flower: 'הוא מושך דבורים ויוצר את הזרעים.', pw_seed: 'ממנו יכול לצמוח צמח חדש.',
+      ww_evap: 'השמש מחממת את המים והם עולים לאוויר כאדים.', ww_cond: 'האדים מתקררים למעלה והופכים לטיפות קטנטנות: עננים.', ww_prec: 'הטיפות נעשות כבדות ונופלות כגשם או שלג.', ww_coll: 'המים נאספים בימים, באגמים ובנהרות, והמחזור מתחיל מחדש.',
+      s_whoami: 'מי אני?', s_whowins: 'מי מנצח?', s_myth: 'מיתוס או עובדה?', s_power: 'של מי הכוח הזה?', s_status: 'שומרים על בעלי החיים', s_tree: 'עץ החיים', q_whoami: 'מי אני? מנחשים עם כמה שפחות רמזים.', q_moreClue: 'עוד רמז', q_ww_weight: 'מי כבד יותר?', q_ww_speed: 'מי מהיר יותר?', q_ww_wingspan: 'למי מוטת כנפיים רחבה יותר?', q_ww_length: 'מי ארוך יותר?', q_myth: 'מיתוס או עובדה?', a_myth: 'מיתוס', a_fact: 'עובדה', q_power: 'לאיזה בעל חיים יש את כוח־העל הזה?', q_status: 'מה מצב השמירה של {a} בטבע?', q_tree: 'מה הענף של {a} בעץ החיים?', x_ww: '{a}: {va}. {b}: {vb}.', x_myth: '{v} {why}', x_power: '{a}. {title}: {text}', x_status: '{a}: {s}. {note}', x_tree: '{chain}', x_who: 'זה היה: {a}.', x_g: '{a}: {text}', why_mollusc: 'לרכיכות יש גוף רך; לרבות מהן, כמו לחלזונות, יש קונכייה, ולתמנון אין.', why_crustacean: 'לסרטנאים יש שלד חיצוני קשה, רגליים מפרקיות ושני זוגות מחושים.', h_desert: 'מדבר', fg_card: 'מדריך השדה', fg_cardSub: 'כל בעלי החיים של השביל, מצוירים: מוצאים אותם, קוראים את הדפים שלהם ומרוויחים חותמי זהב.', fg_lives: 'גר ב: {h}', fg_eats: 'אוכל: {d}', fg_group: 'קבוצה: {c}' }
+  });
+  const { t } = KQ, el = KQ.ui.el, I = e => KQ.icon(e) || el('span', null, e);
+  const he = () => KQ.i18n.lang === 'he';
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), pick = a => a[Math.floor(Math.random() * a.length)];
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const speak4 = (band, text) => band <= 2 ? text : null;
+  const lc = s => he() ? s : s.charAt(0).toLowerCase() + s.slice(1);
+  /* the animals of the trail: [icon, English, Hebrew, home, diet, group, food icon or null, level it appears from] */
+  const ANIMALS = [
+    ['🦈', 'shark', 'כריש', 'ocean', 'carn', 'fish', null, 1], ['🐬', 'dolphin', 'דולפין', 'ocean', 'carn', 'mammal', '🐟', 1], ['🐙', 'octopus', 'תמנון', 'ocean', 'carn', null, null, 1], ['🦀', 'crab', 'סרטן', 'ocean', 'omni', null, null, 1], ['🐢', 'sea turtle', 'צב ים', 'ocean', 'omni', 'reptile', null, 2], ['🐡', 'pufferfish', 'אבו־נפחא', 'ocean', 'carn', 'fish', null, 2],
+    ['🐻', 'bear', 'דוב', 'forest', 'omni', 'mammal', '🍯', 1], ['🦊', 'fox', 'שועל', 'forest', 'omni', 'mammal', null, 1], ['🐺', 'wolf', 'זאב', 'forest', 'carn', 'mammal', '🍖', 1], ['🦉', 'owl', 'ינשוף', 'forest', 'carn', 'bird', '🐭', 1], ['🐿️', 'squirrel', 'סנאי', 'forest', 'herb', 'mammal', null, 1], ['🐨', 'koala', 'קואלה', 'forest', 'herb', 'mammal', '🍃', 2],
+    ['🐧', 'penguin', 'פינגווין', 'ice', 'carn', 'bird', '🐟', 1],
+    ['🐄', 'cow', 'פרה', 'farm', 'herb', 'mammal', '🌾', 1], ['🐷', 'pig', 'חזיר', 'farm', 'omni', 'mammal', '🌽', 1], ['🐴', 'horse', 'סוס', 'farm', 'herb', 'mammal', '🍎', 1], ['🐣', 'chick', 'אפרוח', 'farm', 'omni', 'bird', '🫘', 1],
+    ['🐸', 'frog', 'צפרדע', 'pond', 'carn', 'amphibian', null, 1], ['🦆', 'duck', 'ברווז', 'pond', 'omni', 'bird', null, 1],
+    ['🦁', 'lion', 'אריה', 'savanna', 'carn', 'mammal', '🍖', 1], ['🐘', 'elephant', 'פיל', 'savanna', 'herb', 'mammal', '🌿', 1], ['🦒', 'giraffe', 'ג׳ירפה', 'savanna', 'herb', 'mammal', '🍃', 1], ['🦘', 'kangaroo', 'קנגורו', 'savanna', 'herb', 'mammal', null, 2],
+    ['🐯', 'tiger', 'נמר', 'rainforest', 'carn', 'mammal', '🍖', 2], ['🐵', 'monkey', 'קוף', 'rainforest', 'omni', 'mammal', '🍌', 1], ['🦜', 'parrot', 'תוכי', 'rainforest', 'herb', 'bird', '🫘', 2], ['🐊', 'crocodile', 'תנין', 'rainforest', 'carn', 'reptile', null, 2],
+    ['🐰', 'rabbit', 'ארנב', 'farm', 'herb', 'mammal', '🍀', 1], ['🐝', 'bee', 'דבורה', 'farm', 'herb', 'insect', '🌸', 1], ['🦋', 'butterfly', 'פרפר', 'forest', 'herb', 'insect', '🌸', 2], ['🦇', 'bat', 'עטלף', 'forest', 'carn', 'mammal', null, 3], ['🦅', 'eagle', 'עיט', 'forest', 'carn', 'bird', null, 2], ['🐭', 'mouse', 'עכבר', 'farm', 'omni', 'mammal', '🌽', 1], ['🦖', 'T. rex (long ago)', 'טירנוזאורוס (לפני מיליוני שנים)', null, 'carn', 'reptile', null, 9]
+  ].map(([e, en, heN, home, diet, cls, food, band]) => ({ e, n: [en, heN], home, diet, cls, food, band }));
+  const nm = a => a.n[he() ? 1 : 0];
+  const HOMES = { ocean: '🌊', forest: '🌲', ice: '❄️', farm: '🏡', pond: '🪷', savanna: '🌾', rainforest: '🌳', desert: '🌵' };
+  const FOODS = { '🍯': ['honey', 'דבש'], '🍖': ['meat', 'בשר'], '🐭': ['mice', 'עכברים'], '🐟': ['fish', 'דגים'], '🍃': ['leaves', 'עלים'], '🌾': ['grass and hay', 'עשב וחציר'], '🌽': ['corn', 'תירס'], '🍎': ['apples', 'תפוחים'], '🫘': ['seeds', 'זרעים'], '🌿': ['plants', 'צמחים'], '🍌': ['bananas', 'בננות'], '🍀': ['clover', 'תלתן'], '🌸': ['nectar from flowers', 'צוף מפרחים'] };
+  const pool = band => ANIMALS.filter(a => a.band <= band);
+
+  /* ---------- the Field Guide's animals (style A, Yoni 2026-10-09): painted, every fact checked (guide-data.js, guide.js) ---------- */
+  const GD = window.KQGuide, GIDS = window.KQ_GUIDE ? KQ_GUIDE.ids : [];
+  const gA = id => GD.a(id), gT = id => GD.txt(id), gName = id => GD.name(id);
+  const EMO = { '🦈': 'shark', '🐬': 'dolphin', '🐙': 'octopus', '🦀': 'crab', '🐢': 'seaturtle', '🐡': 'puffer', '🐻': 'bear', '🦊': 'fox', '🐺': 'wolf', '🦉': 'owl', '🐿️': 'squirrel', '🐨': 'koala', '🐧': 'penguin', '🐄': 'cow', '🐷': 'pig', '🐴': 'horse', '🐣': 'chick', '🐸': 'frog', '🦆': 'duck', '🦁': 'lion', '🐘': 'elephant', '🦒': 'giraffe', '🦘': 'kangaroo', '🐯': 'tiger', '🐵': 'monkey', '🦜': 'parrot', '🐊': 'crocodile', '🐰': 'rabbit', '🐝': 'bee', '🦋': 'butterfly', '🦇': 'bat', '🦅': 'eagle', '🐭': 'mouse' };
+  /* the answers' own paintings (Yoni 2026-10-10: 'the answers still look too simplistic'): habitats, food, weather, seasons, life cycles,
+     food-chain plants — one sheet, nature/art/items.webp, 6 × 7 */
+  const ITEMS = ['h_ocean', 'h_forest', 'h_ice', 'h_farm', 'h_pond', 'h_savanna', 'h_rainforest', 'h_desert', 'd_plants', 'd_animals', 'd_both', 'w_rain', 'w_snow', 'w_sun', 'g_umbrella', 'g_gloves', 'g_cap', 'se_winter', 'se_spring', 'se_summer', 'se_autumn', 'lc_seed', 'lc_sprout', 'lc_flower', 'lc_egg', 'lc_chick', 'lc_bird', 'fc_plants', 'fc_grass', 'fc_leaves', 'fc_flowers', 'fc_fish', 'fc_sun', 'eco_tree', 'eco_sunflower', 'eco_mushroom', 'eco_cactus'];
+  const IT = (k, cls) => { const i = ITEMS.indexOf(k), d = el('div', 'gp' + (cls ? ' ' + cls : '')); d.style.backgroundImage = 'url(art/items.webp?v=1)'; d.style.backgroundSize = '600% 700%'; d.style.backgroundPosition = `${(i % 6) * 20}% ${Math.floor(i / 6) * 100 / 6}%`; d.setAttribute('aria-hidden', 'true'); return d; };
+  const ITEM_EMO = { '🌿': 'fc_plants', '🌾': 'fc_grass', '🍃': 'fc_leaves', '🌸': 'fc_flowers', '🐟': 'fc_fish', '☀️': 'fc_sun', '🌳': 'eco_tree', '🌻': 'eco_sunflower', '🍄': 'eco_mushroom', '🌵': 'eco_cactus' };
+  const P = e => (GD && EMO[e]) ? GD.thumb(EMO[e], 'th') : ITEM_EMO[e] ? IT(ITEM_EMO[e], 'th') : I(e);   /* a painting wherever the trail has one, else the icon */
+  const itHero = k => () => { const d = el('div', 'hero'); d.appendChild(IT(k, 'big')); return d; };
+  const paint = id => () => { const d = el('div', 'hero'); d.appendChild(GD.pic(id, 'big')); return d; };
+  const thumbPic = id => () => GD.thumb(id, 'th');
+  /* who a question may be about: familiar animals first, all 36 from age 8 */
+  const YOUNG = ['cow', 'pig', 'horse', 'chick', 'duck', 'rabbit', 'lion', 'elephant', 'giraffe', 'monkey', 'bear', 'fox', 'owl', 'frog', 'penguin', 'dolphin', 'shark', 'bee', 'butterfly', 'mouse', 'tiger', 'crocodile', 'wolf', 'koala', 'kangaroo', 'parrot'];
+  const gPool = band => band <= 2 ? YOUNG.filter(id => GIDS.includes(id)) : GIDS.slice();
+  /* where it lives: one clear answer. Animals at home in many places are left out, and a wrong answer is never one that is also true */
+  const HOME_SKIP = ['peregrine', 'mouse', 'bat', 'eagle'], HOME_OF = { crocodile: 'pond' };
+  const HOME_ALSO = { duck: ['farm'], fox: ['farm', 'desert'], rabbit: ['forest', 'savanna'], wolf: ['ice', 'desert'], bear: ['ice'], crocodile: ['savanna', 'rainforest'], frog: ['forest', 'rainforest'], pig: ['forest'], horse: ['savanna'], kangaroo: ['desert'], elephant: ['forest', 'rainforest'], tiger: ['forest'], bee: ['forest'], butterfly: ['forest'], penguin: ['ocean'], owl: ['forest'], koala: ['savanna'], monkey: ['forest'], cheetah: ['desert'], fennec: ['savanna'] };
+  const homeOf = id => HOME_OF[id] || gA(id).home;
+  /* who wins: the same measure, in the same unit, far enough apart */
+  const CMP = (() => { const out = { weight: [], speed: [], wingspan: [], length: [] };
+    for (const id of GIDS) { const c = gA(id).en.compare; if (!c || c.value == null) continue; const st = String(c.stat).toLowerCase(), u = String(c.unit).toLowerCase(); let k = null, v = +c.value;
+      if (/weight/.test(st)) { k = 'weight'; if (u === 'g') v /= 1000; else if (u === 't') v *= 1000; } else if (/speed/.test(st)) k = 'speed'; else if (/wingspan/.test(st)) { k = 'wingspan'; if (u === 'm') v *= 100; } else if (/^length/.test(st)) { k = 'length'; if (u === 'm') v *= 100; else if (u === 'mm') v /= 10; }
+      if (k) out[k].push({ id, v }); } return out; })();
+  const GROUPS3 = ['mammal', 'bird', 'fish', 'insect'], GROUPS4 = ['mammal', 'bird', 'fish', 'reptile', 'amphibian', 'insect', 'mollusc', 'crustacean'];
+  const meetAll = (q, ok) => { if (!GD || !q.x) return; for (const g of [].concat(q.x.gids || q.x.gid || [])) GD.meet(g, ok); };
+  function renderQ(q) {
+    return (st, api) => {
+      const box = el('div', 'nq' + (q.pic ? ' withpic' : '')); st.appendChild(box); if (q.pic) box.appendChild(q.pic());
+      if (q.order) return q.order(box, api);
+      const ch = el('div', 'choices' + (q.optsCls ? ' ' + q.optsCls : '')); box.appendChild(ch);
+      q.opts.forEach(o => { const b = el('button', 'choice'); b.type = 'button'; if (o.pic) b.appendChild(o.pic()); if (o.label) b.appendChild(el('span', null, o.label)); b.dataset.value = o.value;
+        b.onclick = () => { if (api.locked()) return; const ok = o.value === q.answer; meetAll(q, ok); b.classList.add(ok ? 'ok' : 'bad'); if (!ok) [...ch.children].forEach(c => { if (c.dataset.value === q.answer) c.classList.add('ok'); }); api.submit(ok, o.label || ''); }; ch.appendChild(b); });
+    };
+  }
+  function Q(o) { const q = Object.assign({ tags: [o.skill] }, o); q.render = renderQ(q); const a = (o.opts || []).find(x => x.value === o.answer); q.answerLabel = a ? a.label || '' : ''; return q; }
+  const hero = e => () => { const d = el('div', 'hero'); d.appendChild(GD && EMO[e] ? GD.pic(EMO[e], 'big') : ITEM_EMO[e] ? IT(ITEM_EMO[e], 'big') : I(e)); return d; };
+
+  /* painted plates (field-guide style, Yoni 2026-10-10): the poppy with its parts lit one at a time; the water cycle with its four arrows,
+     the asked one glowing. Coordinates are in the paintings' own pixels (art-src/nature/items/plant_plate.png 928 × 1152, water_plate.png 1200 × 896). */
+  const SVGNS = 'http://www.w3.org/2000/svg'; let plateN = 0;
+  const sv = (tag, a, p) => { const e = document.createElementNS(SVGNS, tag); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+  function plate(img, w, h, wide, draw) {
+    const d = el('div', 'plate' + (wide ? ' wide' : '')), g = el('div', 'gp'); g.style.backgroundImage = `url(art/${img}.webp?v=1)`; g.style.aspectRatio = w + ' / ' + h; d.appendChild(g);
+    const s = sv('svg', { viewBox: `0 0 ${w} ${h}`, 'aria-hidden': 'true' }); d.appendChild(s); draw(s, 'pl' + (++plateN)); return d;
+  }
+  const PART_AT = { flower: [455, 167, 128, 102, 0], seed: [571, 276, 48, 52, 0], leaf: [406, 488, 52, 122, -25], stem: [461, 762, 32, 72, 0], root: [464, 967, 178, 120, 0] };
+  function plantPlate(glow) {
+    return plate('plant_plate', 928, 1152, false, (s, id) => {
+      const [x, y, rx, ry, r] = PART_AT[glow], defs = sv('defs', {}, s), m = sv('mask', { id: id + 'm' }, defs), f = sv('filter', { id: id + 'b', x: '-50%', y: '-50%', width: '200%', height: '200%' }, defs);
+      sv('feGaussianBlur', { stdDeviation: 14 }, f); sv('rect', { width: 928, height: 1152, fill: '#fff' }, m);
+      sv('ellipse', { cx: x, cy: y, rx: rx * 1.15, ry: ry * 1.15, fill: '#000', filter: `url(#${id}b)`, transform: `rotate(${r} ${x} ${y})` }, m);
+      sv('rect', { width: 928, height: 1152, fill: '#f4ecdb', opacity: 0.52, mask: `url(#${id}m)` }, s);
+      sv('ellipse', { cx: x, cy: y, rx: rx * 1.12, ry: ry * 1.12, fill: 'none', stroke: '#d99a1e', 'stroke-width': 6, 'stroke-dasharray': '16 10', class: 'ring' }, sv('g', { transform: `rotate(${r} ${x} ${y})` }, s));
+    });
+  }
+  const WC_AT = { evap: ['M318 548 C290 500 352 466 326 420 C306 386 350 370 362 352', 'M236 552 C210 506 268 474 244 430 C226 398 266 384 276 368'], cond: ['M470 336 C556 272 640 238 736 222'],
+    prec: ['M796 298 L784 392', 'M856 298 L844 392', 'M916 298 L904 392'], coll: ['M792 598 C742 640 624 666 476 662 C424 660 386 646 348 628'] };
+  function waterPlate(glow) {
+    return plate('water_plate', 1200, 896, true, (s, id) => {
+      const defs = sv('defs', {}, s), f = sv('filter', { id: id + 'g', x: '-30%', y: '-30%', width: '160%', height: '160%' }, defs);
+      sv('feDropShadow', { dx: 0, dy: 0, stdDeviation: 7, 'flood-color': '#ffe27a', 'flood-opacity': 1 }, f);
+      const head = (k, fill) => { const mk = sv('marker', { id: id + k, viewBox: '0 0 10 10', refX: 6, refY: 5, markerWidth: k === 'on' ? 40 : 30, markerHeight: k === 'on' ? 40 : 30, markerUnits: 'userSpaceOnUse', orient: 'auto' }, defs); sv('path', { d: 'M0 1 L10 5 L0 9 Z', fill, stroke: '#2a3346', 'stroke-width': 0.7, 'stroke-linejoin': 'round' }, mk); };
+      head('off', '#ffffff'); head('on', '#ffcf3a');
+      for (const k of WC) for (const d of WC_AT[k]) {
+        const on = k === glow;
+        sv('path', { d, fill: 'none', stroke: 'rgba(30,38,56,.55)', 'stroke-width': on ? 18 : 11, 'stroke-linecap': 'round' }, s);
+        sv('path', Object.assign({ d, fill: 'none', stroke: on ? '#ffcf3a' : '#ffffff', 'stroke-width': on ? 11 : 6, 'stroke-linecap': 'round', opacity: on ? 1 : 0.9, 'marker-end': `url(#${id}${on ? 'on' : 'off'})` },
+          on ? { filter: `url(#${id}g)`, 'stroke-dasharray': '26 18', class: 'flow' } : {}), s);
+      }
+    });
+  }
+  const PARTS = ['root', 'stem', 'leaf', 'flower', 'seed'], WC = ['evap', 'cond', 'prec', 'coll'];
+  const CHAINS = [['🌿', '🐰', '🦊'], ['🌿', '🐭', '🦉'], ['🌾', '🐭', '🦅'], ['🍃', '🦒', '🦁'], ['🌿', '🐟', '🦈'], ['🌸', '🦋', '🐸'], ['🌿', '🐟', '🐧']];
+  const ICON_NAME = { '🌿': ['plants', 'צמחים'], '🌾': ['grass', 'עשב'], '🍃': ['leaves', 'עלים'], '🌸': ['flowers', 'פרחים'], '🐟': ['small fish', 'דגים קטנים'] };
+  const iconName = e => { const a = ANIMALS.find(x => x.e === e); return a ? nm(a) : (ICON_NAME[e] || [e, e])[he() ? 1 : 0]; };
+  const ADAPT = [
+    ['🦆', ['Why does a duck have webbed feet?', 'למה לברווז יש קרום בין האצבעות?'], [['To swim and paddle', 'כדי לשחות ולחתור'], ['To climb trees', 'כדי לטפס על עצים'], ['To dig holes', 'כדי לחפור בורות'], ['To keep cool', 'כדי להתקרר']]],
+    ['🦒', ['Why does a giraffe have such a long neck?', 'למה לג׳ירפה יש צוואר כל כך ארוך?'], [['To reach leaves high in the trees', 'כדי להגיע לעלים גבוהים בעצים'], ['To see in the dark', 'כדי לראות בחושך'], ['To swim faster', 'כדי לשחות מהר יותר'], ['To stay warm', 'כדי להתחמם']]],
+    ['🦉', ['Why does an owl have such big eyes?', 'למה לינשוף יש עיניים כל כך גדולות?'], [['To see well at night', 'כדי לראות טוב בלילה'], ['To scare other birds', 'כדי להפחיד ציפורים אחרות'], ['To find water', 'כדי למצוא מים'], ['To fly faster', 'כדי לעוף מהר יותר']]],
+    ['🐧', ['Why do penguins huddle close together?', 'למה פינגווינים מצטופפים יחד?'], [['To keep warm in the cold', 'כדי להתחמם בקור'], ['To catch fish', 'כדי לתפוס דגים'], ['To hide from the sun', 'כדי להסתתר מהשמש'], ['To learn to fly', 'כדי ללמוד לעוף']]],
+    ['🌵', ['Why does a cactus have spines instead of leaves?', 'למה לקקטוס יש קוצים במקום עלים?'], [['To lose less water and keep animals away', 'כדי לאבד פחות מים ולהרחיק בעלי חיים'], ['To catch insects', 'כדי לתפוס חרקים'], ['To grow faster', 'כדי לגדול מהר יותר'], ['To make flowers', 'כדי לעשות פרחים']]],
+    ['🦇', ['How does a bat find its way in the dark?', 'איך עטלף מוצא את דרכו בחושך?'], [['It listens to the echoes of its own calls', 'הוא מקשיב להד של הקולות שלו'], ['It glows like a firefly', 'הוא זוהר כמו גחלילית'], ['It follows the moon', 'הוא הולך אחרי הירח'], ['It smells the trees', 'הוא מריח את העצים']]],
+    ['🐢', ['Why does a turtle have a hard shell?', 'למה לצב יש שריון קשה?'], [['To protect itself', 'כדי להגן על עצמו'], ['To swim faster', 'כדי לשחות מהר יותר'], ['To keep cool', 'כדי להתקרר'], ['To carry food', 'כדי לסחוב אוכל']]],
+    ['🐡', ['Why does a pufferfish blow itself up like a ball?', 'למה אבו־נפחא מתנפח כמו כדור?'], [['To look too big and spiky to eat', 'כדי להיראות גדול ודוקרני מדי לאכילה'], ['To float to the top', 'כדי לצוף למעלה'], ['To sleep', 'כדי לישון'], ['To keep warm', 'כדי להתחמם']]]
+  ];
+  const ECO = [['🌿', 'producer'], ['🌳', 'producer'], ['🌻', 'producer'], ['🌾', 'producer'], ['🍄', 'decomposer'], ['🐰', 'consumer'], ['🦁', 'consumer'], ['🐝', 'consumer'], ['🦉', 'consumer'], ['🐟', 'consumer']];
+  const ECO_NAME = { '🌳': ['tree', 'עץ'], '🌻': ['sunflower', 'חמנייה'], '🍄': ['mushroom', 'פטרייה'], '🌿': ['plant', 'צמח'], '🌾': ['grass', 'עשב'], '🐟': ['fish', 'דג'] };
+  const PHOTO = [
+    [['What do plants need to make their food?', 'מה צמחים צריכים כדי להכין מזון?'], ['Sunlight, water and air', 'אור שמש, מים ואוויר'], [['Only soil', 'רק אדמה'], ['Darkness and sugar', 'חושך וסוכר'], ['Meat and milk', 'בשר וחלב']]],
+    [['Which gas do plants take in from the air?', 'איזה גז צמחים קולטים מהאוויר?'], ['Carbon dioxide', 'פחמן דו־חמצני'], [['Oxygen', 'חמצן'], ['Helium', 'הליום'], ['Steam', 'אדים']]],
+    [['Which gas do plants give out that we breathe?', 'איזה גז צמחים משחררים שאנחנו נושמים?'], ['Oxygen', 'חמצן'], [['Carbon dioxide', 'פחמן דו־חמצני'], ['Smoke', 'עשן'], ['Helium', 'הליום']]],
+    [['What gives leaves their green colour and catches sunlight?', 'מה נותן לעלים את הצבע הירוק וקולט את אור השמש?'], ['Chlorophyll', 'כלורופיל'], [['Salt', 'מלח'], ['Pollen', 'אבקה'], ['Bark', 'קליפת עץ']]],
+    [['Which part of the plant makes most of its food?', 'איזה חלק של הצמח מכין את רוב המזון?'], ['The leaves', 'העלים'], [['The roots', 'השורשים'], ['The flowers', 'הפרחים'], ['The seeds', 'הזרעים']]],
+    [['What does a plant make from sunlight, water and air?', 'מה צמח מכין מאור שמש, מים ואוויר?'], ['Sugar (its food) and oxygen', 'סוכר (המזון שלו) וחמצן'], [['Rocks and sand', 'סלעים וחול'], ['Rain', 'גשם'], ['Salt and smoke', 'מלח ועשן']]]
+  ];
+  const L = p => p[he() ? 1 : 0];
+
+  const GEN = {
+    home(tier, band) { const ps = pool(band).filter(a => a.home && !['🦇', '🦅', '🐝', '🦋', '🐊'].includes(a.e)),   /* only animals with one clear home */ a = pick(ps), hs = band === 1 ? ['ocean', 'forest', 'ice', 'farm', 'pond', 'savanna'] : Object.keys(HOMES), others = shuffle(hs.filter(h => h !== a.home)).slice(0, band === 1 ? 2 : 3);
+      return Q({ skill: 'home', key: 'h' + a.e, prompt: t('q_home'), speak: speak4(band, t('q_home')), answer: a.home, opts: shuffle([a.home, ...others]).map(h => ({ value: h, label: t('h_' + h), pic: () => I(HOMES[h]) })), pic: hero(a.e), x: { a } }); },
+    /* only animals whose diet is clear-cut (no omnivores): a plant-eater's wrong answers are meats, a hunter's are plants */
+    eat(tier, band) { const ps = pool(band).filter(a => a.food && a.diet !== 'omni'), a = pick(ps), MEAT = ['🍖', '🐟', '🐭'], PLANT = ['🍃', '🌾', '🍎', '🌿', '🍀', '🌸', '🫘'], others = shuffle((a.diet === 'herb' ? MEAT : PLANT).filter(f => f !== a.food)).slice(0, 2);
+      return Q({ skill: 'eat', key: 'e' + a.e, prompt: t('q_eat'), speak: speak4(band, t('q_eat')), answer: a.food, opts: shuffle([a.food, ...others]).map(f => ({ value: f, label: L(FOODS[f]), pic: () => I(f) })), pic: hero(a.e), x: { a } }); },
+    weather(tier, band) { const W = [['rain', '🌧️', 'umbrella', '☂️'], ['snow', '❄️', 'gloves', '🧤'], ['sun', '☀️', 'cap', '🧢']], w = pick(W);
+      return Q({ skill: 'weather', key: 'w' + w[0], prompt: t('w_' + w[0]) + ' ' + t('q_weather'), speak: speak4(band, t('w_' + w[0]) + ' ' + t('q_weather')), answer: w[2], opts: shuffle(W).map(x => ({ value: x[2], label: t('g_' + x[2]), pic: () => IT('g_' + x[2], 'th') })), pic: itHero('w_' + w[0]), x: { w } }); },
+    seasons(tier, band) { const S = [['winter', '❄️'], ['spring', pick(['🌷', '🌸'])], ['summer', pick(['☀️', '🌻'])], ['autumn', '🍂']], s = pick(S);
+      return Q({ skill: 'seasons', key: 'se' + s[0], prompt: t('q_season'), speak: speak4(band, t('q_season')), answer: s[0], opts: S.map(x => ({ value: x[0], label: t('se_' + x[0]) })), pic: itHero('se_' + s[0]), x: { s: s[0] } }); },
+    /* tap three pictures in order (the first one, then the next…) */
+    lifecycle(tier, band) { const C = [['🫘', '🌱', '🌷'], ['🥚', '🐣', '🐦']], c = pick(C), names = { '🫘': ['a seed', 'זרע'], '🌱': ['a sprout', 'נבט'], '🌷': ['a flower', 'פרח'], '🥚': ['an egg', 'ביצה'], '🐣': ['a chick', 'אפרוח'], '🐦': ['a bird', 'ציפור'] };
+      return { skill: 'lifecycle', tags: ['lifecycle'], key: 'lc' + c[0], prompt: t('q_life'), speak: speak4(band, t('q_life')), answerLabel: c.map(e => L(names[e])).join(' → '), x: { c, names },
+        render(st, api) { const box = el('div', 'nq'); st.appendChild(box); const slots = el('div', 'order'); const row = el('div', 'order'); box.appendChild(slots); box.appendChild(row); const got = [];
+          c.forEach(() => slots.appendChild(el('div', 'slot')));
+          const LC = { '🫘': 'lc_seed', '🌱': 'lc_sprout', '🌷': 'lc_flower', '🥚': 'lc_egg', '🐣': 'lc_chick', '🐦': 'lc_bird' };
+          shuffle(c).forEach(e => { const b = el('button'); b.type = 'button'; b.appendChild(IT(LC[e], 'th')); b.onclick = () => { if (api.locked() || b.classList.contains('done')) return; const i = got.length; if (e !== c[i]) { b.animate([{ transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'none' }], 300); api.submit(false, L(names[e])); return; } got.push(e); b.classList.add('done'); slots.children[i].appendChild(IT(LC[e], 'th')); KQ.sfx && KQ.sfx.play && KQ.sfx.play('tap'); if (got.length === c.length) api.submit(true, ''); }; row.appendChild(b); }); } }; },
+    eaters(tier, band) { const ps = pool(band).filter(a => a.diet && a.band <= band), a = pick(ps.filter(x => band >= 3 || x.diet !== 'omni')), ds = band >= 3 ? ['herb', 'carn', 'omni'] : ['herb', 'carn'];
+      return Q({ skill: 'eaters', key: 'd' + a.e, prompt: t('q_eaters'), speak: speak4(band, t('q_eaters')), answer: a.diet, opts: ds.map(d => ({ value: d, label: t('d_' + d), pic: () => I(d === 'herb' ? '🌿' : d === 'carn' ? '🍖' : '🍎') })), pic: hero(a.e), x: { a } }); },
+    classify(tier, band) { const groups = band === 3 ? ['mammal', 'bird', 'fish', 'insect'] : ['mammal', 'bird', 'fish', 'reptile', 'amphibian', 'insect'], ps = ANIMALS.filter(a => a.cls && groups.includes(a.cls) && a.band <= Math.max(3, band)), tricky = ps.filter(a => ['🐬', '🦇', '🐧', '🐢', '🐸'].includes(a.e)), a = tier && tricky.length && Math.random() < 0.5 ? pick(tricky) : pick(ps);
+      const others = shuffle(groups.filter(g => g !== a.cls)).slice(0, 3);
+      return Q({ skill: 'classify', key: 'c' + a.e, prompt: t('q_classify'), answer: a.cls, opts: shuffle([a.cls, ...others]).map(g => ({ value: g, label: t('c_' + g) })), pic: hero(a.e), x: { a } }); },
+    plantparts(tier, band) { const p = pick(PARTS); return Q({ skill: 'plantparts', key: 'p' + p, prompt: t('q_part'), answer: p, opts: shuffle([p, ...shuffle(PARTS.filter(x => x !== p)).slice(0, 3)]).map(x => ({ value: x, label: t('p_' + x) })), pic: () => plantPlate(p), x: { p } }); },
+    foodchain(tier, band) { const c = pick(CHAINS), k = band >= 5 && Math.random() < 0.5 ? 1 : 2, shown = c.slice(0, k), ans = c[k], others = shuffle(['🌿', '🌾', '🍃', '🌸', '🐰', '🐭', '🐟', '🦋', '🦒'].filter(e => !c.includes(e))).slice(0, 2);   /* wrong answers are plants and prey, never another hunter */
+      return Q({ skill: 'foodchain', key: 'fc' + c.join(''), prompt: t('q_chain'), answer: ans, opts: shuffle([ans, ...others]).map(e => ({ value: e, label: iconName(e), pic: () => P(e) })), pic: () => { const d = el('div', 'chain'); d.appendChild(IT('fc_sun', 'th')); shown.forEach(e => { d.appendChild(el('span', 'arr', he() ? '←' : '→')); d.appendChild(P(e)); }); d.appendChild(el('span', 'arr', he() ? '←' : '→')); d.appendChild(el('span', 'q', '?')); return d; }, x: { c } }); },
+    water(tier, band) { const w = pick(WC); return Q({ skill: 'water', key: 'wc' + w, prompt: t('q_water'), answer: w, opts: WC.map(x => ({ value: x, label: t('wc_' + x) })), pic: () => waterPlate(w), x: { w } }); },
+    adapt(tier, band) { const [e, q, ans] = pick(ADAPT), right = L(ans[0]); return Q({ skill: 'adapt', key: 'ad' + e, prompt: L(q), wordy: true, answer: right, opts: shuffle(ans.map(a => ({ value: L(a), label: L(a) }))), pic: hero(e), x: { e, q: L(q), right } }); },
+    ecosystem(tier, band) { const [e, role] = pick(ECO), a = ANIMALS.find(x => x.e === e), name = a ? nm(a) : L(ECO_NAME[e]);
+      return Q({ skill: 'ecosystem', key: 'eco' + e, prompt: t('q_eco'), answer: role, opts: ['producer', 'consumer', 'decomposer'].map(r => ({ value: r, label: t('e_' + r) })), pic: hero(e), x: { name, role } }); },
+    photo(tier, band) { const [q, a, wrong] = pick(PHOTO); return Q({ skill: 'photo', key: 'ph' + L(q), prompt: L(q), wordy: true, answer: L(a), opts: shuffle([a, ...wrong].map(x => ({ value: L(x), label: L(x) }))), pic: itHero('fc_plants'), x: { q: L(q), a: L(a) } }); }
+  };
+  /* the name inside an English sentence: 'the barn owl', but 'the Nile crocodile' */
+  const PROPER = /^(Kuhl|Sumatran|Nile|Levant|European|Eurasian|Old|African|Holstein|Western|Mediterranean|Panamanian)/;
+  const nmIn = id => { const n = gName(id); return he() || PROPER.test(n) ? n : n.charAt(0).toLowerCase() + n.slice(1); };
+  Object.assign(GEN, {
+    home(tier, band) { const ps = gPool(band).filter(id => !HOME_SKIP.includes(id)), id = pick(ps), h = homeOf(id), all = band === 1 ? ['ocean', 'forest', 'ice', 'farm', 'pond', 'savanna'] : ['ocean', 'forest', 'ice', 'farm', 'pond', 'savanna', 'rainforest', 'desert'], bad = [h].concat(HOME_ALSO[id] || []), others = shuffle(all.filter(x => !bad.includes(x))).slice(0, band === 1 ? 2 : 3);
+      return Q({ skill: 'home', key: 'h' + id, prompt: t('q_home'), speak: speak4(band, t('q_home')), answer: h, opts: shuffle([h, ...others]).map(x => ({ value: x, label: t('fg_h_' + x), pic: () => IT('h_' + x, 'th') })), pic: paint(id), x: { gid: id } }); },
+    eaters(tier, band) { const ps = gPool(band).filter(id => band >= 3 || gA(id).diet !== 'omni'), id = pick(ps), d = gA(id).diet, ds = band >= 3 ? ['herb', 'carn', 'omni'] : ['herb', 'carn'];
+      return Q({ skill: 'eaters', key: 'd' + id, prompt: t('q_eaters'), speak: speak4(band, t('q_eaters')), answer: d, opts: ds.map(x => ({ value: x, label: t('d_' + x), pic: () => IT(x === 'herb' ? 'd_plants' : x === 'carn' ? 'd_animals' : 'd_both', 'th') })), pic: paint(id), x: { gid: id } }); },
+    classify(tier, band) { const groups = band <= 3 ? GROUPS3 : GROUPS4, ps = GIDS.filter(id => groups.includes(gA(id).group)), tricky = ps.filter(id => ['dolphin', 'bat', 'penguin', 'seaturtle', 'frog', 'octopus', 'crab', 'shark'].includes(id)), id = tier && tricky.length ? pick(tricky) : pick(ps), g = gA(id).group, others = shuffle(groups.filter(x => x !== g)).slice(0, 3);
+      return Q({ skill: 'classify', key: 'c' + id, prompt: t('q_classify'), answer: g, opts: shuffle([g, ...others]).map(x => ({ value: x, label: t('fg_c_' + x) })), pic: paint(id), x: { gid: id, g } }); },
+    /* Who am I? clue by clue, from vague to sure: the sooner the guess, the better the detective */
+    whoami(tier, band) { const ps = gPool(band), id = pick(ps), a = gA(id), clues = (gT(id).clues || []).slice(0, 3), near = shuffle(ps.filter(k => k !== id && (gA(k).home === a.home || gA(k).group === a.group))), rest = shuffle(ps.filter(k => k !== id && !near.includes(k))), opts = shuffle([id].concat(near.concat(rest).slice(0, 3)));
+      return { skill: 'whoami', tags: ['whoami'], key: 'who' + id, prompt: t('q_whoami'), answerLabel: gName(id), x: { gid: id, clues },
+        render(st, api) { const box = el('div', 'nq'); st.appendChild(box); const cl = el('div', 'wq-clues'); box.appendChild(cl); let n = 0; const more = el('button', 'btn ghost wq-more', t('q_moreClue')); more.type = 'button';
+          const show = () => { if (n >= clues.length) return; const c = el('div', 'wq-clue'); c.appendChild(el('b', null, String(n + 1))); c.appendChild(el('span', null, '“' + clues[n] + '”')); cl.appendChild(c); n++; more.hidden = n >= clues.length; };
+          show(); more.onclick = () => { if (!api.locked()) show(); }; box.appendChild(more); const ch = el('div', 'choices pics'); box.appendChild(ch);
+          opts.forEach(k => { const b = el('button', 'choice'); b.type = 'button'; b.appendChild(GD.thumb(k, 'th')); b.appendChild(el('span', null, gName(k))); b.dataset.value = k;
+            b.onclick = () => { if (api.locked()) return; const ok = k === id; b.classList.add(ok ? 'ok' : 'bad'); if (!ok) [...ch.children].forEach(c => { if (c.dataset.value === id) c.classList.add('ok'); }); while (n < clues.length) show(); more.hidden = true; GD.meet(id, ok); api.submit(ok, gName(k)); }; ch.appendChild(b); }); } }; },
+    /* Who wins? two animals, one measure; both numbers show once the child has chosen */
+    whowins(tier, band) { const ks = Object.keys(CMP).filter(k => CMP[k].length >= 2), k = pick(ks), L = CMP[k]; let a1, b1, g = 0; do { a1 = pick(L); b1 = pick(L); } while ((a1.id === b1.id || Math.max(a1.v, b1.v) / Math.max(1e-9, Math.min(a1.v, b1.v)) < 1.25) && g++ < 80);
+      const win = a1.v > b1.v ? a1.id : b1.id, pair = shuffle([a1.id, b1.id]);
+      return { skill: 'whowins', tags: ['whowins'], key: 'ww' + [a1.id, b1.id].sort().join(''), prompt: t('q_ww_' + k), answerLabel: gName(win), x: { gids: pair, k, win },
+        render(st, api) { const box = el('div', 'nq'); st.appendChild(box); const row = el('div', 'ww-pair'); box.appendChild(row);
+          pair.forEach(id => { const b = el('button', 'ww-card'); b.type = 'button'; b.appendChild(GD.pic(id)); b.appendChild(el('b', null, gName(id))); const val = el('span', 'ww-val', (gT(id).compare || {}).text || ''); val.hidden = true; b.appendChild(val); b.dataset.value = id;
+            b.onclick = () => { if (api.locked()) return; const ok = id === win; b.classList.add(ok ? 'ok' : 'bad'); [...row.children].forEach(c => { c.querySelector('.ww-val').hidden = false; if (c.dataset.value === win) c.classList.add('ok'); }); pair.forEach(x => GD.meet(x, ok)); api.submit(ok, gName(id)); }; row.appendChild(b); }); } }; },
+    myth(tier, band) { const ps = GIDS.filter(id => { const m = gT(id).myth; return m && m.claim && (m.verdict === 'myth' || m.verdict === 'fact'); }), id = pick(ps), m = gT(id).myth;
+      return Q({ skill: 'myth', key: 'my' + id, prompt: t('q_myth') + ' “' + m.claim + '”', wordy: true, answer: m.verdict, opts: [{ value: 'myth', label: t('a_myth') }, { value: 'fact', label: t('a_fact') }], pic: paint(id), x: { gid: id, m } }); },
+    /* whose superpower? the power's own words, without the animal's name in them */
+    power(tier, band) { const ps = GIDS.filter(id => (gT(id).powers || []).length), cand = [];
+      for (const id of ps) { const words = [gName(id), gA(id).en.name].concat(gName(id).split(' '), gA(id).en.name.split(' ')).filter(w => w.length >= 3).map(w => w.toLowerCase());
+        for (const p of gT(id).powers) { const tx = (p.title + ' ' + p.kid + ' ' + p.teen).toLowerCase(); if (!words.some(w => tx.includes(w))) cand.push([id, p]); } }
+      const [id, p] = pick(cand), others = shuffle(ps.filter(k => k !== id)).slice(0, 3);
+      return Q({ skill: 'power', key: 'pw' + id + p.part, prompt: t('q_power'), optsCls: 'pics', answer: id, opts: shuffle([id, ...others]).map(k => ({ value: k, label: gName(k), pic: thumbPic(k) })), pic: () => { const d = el('div', 'pw-card'); d.appendChild(el('b', null, p.title)); d.appendChild(el('p', null, band >= 6 ? p.teen : p.kid)); return d; }, x: { gid: id, p } }); },
+    status(tier, band) { const five = ['LC', 'NT', 'VU', 'EN', 'CR'], ps = GIDS.filter(id => five.includes(gA(id).iucn)), id = pick(ps), s0 = gA(id).iucn, others = shuffle(five.filter(x => x !== s0)).slice(0, 3);
+      return Q({ skill: 'status', key: 'st' + id, prompt: t('q_status', { a: nmIn(id) }), optsCls: 'small', answer: s0, opts: shuffle([s0, ...others]).map(x => ({ value: x, label: t('fg_iucn_' + x) })), pic: paint(id), x: { gid: id } }); },
+    tree(tier, band) { const ps = GIDS.filter(id => (gT(id).taxonomy || []).length >= 4), id = pick(ps), ord = x => gT(x).taxonomy[2], lat = o => (o.split(' · ')[1] || o).trim(), ans = ord(id), seen = new Set([lat(ans)]), opts = [ans];   /* one option per branch: the same Latin name never appears twice */
+      for (const k of shuffle(ps)) { const o = ord(k); if (!seen.has(lat(o))) { seen.add(lat(o)); opts.push(o); } if (opts.length === 4) break; }
+      return Q({ skill: 'tree', key: 'tr' + id, prompt: t('q_tree', { a: nmIn(id) }), wordy: true, optsCls: 'small', answer: ans, opts: shuffle(opts).map(o => ({ value: o, label: o })), pic: paint(id), x: { gid: id } }); }
+  });
+  const big = text => [{ text, big: true }];
+  const EXPLAIN = {
+    home: q => big(t('x_home', { a: nm(q.x.a), h: t('hp_' + q.x.a.home) })), eat: q => big(t('x_eat', { a: nm(q.x.a), f: L(FOODS[q.x.a.food]) })),
+    weather: q => big(t('x_weather', { w: t('w_' + q.x.w[0]), g: t('gx_' + q.x.w[2]) })), seasons: q => big(t('x_season', { s: lc(t('se_' + q.x.s)) })),
+    lifecycle: q => big(t('x_life', { a: L(q.x.names[q.x.c[0]]), b: L(q.x.names[q.x.c[1]]), c: L(q.x.names[q.x.c[2]]) })),
+    eaters: q => big(t('x_eaters', { a: nm(q.x.a), d: lc(t('d_' + q.x.a.diet)) })),
+    classify: q => big(t('x_classify', { a: nm(q.x.a), c: lc(t('c_' + q.x.a.cls)), why: t('why_' + q.x.a.cls) })),
+    plantparts: q => big(t('x_part', { p: lc(t('p_' + q.x.p)), what: t('pw_' + q.x.p) })),
+    foodchain: q => big(t('x_chain', { chain: [he() ? 'השמש' : 'the sun', ...q.x.c.map(iconName)].join(he() ? ' ← ' : ' → ') })),
+    water: q => big(t('x_water', { n: t('wc_' + q.x.w), what: t('ww_' + q.x.w) })),
+    adapt: q => big(q.x.q + ' ' + q.x.right + '.'), ecosystem: q => big(t('x_eco', { a: q.x.name, e: t('e_' + q.x.role) })), photo: q => big(q.x.q + ' ' + q.x.a + '.')
+  };
+  Object.assign(EXPLAIN, {
+    home: q => big(t('x_g', { a: gName(q.x.gid), text: gT(q.x.gid).habitat_text || t('fg_h_' + homeOf(q.x.gid)) })),
+    eaters: q => big(t('x_g', { a: gName(q.x.gid), text: gT(q.x.gid).menu || t('d_' + gA(q.x.gid).diet) })),
+    classify: q => big(t('x_g', { a: gName(q.x.gid), text: t('fg_c_' + q.x.g) + '. ' + t('why_' + q.x.g) })),
+    whoami: q => big(t('x_who', { a: gName(q.x.gid) })),
+    whowins: q => big(t('x_ww', { a: gName(q.x.gids[0]), va: (gT(q.x.gids[0]).compare || {}).text || '', b: gName(q.x.gids[1]), vb: (gT(q.x.gids[1]).compare || {}).text || '' })),
+    myth: q => big(t('x_myth', { v: t(q.x.m.verdict === 'fact' ? 'fg_isFact' : 'fg_isMyth'), why: q.x.m.why || '' })),
+    power: q => big(t('x_power', { a: gName(q.x.gid), title: q.x.p.title, text: q.x.p.kid })),
+    status: q => big(t('x_status', { a: gName(q.x.gid), s: t('fg_iucn_' + gA(q.x.gid).iucn), note: gT(q.x.gid).iucn_note || '' })),
+    tree: q => big(t('x_tree', { chain: (gT(q.x.gid).taxonomy || []).join(he() ? ' ‹ ' : ' › ') }))
+  });
+  KQ.quest.shell();
+  const api = KQ.quest({ world: 'nature', title: 'nt_title', sub: 'nt_sub', bands: { 1: ['home', 'eaters', 'weather'], 2: ['seasons', 'lifecycle', 'eaters', 'home', 'whoami'], 3: ['classify', 'whoami', 'myth', 'plantparts'], 4: ['classify', 'whowins', 'whoami', 'foodchain', 'water'], 5: ['adapt', 'power', 'whowins', 'myth', 'ecosystem'], 6: ['photo', 'ecosystem', 'power', 'status', 'tree'] },
+    bandKey: 'band', icons: { home: '🏡', eat: '🍎', weather: '☂️', seasons: '🍂', lifecycle: '🐣', eaters: '🌿', classify: '🧩', plantparts: '🌱', foodchain: '🔗', water: '💧', adapt: '🦉', ecosystem: '🍄', photo: '☀️', whoami: '🔍', whowins: '🏆', myth: '❓', power: '💡', status: '🛡️', tree: '🌳' },
+    n: 8, fastMs: 9000, speakBands: [1, 2], gen: GEN, explain: EXPLAIN });
+  function card() { const pk = document.getElementById('pick'); if (!pk || document.querySelector('.fg-card')) return; const b = el('button', 'fg-card'); b.type = 'button'; const th = el('div', 'thumbs'); ['lion', 'frog', 'owl', 'dolphin'].forEach(id => th.appendChild(GD ? GD.thumb(id, 'tn') : I('🦉'))); b.appendChild(th); const tx = el('div'); tx.appendChild(el('b', null, t('fg_card'))); tx.appendChild(el('span', null, t('fg_cardSub'))); b.appendChild(tx); b.onclick = () => GD && GD.open(); pk.prepend(b); }
+  /* the Quiet Clearing comes first: sit in the forest and meditate to a calm song (Yoni 2026-10-04) */
+  function medCard() { const pk = document.getElementById('pick'); if (!pk || document.querySelector('.md-card')) return; const b = el('button', 'fg-card md-card'); b.type = 'button'; const th = el('div', 'thumbs'); ['🌳', '☀️', '🦋'].forEach(e => th.appendChild(I(e))); b.appendChild(th); const tx = el('div'); tx.appendChild(el('b', null, t('md_card'))); tx.appendChild(el('span', null, t('md_cardSub'))); b.appendChild(tx); b.onclick = () => window.KQMeditate && KQMeditate.open({ realm: 'meadow' }); pk.prepend(b); }   /* the forest clearing, whichever realm the trail is visited from */
+  card(); medCard(); document.addEventListener('kq:lang', () => { document.querySelectorAll('.fg-card').forEach(c => c.remove()); card(); medCard(); });
+  window.__nature = { GEN, api, ANIMALS, CMP };
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('leaf');</script>
+<script>
+/* the way in (Yoni 2026-10-10: 'in the nature trail … like in the forest, a tunnel from woods, when you go in it'): a short walk down a path
+   under arching trees, light falling through the leaves, the bright clearing ahead — then the trail opens. About three seconds; a tap skips it;
+   nothing at all for anyone who asked for less motion. Silent, like the rest of the trail. */
+(function () {
+  'use strict';
+  const T = window.THREE; if (!T || !window.WebGLRenderingContext) return;
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const box = document.createElement('div'); box.id = 'nt-tunnel'; box.setAttribute('aria-hidden', 'true');
+  box.style.cssText = 'position:fixed; inset:0; z-index:60; background:#0d1a0c; transition:opacity .7s ease; cursor:pointer';
+  document.body.appendChild(box);
+  let renderer; try { renderer = new T.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' }); } catch (e) { box.remove(); return; }
+  renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1)); renderer.setSize(innerWidth, innerHeight); renderer.outputColorSpace = T.SRGBColorSpace;
+  renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05; box.appendChild(renderer.domElement);
+  const scene = new T.Scene(), FOG = 0x1f3a1c; scene.background = new T.Color(FOG); scene.fog = new T.Fog(FOG, 12, 78);
+  const camera = new T.PerspectiveCamera(innerWidth / innerHeight < 1 ? 74 : 60, innerWidth / innerHeight, 0.1, 200);
+  scene.add(new T.HemisphereLight(0xdff7b0, 0x2a3a14, 1.15));
+  const sun = new T.DirectionalLight(0xffe2a8, 1.6); sun.position.set(-6, 20, -30); scene.add(sun);
+  const R = (a, b) => a + Math.random() * (b - a), LEN = 120, STEP = 4.2;
+  const bark = new T.MeshStandardMaterial({ color: 0x5a3d24, roughness: 0.95 }), barkD = new T.MeshStandardMaterial({ color: 0x46301c, roughness: 0.95 });
+  const greens = [0x3f7a2e, 0x4f9a3a, 0x6aae44, 0x2f6224].map(c => new T.MeshStandardMaterial({ color: c, roughness: 0.85, flatShading: true }));
+  /* the path and the grass on either side */
+  const ground = new T.Mesh(new T.PlaneGeometry(60, LEN + 40), new T.MeshStandardMaterial({ color: 0x2f5a22, roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.z = -LEN / 2 + 10; scene.add(ground);
+  const path = new T.Mesh(new T.PlaneGeometry(3.2, LEN + 40), new T.MeshStandardMaterial({ color: 0x9a7a4e, roughness: 1 })); path.rotation.x = -Math.PI / 2; path.position.set(0, 0.01, -LEN / 2 + 10); scene.add(path);
+  /* the arches: two trunks leaning in and a branch bowing over the path, leaves heaped along it */
+  const leafGeo = new T.IcosahedronGeometry(1, 1), leaves = greens.map(m => new T.InstancedMesh(leafGeo, m, 2400)), counts = greens.map(() => 0), mtx = new T.Matrix4(), q = new T.Quaternion(), e = new T.Euler();
+  const addLeaf = (x, y, z, s) => { const i = Math.floor(Math.random() * greens.length); if (counts[i] >= 2400) return; e.set(R(0, 3), R(0, 3), R(0, 3)); q.setFromEuler(e); mtx.compose(new T.Vector3(x, y, z), q, new T.Vector3(s, s * R(0.7, 1.1), s)); leaves[i].setMatrixAt(counts[i]++, mtx); };
+  for (let z = 6; z > -LEN; z -= STEP) {
+    const w = R(3.0, 3.6), h = R(5.2, 6.4), zz = z + R(-0.6, 0.6);
+    for (const s of [-1, 1]) {
+      const trunk = new T.Mesh(new T.CylinderGeometry(0.28, 0.42, h, 7), Math.random() < 0.5 ? bark : barkD); trunk.position.set(s * (w + 0.4), h / 2, zz); trunk.rotation.z = s * 0.12; scene.add(trunk);
+      for (let k = 0; k < 14; k++) addLeaf(s * (w + R(-0.3, 2.2)), R(h * 0.6, h + 0.8), zz + R(-1.4, 1.4), R(0.45, 0.85));   /* the trees' own crowns */
+    }
+    const arc = new T.Mesh(new T.TorusGeometry(w, 0.2, 6, 20, Math.PI), bark); arc.position.set(0, h - 0.4, zz); scene.add(arc);
+    for (let k = 0; k < 34; k++) { const a = R(0.12, Math.PI - 0.12); addLeaf(Math.cos(a) * w * R(0.95, 1.2), h - 0.4 + Math.sin(a) * w * R(0.98, 1.3), zz + R(-1.8, 1.8), R(0.4, 0.8)); }   /* a thick canopy, always above the walker */
+    for (let k = 0; k < 6; k++) addLeaf((Math.random() < 0.5 ? -1 : 1) * R(5.2, 14), R(0.4, 1.6), zz + R(-2, 2), R(0.6, 1.3));   /* bushes beside the trees, never on the path */
+  }
+  leaves.forEach((m, i) => { m.count = counts[i]; m.instanceMatrix.needsUpdate = true; scene.add(m); });
+  /* the light: shafts through the canopy and the bright clearing at the end */
+  const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,250,220,1)'); gr.addColorStop(0.4, 'rgba(255,240,180,.55)'); gr.addColorStop(1, 'rgba(255,240,180,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t; })();
+  const end = new T.Sprite(new T.SpriteMaterial({ map: glowTex, color: 0xfff6d8, transparent: true, depthWrite: false, blending: T.AdditiveBlending, fog: false })); end.scale.set(60, 40, 1); end.position.set(0, 4, -LEN - 6); scene.add(end);
+  const shaftMat = new T.MeshBasicMaterial({ color: 0xfff0b0, transparent: true, opacity: 0.12, depthWrite: false, blending: T.AdditiveBlending, side: T.DoubleSide });
+  for (let z = -4; z > -LEN; z -= STEP * 2.3) { const sh = new T.Mesh(new T.PlaneGeometry(1.2, 9), shaftMat); sh.position.set(R(-1.8, 1.8), 3.8, z); sh.rotation.set(0, R(-0.4, 0.4), R(-0.35, -0.15)); scene.add(sh); }
+  /* pollen drifting in the light */
+  const pollen = new T.Points(new T.BufferGeometry().setAttribute('position', new T.Float32BufferAttribute(Array.from({ length: 900 }, (_, i) => i % 3 === 0 ? R(-4, 4) : i % 3 === 1 ? R(0.4, 6) : R(-LEN, 8)), 3)), new T.PointsMaterial({ color: 0xfff2b0, size: 0.16, map: glowTex, transparent: true, opacity: 0.9, depthWrite: false, blending: T.AdditiveBlending })); scene.add(pollen);
+  /* the walk: ease in, glide, ease out into the light */
+  const DUR = 3.1, Z0 = 9, Z1 = -LEN + 18; let t0 = null, done = false, raf = 0;
+  const ease = k => k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+  function finish() { if (done) return; done = true; box.style.opacity = '0'; setTimeout(() => { cancelAnimationFrame(raf); try { renderer.dispose(); } catch (e) {} box.remove(); }, 750); }
+  function frame(now) { raf = requestAnimationFrame(frame); if (t0 == null) t0 = now; const k = Math.min(1, (now - t0) / 1000 / DUR), z = Z0 + (Z1 - Z0) * ease(k);
+    camera.position.set(Math.sin(k * 5) * 0.18, 1.7 + Math.sin(k * 18) * 0.05, z); camera.lookAt(Math.sin(k * 5 + 0.6) * 0.3, 2.1, z - 12);
+    pollen.rotation.z = Math.sin(now / 3000) * 0.02; end.material.opacity = 0.6 + 0.4 * k;
+    renderer.render(scene, camera); if (k >= 1 && !done) finish(); }
+  raf = requestAnimationFrame(frame);
+  box.addEventListener('pointerdown', finish); addEventListener('keydown', function esc(ev) { if (ev.key === 'Escape' || ev.key === ' ' || ev.key === 'Enter') { finish(); removeEventListener('keydown', esc); } });
+  addEventListener('resize', () => { if (done) return; renderer.setSize(innerWidth, innerHeight); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
+  window.__ntTunnel = { finish, get done() { return done; } };   /* for the tests */
+})();
+</script>
+</body>
+</html>

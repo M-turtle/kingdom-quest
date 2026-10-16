@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clock Tower</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#c46a1e; --accent-2:#7a3d0c; }
+.bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:600px){ .bands{grid-template-columns:1fr} }
+.clock{width:min(46vw,220px); height:auto; display:block; margin:0 auto}
+.choice .clock{width:min(24vw,120px)}
+.choices.clocks{grid-template-columns:repeat(auto-fit, minmax(140px, 1fr))}
+.tile .m{width:100%; display:grid; gap:3px} .tile .m small{font-size:11px; color:var(--muted); font-weight:700}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header><main class="play" style="margin-top:18px"></main></div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script src="../shared/quest.js?v=18"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { s_elapsed2: 'Hours and minutes later', s_h24: '24-hour clock', s_duration: 'How long between?', s_zones: 'Time zones', s_schedule: 'Timetables', ct_elapsed2: 'It is {start}. What time is it {dh} h {dm} min later? (h:mm)', ct_h24: '{time} on a 24-hour clock is what on a 12-hour clock? (h:mm)', ct_duration: 'From {a} to {b}: how many minutes?', ct_zones: 'It is {time} in {a}. {b} is {diff} hours from {a}. What time is it in {b}? (h:mm)', ct_schedule: 'A bus leaves at {start} and then every {every} minutes. When does bus number {n} leave? (h:mm)', x_elapsed2: '{start} + {dh} h = then + {dm} min → {ans}', x_h24: 'Take 12 away from {H} → {ans}', x_duration: '{a} to {b} is {hrs} h {rem} min = {mins} minutes', x_zones: 'Add {diff} hours for {b} → {ans}', x_schedule: 'Bus {n} is {n}−1 gaps after the first: {add} min after {start} → {ans}', ct_title: 'Clock Tower', ct_sub: 'Hours, minutes, time that passes', s_oclock: "O'clock", s_which: 'Find the clock', s_half: 'Half & quarter', s_five: 'Five minutes', s_elapsed: 'Time that passes', s_type: 'Type the time', ct_what: 'What time is it?', ct_which: 'Which clock shows {t}?', ct_type: 'Type the time (like 3:20)', ct_elapsed: 'It is {t}. What time will it be in {m} minutes?', ct_elapsedH: 'It is {t}. What time will it be in {h} hours?',
+      x_short: 'The short hand is the hour hand. It points at {h} (or just past it), so the hour is {h}.', x_long: 'The long hand is the minute hand. Each number is 5 minutes: it points at {n}, so {n} × 5 = {m} minutes.', x_long0: 'The long hand points straight up at 12: that means 0 minutes, so it is exactly {h} o\'clock.', x_half: 'The long hand at 6 means 30 minutes: half past.', x_read: 'So the time is {t}.', x_el1: 'Start at {t}.', x_el2: 'Add {m} minutes: {seq}.', x_el3: 'When the minutes pass 60, the hour goes up by one.', x_elH: 'Add {h} hours: the hour goes from {a} to {b}, the minutes stay {m}.', tg_hourHand: 'the hour hand', tg_minuteHand: 'the minute hand', tg_carryHour: 'crossing the hour' },
+    he: { s_elapsed2: 'שעות ודקות אחר כך', s_h24: 'שעון 24 שעות', s_duration: 'כמה זמן עבר?', s_zones: 'אזורי זמן', s_schedule: 'לוחות זמנים', ct_elapsed2: 'עכשיו {start}. מה השעה בעוד {dh} שעות ו-{dm} דקות? (ש:דד)', ct_h24: '{time} בשעון 24 שעות — מה זה בשעון 12 שעות? (ש:דד)', ct_duration: 'מ-{a} עד {b}: כמה דקות?', ct_zones: 'ב{a} השעה {time}. {b} נמצאת {diff} שעות מ{a}. מה השעה ב{b}? (ש:דד)', ct_schedule: 'אוטובוס יוצא ב-{start} ואחר כך כל {every} דקות. מתי יוצא אוטובוס מספר {n}? (ש:דד)', x_elapsed2: '{start} + {dh} שעות, ואז + {dm} דקות → {ans}', x_h24: 'מורידים 12 מ-{H} → {ans}', x_duration: 'מ-{a} עד {b} זה {hrs} שעות ו-{rem} דקות = {mins} דקות', x_zones: 'מוסיפים {diff} שעות בשביל {b} → {ans}', x_schedule: 'אוטובוס {n} יוצא {n}−1 מרווחים אחרי הראשון: {add} דקות אחרי {start} → {ans}', ct_title: 'מגדל השעון', ct_sub: 'שעות, דקות, זמן שעובר', s_oclock: 'שעה עגולה', s_which: 'מוצאים את השעון', s_half: 'חצי ורבע', s_five: 'חמש דקות', s_elapsed: 'זמן שעובר', s_type: 'כותבים את השעה', ct_what: 'מה השעה?', ct_which: 'איזה שעון מראה {t}?', ct_type: 'כותבים את השעה (למשל 3:20)', ct_elapsed: 'השעה {t}. מה תהיה השעה בעוד {m} דקות?', ct_elapsedH: 'השעה {t}. מה תהיה השעה בעוד {h} שעות?',
+      x_short: 'המחוג הקצר הוא מחוג השעות. הוא מצביע על {h} (או קצת אחרי), ולכן השעה היא {h}.', x_long: 'המחוג הארוך הוא מחוג הדקות. כל מספר הוא 5 דקות: הוא מצביע על {n}, ולכן {n} × 5 = {m} דקות.', x_long0: 'המחוג הארוך מצביע ישר למעלה על 12: זה 0 דקות, ולכן השעה {h} בדיוק.', x_half: 'המחוג הארוך על 6 זה 30 דקות: וחצי.', x_read: 'ולכן השעה היא {t}.', x_el1: 'מתחילים ב-{t}.', x_el2: 'מוסיפים {m} דקות: {seq}.', x_el3: 'כשהדקות עוברות את 60, השעה עולה באחת.', x_elH: 'מוסיפים {h} שעות: השעה עולה מ-{a} ל-{b}, הדקות נשארות {m}.', tg_hourHand: 'מחוג השעות', tg_minuteHand: 'מחוג הדקות', tg_carryHour: 'מעבר שעה' }
+  });
+  const { t } = KQ; const NS = 'http://www.w3.org/2000/svg';
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), pick = a => a[Math.floor(Math.random() * a.length)];
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const fmt = (h, m) => `${h}:${String(m).padStart(2, '0')}`;
+  const norm = s => { const m = String(s).trim().match(/^0?(\d{1,2})[:.](\d{1,2})$/); return m ? fmt(((+m[1] - 1) % 12) + 1, +m[2]) : String(s).trim(); };
+  // an analogue clock face: hour hand advances with the minutes, like a real clock
+  function clockEl(h, m, cls) {
+    const S = (tag, a) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); return e; };
+    const svg = S('svg', { viewBox: '0 0 200 200', class: 'clock ' + (cls || '') });
+    svg.appendChild(S('circle', { cx: 100, cy: 100, r: 96, fill: '#fff8ea', stroke: '#8a5a2b', 'stroke-width': 6 }));
+    for (let i = 0; i < 60; i++) { const a = i * Math.PI / 30, big = i % 5 === 0, r1 = big ? 80 : 86; svg.appendChild(S('line', { x1: 100 + r1 * Math.sin(a), y1: 100 - r1 * Math.cos(a), x2: 100 + 90 * Math.sin(a), y2: 100 - 90 * Math.cos(a), stroke: '#5a3a1a', 'stroke-width': big ? 3 : 1.2 })); }
+    for (let n = 1; n <= 12; n++) { const a = n * Math.PI / 6; const tx = S('text', { x: 100 + 66 * Math.sin(a), y: 100 - 66 * Math.cos(a) + 7, 'text-anchor': 'middle', 'font-size': 20, 'font-weight': 800, 'font-family': 'Rubik, Fraunces, serif', fill: '#2a1a0a' }); tx.textContent = n; svg.appendChild(tx); }
+    const ha = (h % 12 + m / 60) * Math.PI / 6, ma = m * Math.PI / 30;
+    svg.appendChild(S('line', { x1: 100, y1: 100, x2: 100 + 44 * Math.sin(ha), y2: 100 - 44 * Math.cos(ha), stroke: '#2a1a0a', 'stroke-width': 9, 'stroke-linecap': 'round' }));
+    svg.appendChild(S('line', { x1: 100, y1: 100, x2: 100 + 68 * Math.sin(ma), y2: 100 - 68 * Math.cos(ma), stroke: '#c46a1e', 'stroke-width': 6, 'stroke-linecap': 'round' }));
+    svg.appendChild(S('circle', { cx: 100, cy: 100, r: 6, fill: '#c9962a' }));
+    return svg;
+  }
+  const others = (h, m, n, step) => { const s = new Set([fmt(h, m)]); let g = 0; while (s.size < n + 1 && g++ < 100) { const hh = Math.random() < 0.5 ? h : ri(1, 12), mm = step === 60 ? 0 : Math.random() < 0.5 ? m : ri(0, 60 / step - 1) * step; s.add(fmt(hh, mm)); } return shuffle([...s]); };
+  const timeQ = (h, m, choices, tags) => ({ key: 'r' + fmt(h, m), prompt: t('ct_what'), visualEl: clockEl(h, m), answer: fmt(h, m), choices, tags, x: { h, m } });
+  const GEN = {
+    // ---- ages 10–15: elapsed time across hours, 24-hour clock, time zones, timetables ----
+    elapsed2(tier) { const h = ri(1, 11), m = ri(0, 11) * 5, dh = ri(1, tier ? 5 : 3), dm = ri(1, 11) * 5; let eh = h + dh, em = m + dm; if (em >= 60) { em -= 60; eh++; } eh = ((eh - 1) % 12) + 1; return { key: 'e2' + [h, m, dh, dm].join(','), prompt: t('ct_elapsed2', { start: fmt(h, m), dh, dm }), answer: fmt(eh, em), check: v => norm(v) === fmt(eh, em), tags: ['elapsed'], x: { start: fmt(h, m), dh, dm, ans: fmt(eh, em) } }; },
+    h24(tier) { const H = ri(13, 23), m = ri(0, 11) * 5; const ans = fmt(H - 12, m); return { key: 'h24' + H + ':' + m, prompt: t('ct_h24', { time: `${H}:${String(m).padStart(2, '0')}` }), answer: ans, check: v => norm(v) === ans, tags: ['h24'], x: { H, m, ans } }; },
+    duration(tier) { const h1 = ri(6, 11), m1 = ri(0, 11) * 5, h2 = h1 + ri(1, tier ? 5 : 3), m2 = ri(0, 11) * 5; const mins = (h2 * 60 + m2) - (h1 * 60 + m1); return { key: 'du' + [h1, m1, h2, m2].join(','), prompt: t('ct_duration', { a: fmt(h1, m1), b: fmt(((h2 - 1) % 12) + 1, m2) }), answer: mins, choices: null, tags: ['duration'], x: { a: fmt(h1, m1), b: fmt(((h2 - 1) % 12) + 1, m2), mins, hrs: Math.floor(mins / 60), rem: mins % 60 } }; },
+    zones(tier) { const Z = [['London', 0], ['Paris', 1], ['Tel Aviv', 2], ['Dubai', 4], ['Mumbai', 5], ['Tokyo', 9], ['New York', -5], ['Los Angeles', -8]]; const [c1, z1] = pick(Z); let [c2, z2] = pick(Z); while (c2 === c1) [c2, z2] = pick(Z); const h = ri(1, 12), diff = z2 - z1; const H = ((h + diff) % 24 + 24) % 24; const ans = fmt(((H + 11) % 12) + 1, 0); return { key: 'z' + c1 + c2 + h, prompt: t('ct_zones', { a: c1, b: c2, time: fmt(h, 0), diff: (diff >= 0 ? '+' : '') + diff }), answer: ans, check: v => norm(v) === ans, wordy: true, tags: ['zones'], x: { c1, c2, h, diff, ans } }; },
+    schedule(tier) { const h = ri(6, 10), m = pick([0, 10, 15, 20, 30]), every = pick(tier ? [12, 15, 20, 25] : [10, 15, 30]), n = ri(3, 6); const total = m + every * (n - 1); const eh = h + Math.floor(total / 60), em = total % 60; return { key: 's' + [h, m, every, n].join(','), prompt: t('ct_schedule', { start: fmt(h, m), every, n }), answer: fmt(eh, em), check: v => norm(v) === fmt(eh, em), wordy: true, tags: ['schedule'], x: { start: fmt(h, m), every, n, ans: fmt(eh, em), add: every * (n - 1) } }; },
+
+    oclock(tier) { const h = ri(1, 12); return timeQ(h, 0, others(h, 0, tier ? 3 : 2, 60), ['oclock', 'hourHand']); },
+    half(tier) { const h = ri(1, 12), m = pick(tier ? [0, 15, 30, 45] : [0, 30]); return timeQ(h, m, others(h, m, 3, 15), ['half', 'minuteHand']); },
+    five(tier, band) { const h = ri(1, 12), m = ri(0, 11) * 5; return band >= 3 ? Object.assign(timeQ(h, m, null, ['five', 'minuteHand']), { prompt: t('ct_type'), check: v => norm(v) === fmt(h, m) }) : timeQ(h, m, others(h, m, 3, 5), ['five', 'minuteHand']); },
+    type() { const h = ri(1, 12), m = ri(0, 11) * 5; return Object.assign(timeQ(h, m, null, ['type', 'minuteHand']), { prompt: t('ct_type'), check: v => norm(v) === fmt(h, m) }); },
+    which(tier, band) { const step = band === 1 ? 60 : band === 2 ? 15 : 5; const h = ri(1, 12), m = step === 60 ? 0 : ri(0, 60 / step - 1) * step; const opts = others(h, m, 2, step); return { key: 'w' + fmt(h, m), prompt: t('ct_which', { t: fmt(h, m) }), answer: fmt(h, m), choices: opts.map(o => { const [hh, mm] = o.split(':').map(Number); return { value: o, el: clockEl(hh, mm) }; }), picChoices: true, tags: ['which', step === 60 ? 'hourHand' : 'minuteHand'], x: { h, m } }; },
+    elapsed(tier) {
+      const h = ri(1, 12), m = ri(0, 11) * 5;
+      if (!tier || Math.random() < 0.4) { const add = ri(1, 3), h2 = ((h - 1 + add) % 12) + 1; return { key: 'eh' + fmt(h, m) + add, prompt: t('ct_elapsedH', { t: fmt(h, m), h: add }), visualEl: clockEl(h, m), answer: fmt(h2, m), check: v => norm(v) === fmt(h2, m), wordy: true, tags: ['elapsed'], x: { h, m, addH: add, h2 } }; }
+      const add = pick([5, 10, 15, 20, 25, 30, 40, 45]); const total = m + add, h2 = ((h - 1 + Math.floor(total / 60)) % 12) + 1, m2 = total % 60;
+      return { key: 'em' + fmt(h, m) + add, prompt: t('ct_elapsed', { t: fmt(h, m), m: add }), visualEl: clockEl(h, m), answer: fmt(h2, m2), check: v => norm(v) === fmt(h2, m2), wordy: true, tags: ['elapsed', total >= 60 ? 'carryHour' : 'minuteHand'], x: { h, m, add, h2, m2 } };
+    }
+  };
+  const read = q => { const { h, m } = q.x, n = m / 5; return [{ text: t('x_short', { h }), vis: { el: clockEl(h, m, 'small') } }, { text: m === 0 ? t('x_long0', { h }) : m === 30 ? t('x_half') : t('x_long', { n, m }) }, { text: t('x_read', { t: fmt(h, m) }), big: true }]; };
+  const EXPLAIN = {
+    elapsed2: q => [{ text: t('x_elapsed2', { start: q.x.start, dh: q.x.dh, dm: q.x.dm, ans: q.x.ans }), big: true }],
+    h24: q => [{ text: t('x_h24', { H: q.x.H, ans: q.x.ans }), big: true }],
+    duration: q => [{ text: t('x_duration', { a: q.x.a, b: q.x.b, hrs: q.x.hrs, rem: q.x.rem, mins: q.x.mins }), big: true }],
+    zones: q => [{ text: t('x_zones', { b: q.x.c2, diff: q.x.diff, ans: q.x.ans }), big: true }],
+    schedule: q => [{ text: t('x_schedule', { n: q.x.n, every: q.x.every, add: q.x.add, start: q.x.start, ans: q.x.ans }), big: true }],
+
+    oclock: read, half: read, five: read, type: read, which: read,
+    elapsed: q => { const x = q.x; if (x.addH) return [{ text: t('x_el1', { t: fmt(x.h, x.m) }), vis: { el: clockEl(x.h, x.m, 'small') } }, { text: t('x_elH', { h: x.addH, a: x.h, b: x.h2, m: String(x.m).padStart(2, '0') }) }, { text: t('x_read', { t: fmt(x.h2, x.m) }), big: true }]; const seq = []; let mm = x.m, hh = x.h; for (let k = 0; k < x.add / 5; k++) { mm += 5; if (mm >= 60) { mm -= 60; hh = (hh % 12) + 1; } seq.push(fmt(hh, mm)); } const steps = [{ text: t('x_el1', { t: fmt(x.h, x.m) }), vis: { el: clockEl(x.h, x.m, 'small') } }, { text: t('x_el2', { m: x.add, seq: seq.join(' → ') }) }]; if (x.m + x.add >= 60) steps.push({ text: t('x_el3') }); steps.push({ text: t('x_read', { t: fmt(x.h2, x.m2) }), big: true, vis: { el: clockEl(x.h2, x.m2, 'small') } }); return steps; }
+  };
+  KQ.quest.shell();
+  KQ.quest({ world: 'clock', title: 'ct_title', sub: 'ct_sub', bands: { 1: ['oclock', 'which'], 2: ['half', 'five', 'which'], 3: ['type', 'elapsed', 'which'], 4: ['elapsed2', 'h24', 'type'], 5: ['duration', 'zones', 'h24'], 6: ['zones', 'schedule', 'duration'] }, bandKey: 'band', bandIcons: ['🛡️', '⚔️', '🐴'], icons: { elapsed2: '⏳', h24: '🕛', duration: '⏱️', zones: '🌍', schedule: '🚌',  oclock: '🕛', which: '🔍', half: '🕧', five: '🕰️', type: '⌨️', elapsed: '⏳' }, n: 8, fastMs: 8000, gen: GEN, explain: EXPLAIN });
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('clockwork');</script>
+</body>
+</html>

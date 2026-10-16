@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coin Market</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#b8860b; --accent-2:#6e4f06; }
+.bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:600px){ .bands{grid-template-columns:1fr} }
+.coins{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:6px 0 10px}
+.coin{width:64px; height:64px; border-radius:50%; display:grid; place-items:center; font:900 15px/1 var(--font-body); color:#3a2a10; border:4px solid rgba(0,0,0,.18); box-shadow:inset 0 0 0 3px rgba(255,255,255,.35), 0 3px 6px rgba(0,0,0,.25); user-select:none}
+.coin.sm{width:46px; height:46px; font-size:12px}
+.coin.copper{background:radial-gradient(circle at 35% 30%,#e0a070,#a8642c)} .coin.silver{background:radial-gradient(circle at 35% 30%,#f4f4f4,#a9adb4)} .coin.gold{background:radial-gradient(circle at 35% 30%,#ffe9a0,#c9962a)}
+.tray{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; padding:10px; border-radius:14px; background:var(--paper-2); border:2px dashed var(--line)}
+.tray .coin{cursor:pointer} .tray .coin:active{transform:scale(.94)}
+.purse{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; min-height:56px; padding:8px; border-radius:14px; border:3px solid var(--gold-2); background:var(--paper); margin:10px 0}
+.item{font-size:64px; line-height:1.1} .price{font:900 clamp(24px,5vw,34px) var(--font-body); color:var(--gold-3)}   /* on night glass: the old dark --accent-2 read 2.3:1 (2026-09-29) */
+.paid{font-weight:800; color:var(--muted)}
+.tile .m{width:100%; display:grid; gap:3px} .tile .m small{font-size:11px; color:var(--muted); font-weight:700}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header><main class="play" style="margin-top:18px"></main></div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script src="../shared/quest.js?v=18"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { s_discount: 'Discounts', s_budget: 'Stay in budget', s_unit: 'Price per item', s_tax: 'Adding tax', s_profit: 'Profit', s_split: 'Split the bill', cm_discount: 'A coat costs {cur}{price}. It is {p}% off. What do you pay?', cm_budget: 'You have {cur}{have} and buy items costing {cur}{items}. How much is left?', cm_unit: '{n} identical books cost {cur}{total} together. How much is one?', cm_tax: 'A bike costs {cur}{price} before tax. Tax is {rate}%. Total price?', cm_profit: 'A trader buys for {cur}{cost} and sells for {cur}{sold}. Profit in percent?', cm_split: 'A bill of {cur}{bill} is split evenly between {people} friends. Each pays?', cm_splitTip: 'A bill of {cur}{bill} plus a {tip}% tip is split evenly between {people} friends. Each pays?', x_discount: '{p}% of {price} is {off}. {price} − {off} = {ans}', x_budget: '{have} − {spent} = {ans}', x_unit: '{total} ÷ {n} = {each}', x_tax: '{rate}% of {price} is {add}. {price} + {add} = {ans}', x_profit: 'Gain {gain} ÷ cost {cost} × 100 = {pct}%', x_split: 'Total {total} ÷ {people} = {ans}', cm_title: 'Coin Market', cm_sub: 'Count, pay, get change', s_count: 'How much money?', s_same: 'Same coins', s_total: 'How much money?', s_pay: 'Pay for it', s_change: 'Get the change', cm_howMany: 'How much money is this?', cm_total: 'How much is this altogether?', cm_totalType: 'How much altogether? (in {u})', cm_pay: 'Pay exactly {p}. Tap coins to put them in the purse.', cm_paid: 'In the purse: {v}', cm_change: 'It costs {p}. You pay {g}. How much change do you get? (in {u})', cm_clear: 'Empty the purse', cm_pay_btn: 'Pay', cents: 'cents', agorot: 'agorot',
+      x_c1: '{n} coins, but we count the money, not the coins: what each coin is worth.', x_s1: 'Every coin is {v}. Count on by {v}: {seq}.', x_t1: 'Start with the biggest coin: {big}.', x_t2: 'Count on coin by coin: {seq}.', x_t3: 'Altogether: {v}.', x_p1: 'Start from the biggest coin that fits under the price.', x_p2: 'One way to pay exactly {p}: {seq}.', x_ch1: 'Count up from the price to what you paid.', x_ch2: '{p} → {seq} → {g}.', x_ch3: 'That is {v} of change.', tg_countOn: 'counting on', tg_coins: 'coin values', tg_changeUp: 'counting up for change' },
+    he: { s_discount: 'הנחות', s_budget: 'לעמוד בתקציב', s_unit: 'מחיר ליחידה', s_tax: 'הוספת מס', s_profit: 'רווח', s_split: 'לחלק את החשבון', cm_discount: 'מעיל עולה {price}{cur}. יש עליו {p}% הנחה. כמה משלמים?', cm_budget: 'יש לכם {have}{cur} ואתם קונים פריטים ב-{items}{cur}. כמה נשאר?', cm_unit: '{n} ספרים זהים עולים יחד {total}{cur}. כמה עולה אחד?', cm_tax: 'אופניים עולים {price}{cur} לפני מס. המס {rate}%. מה המחיר הסופי?', cm_profit: 'סוחר קונה ב-{cost}{cur} ומוכר ב-{sold}{cur}. כמה אחוזי רווח?', cm_split: 'חשבון של {bill}{cur} מתחלק שווה בין {people} חברים. כמה משלם כל אחד?', cm_splitTip: 'חשבון של {bill}{cur} ועוד טיפ של {tip}% מתחלק שווה בין {people} חברים. כמה משלם כל אחד?', x_discount: '{p}% מתוך {price} זה {off}. {price} − {off} = {ans}', x_budget: '{have} − {spent} = {ans}', x_unit: '{total} ÷ {n} = {each}', x_tax: '{rate}% מתוך {price} זה {add}. {price} + {add} = {ans}', x_profit: 'רווח {gain} ÷ עלות {cost} × 100 = {pct}%', x_split: 'סך הכול {total} ÷ {people} = {ans}', cm_title: 'שוק המטבעות', cm_sub: 'סופרים, משלמים, מקבלים עודף', s_count: 'כמה כסף?', s_same: 'אותם מטבעות', s_total: 'כמה כסף?', s_pay: 'משלמים', s_change: 'מקבלים עודף', cm_howMany: 'כמה כסף יש כאן?', cm_total: 'כמה כסף יש כאן ביחד?', cm_totalType: 'כמה ביחד? (ב{u})', cm_pay: 'משלמים בדיוק {p}. לוחצים על מטבעות כדי לשים בארנק.', cm_paid: 'בארנק: {v}', cm_change: 'זה עולה {p}. משלמים {g}. כמה עודף מקבלים? (ב{u})', cm_clear: 'לרוקן את הארנק', cm_pay_btn: 'לשלם', cents: 'סנטים', agorot: 'אגורות',
+      x_c1: '{n} מטבעות, אבל סופרים את הכסף ולא את המטבעות: כמה כל מטבע שווה.', x_s1: 'כל מטבע הוא {v}. סופרים בקפיצות של {v}: {seq}.', x_t1: 'מתחילים מהמטבע הכי גדול: {big}.', x_t2: 'סופרים מטבע אחרי מטבע: {seq}.', x_t3: 'ביחד: {v}.', x_p1: 'מתחילים מהמטבע הכי גדול שנכנס מתחת למחיר.', x_p2: 'דרך אחת לשלם בדיוק {p}: {seq}.', x_ch1: 'סופרים קדימה מהמחיר עד מה ששילמנו.', x_ch2: '{p} ← {seq} ← {g}.', x_ch3: 'זה {v} עודף.', tg_countOn: 'ספירה קדימה', tg_coins: 'ערכי מטבעות', tg_changeUp: 'ספירה קדימה לעודף' }
+  });
+  const { t } = KQ;
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), pick = a => a[Math.floor(Math.random() * a.length)];
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const he = () => KQ.i18n.lang === 'he';
+  // coin sets in the smallest unit (cents / agorot)
+  const SETS = { en: [[1, '1¢', 'copper'], [5, '5¢', 'silver'], [10, '10¢', 'silver'], [25, '25¢', 'silver'], [100, '$1', 'gold']], he: [[10, '10 אג׳', 'copper'], [50, '½ ₪', 'copper'], [100, '1 ₪', 'silver'], [200, '2 ₪', 'silver'], [500, '5 ₪', 'silver'], [1000, '10 ₪', 'gold']] };
+  const coins = () => SETS[he() ? 'he' : 'en'];
+  const unit = () => t(he() ? 'agorot' : 'cents');
+  const money = v => he() ? (v >= 100 ? (v / 100).toFixed(v % 100 ? 2 : 0) + ' ₪' : v + ' אג׳') : (v >= 100 ? '$' + (v / 100).toFixed(2) : v + '¢');
+  const label = v => coins().find(c => c[0] === v)[1];
+  const coinEl = (v, sm) => { const c = coins().find(x => x[0] === v); const d = document.createElement('div'); d.className = 'coin ' + c[2] + (sm ? ' sm' : ''); d.textContent = c[1]; return d; };
+  const row = (vals, sm) => { const d = document.createElement('div'); d.className = 'coins'; vals.forEach(v => d.appendChild(coinEl(v, sm))); return d; };
+  const parseMoney = s => { s = String(s).trim().replace(/[^\d.]/g, ''); if (!s) return NaN; return s.includes('.') ? Math.round(parseFloat(s) * 100) : parseInt(s, 10); };
+  const around = (v, n, vals) => { const s = new Set([v]); let g = 0; while (s.size < n && g++ < 100) { const d = pick(vals) * pick([-1, 1]); if (v + d > 0) s.add(v + d); } return shuffle([...s]).map(x => ({ label: money(x), value: x })); };
+  const sum = a => a.reduce((s, x) => s + x, 0);
+  const seqText = vals => { let acc = 0; return vals.map(v => { acc += v; return money(acc); }).join(', '); };
+  const sorted = vals => vals.slice().sort((a, b) => b - a);
+  const cur = () => he() ? '₪' : '$';
+  const GEN = {
+    // ---- ages 10–15: discounts, budgets, unit prices, tax, profit, splitting the bill ----
+    discount(tier) { const p = pick(tier ? [10, 15, 20, 25, 30, 40, 50] : [10, 25, 50]), price = pick([20, 40, 50, 60, 80, 100, 120, 150, 200]), ans = price - price * p / 100; return { key: 'dc' + p + '-' + price, prompt: t('cm_discount', { price, p, cur: cur() }), answer: ans, choices: null, tags: ['discount'], x: { price, p, off: price * p / 100, ans } }; },
+    budget(tier) { const have = pick([50, 100, 150, 200]), items = Array.from({ length: tier ? 3 : 2 }, () => ri(5, 40)), spent = items.reduce((a, b) => a + b, 0); if (spent > have) return GEN.budget(tier); return { key: 'bu' + have + '-' + items.join(','), prompt: t('cm_budget', { have, items: items.join(' + '), cur: cur() }), answer: have - spent, choices: null, tags: ['budget'], x: { have, spent, ans: have - spent } }; },
+    unit(tier) { const n = pick(tier ? [3, 4, 5, 6, 8] : [2, 4, 5]), each = ri(2, 9) + (tier ? pick([0, 0.5]) : 0), total = n * each; return { key: 'un' + n + '-' + total, prompt: t('cm_unit', { n, total, cur: cur() }), answer: each, choices: null, tags: ['unit'], x: { n, total, each } }; },
+    tax(tier) { const price = pick([50, 100, 200, 300, 400, 500]), rate = tier ? pick([10, 15, 17, 20]) : pick([10, 20]), ans = price + price * rate / 100; return { key: 'tx' + price + '-' + rate, prompt: t('cm_tax', { price, rate, cur: cur() }), answer: ans, choices: null, tags: ['tax'], x: { price, rate, add: price * rate / 100, ans } }; },
+    profit(tier) { const cost = pick([20, 40, 50, 80, 100, 200]), pct = pick(tier ? [10, 20, 25, 30, 50, 75] : [25, 50, 100]), sold = cost + cost * pct / 100; return { key: 'pf' + cost + '-' + sold, prompt: t('cm_profit', { cost, sold, cur: cur() }), answer: pct, choices: null, tags: ['profit'], x: { cost, sold, gain: sold - cost, pct } }; },
+    split(tier) { const people = ri(2, tier ? 6 : 4), each = ri(4, 30), tipPct = tier ? pick([0, 10, 20]) : 0, bill = people * each, total = bill + bill * tipPct / 100, ans = total / people; return { key: 'sp' + people + '-' + bill + '-' + tipPct, prompt: tipPct ? t('cm_splitTip', { bill, tip: tipPct, people, cur: cur() }) : t('cm_split', { bill, people, cur: cur() }), answer: ans, choices: null, tags: ['split'], x: { bill, tipPct, total, people, ans } }; },
+
+    /* Yoni 2026-10-03: 'count the sum of the coins, not the amount of them — four coins is not four, it is how much money'. The youngest
+       start with the 1 coin of the currency (1¢ / 1 ₪), so the money and the coins only line up when every coin is worth 1; then a 5¢ / 2 ₪
+       joins and the count of coins stops being the answer */
+    count(tier) { const one = he() ? 100 : 1, two = he() ? 200 : 5, n = ri(2, tier ? 6 : 5), k = tier ? ri(1, 2) : 0, vals = sorted(Array.from({ length: n }, (_, i) => i < k ? two : one)), v = sum(vals); return { key: 'c' + vals.join(','), prompt: t('cm_howMany'), visualEl: row(vals), answer: v, choices: around(v, 4, [one, two]), tags: ['count'], x: { vals, v, n } }; },
+    same(tier) { const c = pick(coins().slice(0, tier ? 4 : 3)), n = ri(2, tier ? 5 : 4), vals = Array(n).fill(c[0]), v = n * c[0]; return { key: 's' + c[0] + 'x' + n, prompt: t('cm_total'), visualEl: row(vals), answer: v, choices: around(v, 4, [c[0], c[0] * 2]), tags: ['same', 'countOn'], x: { vals, v } }; },
+    total(tier, band) { const pool = coins().slice(0, band === 3 ? 6 : 4), n = ri(3, tier ? 6 : 4), vals = Array.from({ length: n }, () => pick(pool)[0]), v = sum(vals); const q = { key: 't' + vals.join(','), visualEl: row(vals), answer: v, tags: ['total', 'countOn', 'coins'], x: { vals, v } }; if (band === 3) { q.prompt = t('cm_totalType', { u: unit() }); q.check = x => parseMoney(x) === v; q.answerLabel = money(v); } else { q.prompt = t('cm_total'); q.choices = around(v, 4, pool.map(c => c[0])); } return q; },
+    pay(tier, band) {
+      const pool = coins().slice(0, band === 3 ? 6 : 4), picks = ri(2, band === 3 ? 5 : 3), vals = Array.from({ length: picks }, () => pick(pool)[0]), p = sum(vals);
+      const item = pick(['🍎', '🍪', '🧸', '🎈', '📘', '🍦', '🚗', '🪁', '🧃', '🍬']);
+      return { key: 'p' + p + item, prompt: t('cm_pay', { p: money(p) }), wordy: true, answerLabel: money(p), tags: ['pay', 'coins'], x: { p, vals: sorted(vals) },
+        render(stage, api) {
+          const top = api.el('div'); top.appendChild(api.el('div', 'item', item)); top.appendChild(api.el('div', 'price', money(p))); stage.appendChild(top);
+          const purse = api.el('div', 'purse'), paid = api.el('div', 'paid'); let inPurse = [];
+          const upd = () => { paid.textContent = t('cm_paid', { v: money(sum(inPurse)) }); };
+          const tray = api.el('div', 'tray'); pool.forEach(c => { const e = coinEl(c[0]); e.onclick = () => { if (api.locked()) return; inPurse.push(c[0]); purse.appendChild(coinEl(c[0], true)); api.sfx.play('coin'); upd(); }; tray.appendChild(e); });
+          const bar = api.el('div', 'qtools'); const go = api.el('button', 'btn gold sm', t('cm_pay_btn')); go.onclick = () => { if (api.locked() || !inPurse.length) return; api.submit(sum(inPurse) === p, money(sum(inPurse))); };
+          const clr = api.el('button', 'btn ghost sm', t('cm_clear')); clr.onclick = () => { if (api.locked()) return; inPurse = []; purse.replaceChildren(); upd(); };
+          bar.appendChild(go); bar.appendChild(clr);
+          stage.appendChild(tray); stage.appendChild(purse); stage.appendChild(paid); stage.appendChild(bar); upd();
+        } };
+    },
+    change(tier) { const pool = coins(); const big = tier ? pick(pool.slice(-2))[0] : pool[pool.length - 1][0]; const step = he() ? 10 : 5; const p = ri(1, big / step - 1) * step, v = big - p; return { key: 'ch' + p + '/' + big, prompt: t('cm_change', { p: money(p), g: money(big), u: unit() }), wordy: true, visualEl: row([big]), answer: v, answerLabel: money(v), check: x => parseMoney(x) === v, tags: ['change', 'changeUp'], x: { p, big, v } }; }
+  };
+  const countUp = (from, to) => { const steps = []; let acc = from; const vals = sorted(coins().map(c => c[0])); while (acc < to) { const c = vals.find(v => acc + v <= to) || vals[vals.length - 1]; acc += c; steps.push(money(acc)); } return steps; };
+  const EXPLAIN = {
+    discount: q => [{ text: t('x_discount', { p: q.x.p, price: q.x.price, off: q.x.off, ans: q.x.ans }), big: true }],
+    budget: q => [{ text: t('x_budget', { have: q.x.have, spent: q.x.spent, ans: q.x.ans }), big: true }],
+    unit: q => [{ text: t('x_unit', { total: q.x.total, n: q.x.n, each: q.x.each }), big: true }],
+    tax: q => [{ text: t('x_tax', { rate: q.x.rate, price: q.x.price, add: q.x.add, ans: q.x.ans }), big: true }],
+    profit: q => [{ text: t('x_profit', { gain: q.x.gain, cost: q.x.cost, pct: q.x.pct }), big: true }],
+    split: q => [{ text: t('x_split', { total: q.x.total, people: q.x.people, ans: q.x.ans }), big: true }],
+
+    count: q => [{ text: t('x_c1', { n: q.x.n }) }, { text: t('x_t2', { seq: seqText(q.x.vals) }), vis: { el: row(q.x.vals, true) } }, { text: t('x_t3', { v: money(q.x.v) }), big: true }],
+    same: q => [{ text: t('x_s1', { v: label(q.x.vals[0]), seq: seqText(q.x.vals) }) }, { text: t('x_t3', { v: money(q.x.v) }), big: true }],
+    total: q => { const s = sorted(q.x.vals); return [{ text: t('x_t1', { big: label(s[0]) }), vis: { el: row(s, true) } }, { text: t('x_t2', { seq: seqText(s) }) }, { text: t('x_t3', { v: money(q.x.v) }), big: true }]; },
+    pay: q => [{ text: t('x_p1') }, { text: t('x_p2', { p: money(q.x.p), seq: q.x.vals.map(label).join(' + ') }), vis: { el: row(q.x.vals, true) } }, { text: t('x_t3', { v: money(q.x.p) }), big: true }],
+    change: q => [{ text: t('x_ch1') }, { text: t('x_ch2', { p: money(q.x.p), seq: countUp(q.x.p, q.x.big).join(' → '), g: money(q.x.big) }) }, { text: t('x_ch3', { v: money(q.x.v) }), big: true }]
+  };
+  KQ.quest.shell();
+  KQ.quest({ world: 'market', title: 'cm_title', sub: 'cm_sub', bands: { 1: ['count', 'same'], 2: ['same', 'total', 'pay'], 3: ['total', 'pay', 'change'], 4: ['discount', 'budget', 'change'], 5: ['unit', 'tax', 'discount'], 6: ['profit', 'split', 'tax'] }, bandKey: 'band', bandIcons: ['🛡️', '⚔️', '🐴'], icons: { discount: '🏷️', budget: '👛', unit: '📦', tax: '🧾', profit: '📈', split: '🍕',  count: '🪙', same: '🟰', total: '💰', pay: '🛒', change: '🔄' }, n: 8, fastMs: 9000, gen: GEN, explain: EXPLAIN });
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('bazaar');</script>
+</body>
+</html>

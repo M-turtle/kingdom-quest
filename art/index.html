@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Art Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Frank+Ruhl+Libre:wght@700;900&family=Assistant:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#c8862a; --accent-2:#6a3a10; }
+.bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:600px){ .bands{grid-template-columns:1fr} }
+/* paintings are shown sharp and large: the real work, never a pixel-art copy */
+.aq{display:grid; gap:12px; justify-items:center; width:100%}
+.aq .frame{display:inline-block; padding:10px; border-radius:6px; background:linear-gradient(135deg,#e8c068,#9a6a1e 45%,#f2d088 70%,#8a5a18); box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 0 0 2px rgba(0,0,0,.25)}
+.aq .frame img{display:block; max-width:min(78vw,460px); max-height:min(46vh,360px); width:auto; height:auto; background:#222; image-rendering:auto}
+.aq .cap{text-align:center; display:grid; gap:2px} .aq .cap b{font-size:17px} .aq .cap span{font-size:14px; opacity:.85}
+.aq .choices{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; width:100%}
+.aq .choice{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:56px; font-weight:800}
+.aq .choice img{width:100%; max-width:150px; height:110px; object-fit:cover; border-radius:6px; box-shadow:0 0 0 3px #c8962e}
+.aq .choice.ok{outline:4px solid #3ecf7a} .aq .choice.bad{outline:4px solid #ff5a6a; opacity:.8}
+.aq .sw{width:58px; height:58px; border-radius:50%; box-shadow:inset 0 -6px 0 rgba(0,0,0,.18), 0 2px 6px rgba(0,0,0,.3); border:3px solid rgba(255,255,255,.7)}
+.aq .mixrow{display:flex; align-items:center; gap:14px; font:900 34px var(--font-body)} .aq .mixrow .sw{width:76px; height:76px}
+.aq .zoom{width:min(72vw,300px); aspect-ratio:1; border-radius:50%; background-repeat:no-repeat; box-shadow:0 0 0 6px #c8962e, 0 10px 30px rgba(0,0,0,.5)}
+.aq .pair{display:flex; gap:12px; flex-wrap:wrap; justify-content:center}
+.ar-card{display:flex; align-items:center; gap:14px; width:100%; margin:0 0 12px; padding:12px 14px; border-radius:18px; cursor:pointer; text-align:start; border:1px solid rgba(255,224,138,.55); background:linear-gradient(135deg,rgba(200,134,42,.35),rgba(90,40,140,.3)); color:inherit; font:inherit}
+.ar-card .thumbs{display:flex; gap:4px; flex:none} .ar-card .thumbs img{width:46px; height:46px; object-fit:cover; border-radius:4px; box-shadow:0 0 0 2px #c8962e}
+.ar-card b{display:block; font:800 20px/1.1 Cinzel, 'Frank Ruhl Libre', serif} .ar-card span{font-size:14px; opacity:.85}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+<link rel="stylesheet" href="studio.css?v=1">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header><main class="play" style="margin-top:18px"></main></div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script src="../shared/quest.js?v=18"></script>
+<script src="../shared/art.js?v=3"></script>
+<script src="artkit.js?v=1"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { as_title: 'Art Studio', as_sub: 'Real paintings by real artists. Look closely, then paint your own.',
+      s_colors: 'Find the colour', s_mix: 'Mix the paint', s_same: 'Find the same painting', s_detail: 'Zoom detective', s_warm: 'Warm or cool?', s_artist: 'Who painted it?', s_title: 'Name the painting', s_movement: 'Art styles', s_older: 'Which is older?', s_era: 'Which century?', s_technique: 'How was it made?',
+      q_colors: 'Which colour can you see in this painting?', q_mix: 'Mix these two paints. What colour do you get?', q_comp: 'Which colour is the opposite (complementary) of this one?', q_same: 'Find the same painting.', q_detail: 'This is a close-up. Which painting is it from?', q_warm: 'Are the colours in this painting warm or cool?',
+      q_artist: 'Who painted this?', q_title: 'What is this painting called?', q_movement: 'Which art style is this?', q_older: 'Which painting is older?', q_era: 'In which century was this made?', q_technique: 'How was this made?',
+      a_warm: 'Warm (like fire)', a_cool: 'Cool (like water)', cen: '{n}th century', cen21: '21st century',
+      x_colors: 'Look all over the painting: there is {c} in it.', x_mix: 'Mix {a} with {b} and you get {c}.', w_warm: 'warm', w_cool: 'cool', x_comp: '{a} and {c} sit opposite each other on the colour wheel. Side by side, each makes the other look brighter.', x_warm: 'Reds, oranges and yellows are warm colours; blues, greens and purples are cool. This painting is mostly {w}.',
+      x_work: '{title} by {artist}, {year}.', x_older: '{a} was painted in {ya}, and {b} in {yb}.', x_era: '{year} is in the {cen}.',
+      mc_paint: 'Paint Studio', mc_paintSub: 'Paint like the great artists. Your work hangs in your own gallery.', mc_gallery: 'The Gallery', mc_gallerySub: 'Walk through 78 real paintings, from Leonardo to Kusama.' },
+    he: { as_title: 'סטודיו האמנות', as_sub: 'ציורים אמיתיים של אמנים אמיתיים. מסתכלים מקרוב, ואז מציירים בעצמכם.',
+      s_colors: 'מוצאים את הצבע', s_mix: 'מערבבים צבעים', s_same: 'מוצאים את אותו ציור', s_detail: 'בלשי זום', s_warm: 'חם או קר?', s_artist: 'מי צייר?', s_title: 'איך קוראים לציור?', s_movement: 'סגנונות באמנות', s_older: 'מה יותר ישן?', s_era: 'באיזו מאה?', s_technique: 'איך זה נעשה?',
+      q_colors: 'איזה צבע רואים בציור הזה?', q_mix: 'מערבבים את שני הצבעים. איזה צבע יוצא?', q_comp: 'מה הצבע המשלים (ההפוך) של הצבע הזה?', q_same: 'מוצאים את אותו ציור.', q_detail: 'זה תקריב. מאיזה ציור הוא?', q_warm: 'הצבעים בציור הזה חמים או קרים?',
+      q_artist: 'מי צייר את זה?', q_title: 'איך קוראים לציור הזה?', q_movement: 'איזה סגנון אמנות זה?', q_older: 'איזה ציור ישן יותר?', q_era: 'באיזו מאה זה נעשה?', q_technique: 'איך זה נעשה?',
+      a_warm: 'חמים (כמו אש)', a_cool: 'קרים (כמו מים)', cen: 'המאה ה־{n}', cen21: 'המאה ה־21',
+      x_colors: 'מסתכלים על כל הציור: יש בו {c}.', x_mix: '{a} ועוד {b} יוצא {c}.', w_warm: 'חמים', w_cool: 'קרים', x_comp: '{a} ו{c} נמצאים זה מול זה בגלגל הצבעים. כשהם זה ליד זה, כל אחד גורם לשני להיראות בוהק יותר.', x_warm: 'אדום, כתום וצהוב הם צבעים חמים; כחול, ירוק וסגול הם צבעים קרים. בציור הזה יש בעיקר צבעים {w}.',
+      x_work: '{title} מאת {artist}, {year}.', x_older: '{a} צויר ב־{ya}, ו{b} ב־{yb}.', x_era: '{year} זה במאה ה־{n}.',
+      mc_paint: 'סטודיו הציור', mc_paintSub: 'מציירים כמו האמנים הגדולים. היצירה שלכם נתלית בגלריה שלכם.', mc_gallery: 'הגלריה', mc_gallerySub: 'מטיילים בין 78 ציורים אמיתיים, מלאונרדו ועד קוסאמה.' }
+  });
+  const { t } = KQ, A = window.KQArtKit, el = KQ.ui.el;
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), pick = a => a[Math.floor(Math.random() * a.length)];
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const pool = band => KQ_ART.filter(w => w.band <= Math.max(1, band));
+  const speak4 = (band, text) => band <= 2 ? text : null;
+
+  /* one question: a picture area, the choices; the right answer turns the caption on (the artist and the piece are always named) */
+  function renderQ(q) {
+    return (st, api) => {
+      const box = el('div', 'aq'); st.appendChild(box);
+      if (q.pic) box.appendChild(q.pic());
+      const ch = el('div', 'choices'); box.appendChild(ch);
+      q.opts.forEach(o => { const b = el('button', 'choice'); b.type = 'button'; if (o.pic) b.appendChild(o.pic()); if (o.label) b.appendChild(el('span', null, o.label)); b.dataset.value = o.value;
+        b.onclick = () => { if (api.locked()) return; const ok = o.value === q.answer; b.classList.add(ok ? 'ok' : 'bad'); if (!ok) [...ch.children].forEach(c => { if (c.dataset.value === q.answer) c.classList.add('ok'); }); if (q.after) box.appendChild(q.after()); api.submit(ok, o.label || ''); };
+        ch.appendChild(b); });
+    };
+  }
+  function Q(o) { const q = Object.assign({ tags: [o.skill] }, o); q.render = renderQ(q); const a = o.opts.find(x => x.value === o.answer); q.answerLabel = a ? a.label || '' : ''; return q; }
+  const framed = w => () => A.framed(w);
+  const capOf = w => () => A.caption(w);
+  const SW = c => () => A.swatch(c);
+  const workOpt = w => ({ value: w.id, label: '', pic: () => A.img(w) });
+
+  const GEN = {
+    colors(tier, band) {
+      /* hand-checked (measuring pixels was not trustworthy enough for a four-year-old: orange apples are "red", ochre is not "yellow"):
+         the colours that are unmistakably IN each painting, and colours that are unmistakably NOT */
+      const COL = { 'starry-night': [['blue', 'yellow'], ['pink', 'red', 'purple']], 'great-wave': [['blue'], ['red', 'pink', 'purple', 'green']], 'mondrian-rby': [['red', 'blue', 'yellow'], ['green', 'pink', 'purple', 'orange']],
+        'sunflowers': [['yellow', 'orange'], ['blue', 'purple', 'pink']], 'warhol-campbell-s-soup-cans': [['red'], ['green', 'blue', 'purple', 'pink']], 'kusama-yellow-pumpkin': [['yellow', 'black'], ['blue', 'green', 'pink', 'purple']],
+        'matisse-icarus': [['blue', 'yellow', 'black'], ['green', 'pink', 'purple', 'orange']], 'banksy-girl-with-balloon': [['red'], ['blue', 'green', 'yellow', 'purple']], 'magritte-the-son-of-man': [['green', 'blue', 'black'], ['pink', 'purple', 'orange']],
+        'magritte-the-listening-room': [['green'], ['red', 'pink', 'purple']], 'mona-lisa': [['brown', 'green'], ['red', 'pink', 'purple']], 'dali-the-persistence-of-memory': [['blue', 'brown'], ['red', 'pink', 'purple']],
+        'kahlo-self-portrait-with-monkey': [['green', 'red'], ['blue', 'purple', 'pink']], 'surprised': [['green', 'orange'], ['purple', 'pink', 'blue']], 'basket-apples': [['yellow', 'red'], ['purple', 'pink', 'blue']] };
+      { const ids = Object.keys(COL).filter(id => KQ_ART.find(w => w.id === id && w.band <= Math.max(1, band))), id = pick(ids), w = KQ_ART.find(x => x.id === id), [have, none] = COL[id], c = pick(have);
+        const opts = shuffle([c, ...shuffle(none).slice(0, band === 1 ? 2 : 3)]);
+        return Q({ skill: 'colors', key: 'c' + w.id + c, prompt: t('q_colors'), speak: speak4(band, t('q_colors')), answer: c, opts: opts.map(x => ({ value: x, label: A.cname(x), pic: SW(x) })), pic: framed(w), after: capOf(w), x: { w, c } }); }
+      return GEN.mix(tier, band);
+    },
+    mix(tier, band) {
+      if (band >= 5) { const [a, c] = pick([['red', 'green'], ['blue', 'orange'], ['yellow', 'purple'], ['green', 'red'], ['orange', 'blue'], ['purple', 'yellow']]); const opts = shuffle([c, ...shuffle(['red', 'green', 'blue', 'orange', 'yellow', 'purple'].filter(x => x !== a && x !== c)).slice(0, 3)]);
+        return Q({ skill: 'mix', tags: ['comp'], key: 'cp' + a, prompt: t('q_comp'), answer: c, opts: opts.map(x => ({ value: x, label: A.cname(x), pic: SW(x) })), pic: () => { const d = el('div', 'mixrow'); d.appendChild(A.swatch(a)); return d; }, x: { a, c, comp: true } }); }
+      const M = [['red', 'yellow', 'orange'], ['yellow', 'blue', 'green'], ['red', 'blue', 'purple'], ['red', 'white', 'pink']].concat(band >= 2 ? [['black', 'white', 'grey'], ['blue', 'white', 'lightblue'], ['orange', 'blue', 'brown']] : []);
+      const [a, b, c] = pick(M), all = ['orange', 'green', 'purple', 'pink', 'grey', 'brown', 'lightblue', 'red', 'yellow', 'blue'];
+      const opts = shuffle([c, ...shuffle(all.filter(x => x !== c && x !== a && x !== b)).slice(0, band === 1 ? 2 : 3)]);
+      return Q({ skill: 'mix', key: 'm' + a + b, prompt: t('q_mix'), speak: speak4(band, t('q_mix')), answer: c, opts: opts.map(x => ({ value: x, label: A.cname(x), pic: SW(x) })), pic: () => { const d = el('div', 'mixrow'); d.appendChild(A.swatch(a)); d.appendChild(el('span', null, '+')); d.appendChild(A.swatch(b)); return d; }, x: { a, b, c } });
+    },
+    same(tier, band) { const ws = shuffle(pool(band)).slice(0, band === 1 ? 3 : 4), w = ws[0]; return Q({ skill: 'same', key: 's' + w.id, prompt: t('q_same'), speak: speak4(band, t('q_same')), answer: w.id, opts: shuffle(ws).map(workOpt), pic: framed(w), after: capOf(w), x: { w } }); },
+    detail(tier, band) { const ws = shuffle(pool(band).filter(w => w.w >= 560)).slice(0, band <= 2 ? 3 : 4), w = ws[0], fx = ri(25, 75), fy = ri(25, 75), z = band <= 2 ? 260 : 380;
+      return Q({ skill: 'detail', key: 'd' + w.id + fx + fy, prompt: t('q_detail'), speak: speak4(band, t('q_detail')), answer: w.id, opts: shuffle(ws).map(workOpt), pic: () => A.zoom(w, fx, fy, z), after: capOf(w), x: { w } }); },
+    warm(tier, band) { /* hand-checked: paintings that are clearly warm or clearly cool */ const WARM = ['sunflowers', 'the-kiss', 'kusama-yellow-pumpkin', 'warhol-campbell-s-soup-cans', 'keeffe-poppy-2', 'gottlieb-yom-kippur', 'basket-apples'], COOL = ['starry-night', 'great-wave', 'matisse-icarus', 'water-lilies', 'magritte-golconda', 'picasso-child-with-dove', 'hunters-snow', 'wanderer'];
+      const ws = KQ_ART.filter(w => (WARM.includes(w.id) || COOL.includes(w.id)) && w.band <= Math.max(1, band)), w = pick(ws), ans = WARM.includes(w.id) ? 'warm' : 'cool';
+      return Q({ skill: 'warm', key: 'w' + w.id, prompt: t('q_warm'), speak: speak4(band, t('q_warm')), answer: ans, opts: [{ value: 'warm', label: t('a_warm'), pic: () => KQ.icon('🔥') }, { value: 'cool', label: t('a_cool'), pic: () => KQ.icon('💧') }], pic: framed(w), after: capOf(w), x: { w, ans } }); },
+    artist(tier, band) { const w = pick(pool(band)), others = shuffle([...new Set(pool(Math.max(band, 3)).map(x => x.a[0]))].filter(a => a !== w.a[0])).slice(0, band >= 4 ? 3 : 2), nm = a => A.artistName(a);
+      return Q({ skill: 'artist', key: 'a' + w.id, prompt: t('q_artist'), answer: w.a[0], opts: shuffle([w.a[0], ...others]).map(a => ({ value: a, label: nm(a) })), pic: framed(w), after: capOf(w), x: { w } }); },
+    title(tier, band) { const ws = shuffle(pool(band)).slice(0, 3), w = ws[0]; return Q({ skill: 'title', key: 't' + w.id, prompt: t('q_title'), answer: w.id, opts: shuffle(ws).map(x => ({ value: x.id, label: A.title(x) })), pic: framed(w), after: capOf(w), x: { w } }); },
+    movement(tier, band) { const w = pick(pool(band)), others = shuffle(Object.keys(A.MOVES).filter(m => m !== w.mv)).slice(0, band >= 5 ? 3 : 2);
+      return Q({ skill: 'movement', key: 'mv' + w.id, prompt: t('q_movement'), answer: w.mv, opts: shuffle([w.mv, ...others]).map(m => ({ value: m, label: A.moveName(m) })), pic: framed(w), after: capOf(w), x: { w } }); },
+    older(tier, band) { let a, b, g = 0; do { [a, b] = shuffle(pool(band)).slice(0, 2); g++; } while (Math.abs(A.yearOf(a) - A.yearOf(b)) < (tier ? 20 : 60) && g < 60); const old = A.yearOf(a) < A.yearOf(b) ? a : b;
+      return Q({ skill: 'older', key: 'o' + a.id + b.id, prompt: t('q_older'), answer: old.id, opts: [a, b].map(w => ({ value: w.id, label: A.title(w), pic: () => A.img(w) })), x: { a, b } }); },
+    era(tier, band) { const w = pick(pool(band)), c = A.century(w), set = [...new Set([c, c - 1, c + 1, c - 2, c + 2].filter(x => x >= 16 && x <= 21))]; const opts = shuffle([c, ...shuffle(set.filter(x => x !== c)).slice(0, 3)]);
+      return Q({ skill: 'era', key: 'e' + w.id, prompt: t('q_era'), answer: String(c), opts: opts.map(x => ({ value: String(x), label: A.cenName(x) })), pic: framed(w), after: capOf(w), x: { w, c } }); },
+    technique(tier, band) { const ids = Object.keys(A.TECH).filter(id => KQ_ART.find(w => w.id === id)), id = pick(ids), w = KQ_ART.find(x => x.id === id), tk = A.TECH[id];
+      const opts = shuffle([tk, ...shuffle([...new Set(Object.values(A.TECH))].filter(x => x !== tk)).slice(0, 3)]);
+      return Q({ skill: 'technique', key: 'tk' + id, prompt: t('q_technique'), answer: tk, opts: opts.map(x => ({ value: x, label: A.techName(x) })), pic: framed(w), after: capOf(w), x: { w, tk } }); }
+  };
+  const work = w => ({ text: t('x_work', { title: A.title(w), artist: A.artistName(w.a[0]), year: w.y }), vis: { el: A.img(w, 'small') } });
+  const mvStep = w => ({ text: A.moveName(w.mv) + ': ' + A.moveAbout(w.mv), big: true });
+  const EXPLAIN = {
+    colors: q => [work(q.x.w), { text: t('x_colors', { c: A.cname(q.x.c) }), big: true }],
+    mix: q => q.x.comp ? [{ text: t('x_comp', { a: A.cname(q.x.a), c: A.cname(q.x.c) }), big: true }] : [{ text: t('x_mix', { a: A.cname(q.x.a), b: A.cname(q.x.b), c: A.cname(q.x.c) }), vis: { el: A.swatch(q.x.c) }, big: true }],
+    same: q => [work(q.x.w)], detail: q => [work(q.x.w), { text: A.moveName(q.x.w.mv), big: true }],
+    warm: q => [work(q.x.w), { text: t('x_warm', { w: t('w_' + q.x.ans) }), big: true }],
+    artist: q => [work(q.x.w), mvStep(q.x.w)], title: q => [work(q.x.w)], movement: q => [work(q.x.w), mvStep(q.x.w)],
+    older: q => [{ text: t('x_older', { a: A.title(q.x.a), ya: q.x.a.y, b: A.title(q.x.b), yb: q.x.b.y }), big: true }],
+    era: q => [work(q.x.w), { text: t('x_era', { year: q.x.w.y, cen: A.cenName(q.x.c), n: q.x.c }), big: true }],
+    technique: q => [work(q.x.w), { text: A.techName(q.x.tk) + ': ' + A.techAbout(q.x.tk), big: true }]
+  };
+  KQ.quest.shell();
+  const api = KQ.quest({ world: 'art', title: 'as_title', sub: 'as_sub', bands: { 1: ['colors', 'mix', 'same'], 2: ['detail', 'mix', 'warm', 'colors'], 3: ['artist', 'title', 'detail'], 4: ['artist', 'movement', 'older'], 5: ['movement', 'era', 'mix'], 6: ['movement', 'era', 'technique'] },
+    bandKey: 'band', icons: { colors: '🎯', mix: '🧪', same: '🔍', detail: '🔎', warm: '🔥', artist: '🎓', title: '🏷️', movement: '🖼️', older: '⏳', era: '📅', technique: '✂️' },
+    n: 8, fastMs: 12000, speakBands: [1, 2], gen: GEN, explain: EXPLAIN });
+  /* the two big doors on the pick screen: the Paint Studio and the Gallery */
+  function cards() {
+    const pk = document.getElementById('pick'); if (!pk || document.querySelector('.ar-card')) return;
+    const make = (title, sub, ids, fn) => { const b = el('button', 'ar-card'); b.type = 'button'; const th = el('div', 'thumbs'); ids.forEach(id => th.appendChild(A.img(KQ_ART.find(w => w.id === id)))); b.appendChild(th); const tx = el('div'); tx.appendChild(el('b', null, title)); tx.appendChild(el('span', null, sub)); b.appendChild(tx); b.onclick = fn; return b; };
+    const band = () => (api && api.R ? api.R.band : 1);
+    pk.prepend(make(t('mc_gallery'), t('mc_gallerySub'), ['mona-lisa', 'great-wave', 'kusama-pumpkin'], () => A.openGallery(band())));
+    pk.prepend(make(t('mc_paint'), t('mc_paintSub'), ['starry-night', 'mondrian-rby', 'pollock-convergence-number-10'], () => window.KQPaint && KQPaint.open(band())));
+  }
+  cards();
+  document.addEventListener('kq:lang', () => { document.querySelectorAll('.ar-card').forEach(c => c.remove()); cards(); });
+  window.__art = { GEN, api };
+})();
+</script>
+<script src="studio.js?v=2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('gallery');</script>
+</body>
+</html>

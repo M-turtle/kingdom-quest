@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Scroll Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#7a4a1e; --accent-2:#4a2c10; }
+.decks{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px; margin:8px 0 14px}
+.deck{position:relative; display:grid; gap:4px; padding:12px 12px 12px 14px; border-radius:12px; border:2px solid var(--line); background:var(--paper-2); cursor:pointer; text-align:start}
+.deck.on{border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 60%, transparent)}
+.deck b{font-size:16px} .deck small{color:var(--muted); font-weight:700}
+.deck .x{position:absolute; top:6px; inset-inline-end:8px; border:0; background:transparent; font-size:14px; cursor:pointer; color:var(--muted)}
+.import{display:grid; gap:8px}
+.import input,.import textarea{width:100%; box-sizing:border-box; font:600 15px var(--font-body); padding:10px 12px; border-radius:10px; border:2px solid var(--line); background:var(--paper)}
+.import textarea{min-height:150px; resize:vertical; font-family:ui-monospace, Menlo, monospace; font-size:14px}
+.help{font-size:13px; color:var(--muted); font-weight:700; line-height:1.45}
+.typebox{display:grid; gap:10px; justify-items:center; margin:10px 0}
+.typebox input{width:min(420px, 100%); box-sizing:border-box; font:800 22px var(--font-body); padding:10px 14px; border-radius:12px; border:2px solid var(--line); text-align:center}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header>
+<section class="card" id="library" style="margin-top:18px">
+  <h2 data-i18n="sc_decks">Your scrolls</h2>
+  <div class="decks" id="decks"></div>
+  <div class="sec" data-i18n="sc_new">New scroll</div>
+  <div class="import">
+    <input id="scName" data-i18n-placeholder="sc_name" placeholder="Scroll name (e.g. Geography, chapter 3)">
+    <textarea id="scText" data-i18n-placeholder="sc_paste" placeholder="Paste your lesson here, one item per line"></textarea>
+    <div class="help" id="scHelp"></div>
+    <div><button class="btn gold" id="scImport" data-i18n="sc_import">Add scroll</button></div>
+  </div>
+</section>
+<main class="play" style="margin-top:18px"></main></div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script src="../shared/quest.js?v=18"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { sc_title: 'Scroll Library', sc_sub: 'Your lessons, turned into games', s_quiz: 'Quiz', s_type: 'Type the answer', sc_b1: 'My scrolls', sc_decks: 'Your scrolls', sc_new: 'New scroll', sc_name: 'Scroll name (e.g. Geography, chapter 3)', sc_paste: 'Paste your lesson here, one item per line', sc_help: 'One item per line. Formats: "question | answer | wrong; wrong; wrong" · "term = meaning" · "word: meaning". Start a line with # to name the scroll.', sc_import: 'Add scroll', sc_items: '{n} items', sc_none: 'No scrolls yet. Paste a lesson above to make your first one.', sc_del: 'Delete this scroll?', sc_bad: 'Nothing I could read. One item per line, please.', sc_check: 'Check', sc_answer: 'Type your answer', sc_added: 'Scroll added: {n} items', sc_whatIs: 'What is {term}?', sc_which: 'Which term means: {def}' },
+    he: { sc_title: 'ספריית המגילות', sc_sub: 'השיעורים שלכם הופכים למשחקים', s_quiz: 'חידון', s_type: 'להקליד תשובה', sc_b1: 'המגילות שלי', sc_decks: 'המגילות שלכם', sc_new: 'מגילה חדשה', sc_name: 'שם המגילה (למשל גאוגרפיה, פרק 3)', sc_paste: 'מדביקים כאן את השיעור, פריט בכל שורה', sc_help: 'פריט בכל שורה. פורמטים: "שאלה | תשובה | טעות; טעות; טעות" · "מונח = פירוש" · "מילה: פירוש". שורה שמתחילה ב-# נותנת שם למגילה.', sc_import: 'להוסיף מגילה', sc_items: '{n} פריטים', sc_none: 'עוד אין מגילות. מדביקים שיעור למעלה ויוצרים את הראשונה.', sc_del: 'למחוק את המגילה?', sc_bad: 'לא הצלחתי לקרוא כלום. פריט בכל שורה, בבקשה.', sc_check: 'לבדוק', sc_answer: 'מקלידים את התשובה', sc_added: 'המגילה נוספה: {n} פריטים', sc_whatIs: 'מה זה {term}?', sc_which: 'איזה מונח פירושו: {def}' }
+  });
+  const { t, ui, sfx } = KQ; const { el } = ui; const $ = s => document.querySelector(s);
+  const profile = KQ.requireProfile('../index.html'); if (!profile) return;
+  const pick = a => a[Math.floor(Math.random() * a.length)], shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  // ---------- scrolls live in the player's saved state ----------
+  const S = () => { const st = KQ.state(); st.scrolls = st.scrolls || {}; return st.scrolls[profile.id] = st.scrolls[profile.id] || { active: null, decks: [] }; };
+  const active = () => { const s = S(); return s.decks.find(d => d.id === s.active) || s.decks[0] || null; };
+  // ---------- parse a pasted lesson: "q | a | w; w", "term = meaning", "word: meaning" ----------
+  function parse(text) {
+    const items = []; let name = '';
+    for (let raw of text.split(/\r?\n/)) { const line = raw.trim(); if (!line) continue; if (line.startsWith('#')) { name = name || line.slice(1).trim(); continue; }
+      if (line.includes('|')) { const [q, a, w] = line.split('|').map(x => x.trim()); if (q && a) items.push({ q, a, w: w ? w.split(/[;；,]/).map(x => x.trim()).filter(Boolean) : [] }); continue; }
+      const m = line.match(/^(.+?)\s*(?:=|→|->|:|–|—| - )\s*(.+)$/); if (m && m[1] && m[2]) items.push({ term: m[1].trim(), def: m[2].trim() }); }
+    return { name, items };
+  }
+  function renderDecks() {
+    const box = $('#decks'); box.replaceChildren(); const s = S();
+    if (!s.decks.length) { box.appendChild(el('div', 'muted', t('sc_none'))); }
+    for (const d of s.decks) { const b = el('button', 'deck' + (active() && active().id === d.id ? ' on' : '')); b.type = 'button'; b.appendChild(el('b', null, d.name)); b.appendChild(el('small', null, t('sc_items', { n: d.items.length }))); const x = el('button', 'x', '✕'); x.type = 'button'; x.title = t('sc_del'); x.onclick = e => { e.stopPropagation(); if (!confirm(t('sc_del'))) return; s.decks = s.decks.filter(z => z.id !== d.id); if (s.active === d.id) s.active = null; KQ.save(); renderDecks(); }; b.appendChild(x); b.onclick = () => { s.active = d.id; KQ.save(); sfx.play('tap'); renderDecks(); }; box.appendChild(b); }
+    $('#pick').hidden = !s.decks.length; $('#scHelp').textContent = t('sc_help');
+  }
+  $('#scImport').onclick = () => { const { name, items } = parse($('#scText').value); if (!items.length) { ui.toast(t('sc_bad')); return; } const s = S(); const d = { id: 'd' + Date.now().toString(36), name: ($('#scName').value.trim() || name || t('sc_new')).slice(0, 40), items, ts: Date.now() }; s.decks.push(d); s.active = d.id; KQ.save(); $('#scText').value = ''; $('#scName').value = ''; sfx.play('star'); ui.toast(t('sc_added', { n: items.length })); renderDecks(); };
+  // ---------- questions come straight from the active scroll ----------
+  const norm = s => String(s).toLowerCase().replace(/[֑-ׇ]/g, '').replace(/[.,!?;:"'()\-–—]/g, ' ').replace(/\s+/g, ' ').trim();
+  function ask(item, dir) {   // a scroll item as a question, with three wrong choices from the same scroll
+    const d = active(); const others = d.items.filter(x => x !== item), it = 'it:' + d.id + ':' + d.items.indexOf(item);   /* the item's own tag: the parents' view counts how many of a scroll's items are known */
+    if (item.q) { const w = item.w.length ? item.w : shuffle(others.map(x => x.a || x.term).filter(Boolean)).slice(0, 3); return { prompt: item.q, answer: item.a, choices: shuffle([item.a, ...w.slice(0, 3)]), key: d.id + ':' + d.items.indexOf(item), it }; }
+    if (dir === 'def') { const w = shuffle(others.map(x => x.def || x.a).filter(Boolean)).slice(0, 3); return { prompt: t('sc_whatIs', { term: item.term }), answer: item.def, choices: shuffle([item.def, ...w]), key: d.id + ':' + d.items.indexOf(item) + ':def', it }; }
+    const w = shuffle(others.map(x => x.term || x.q).filter(Boolean)).slice(0, 3); return { prompt: t('sc_which', { def: item.def }), answer: item.term, choices: shuffle([item.term, ...w]), key: d.id + ':' + d.items.indexOf(item) + ':term', it };
+  }
+  const GEN = {
+    quiz() { const d = active(); const it = pick(d.items); const q = ask(it, Math.random() < 0.5 ? 'def' : 'term'); q.wordy = true; q.tags = ['quiz', q.it]; q.journal = q.prompt; return q; },
+    type() { const d = active(); const it = pick(d.items); const q = ask(it, 'def'); q.tags = ['type', q.it]; q.journal = q.prompt; q.wordy = true; const answer = q.answer; q.choices = null;
+      q.render = (stage, api) => { const box = el('div', 'typebox'); const inp = document.createElement('input'); inp.placeholder = t('sc_answer'); inp.autocomplete = 'off'; inp.style.direction = /[֐-׿]/.test(answer) ? 'rtl' : 'ltr'; const go = el('button', 'btn gold', t('sc_check')); const submit = () => { if (api.locked()) return; const v = inp.value; const ok = norm(v) === norm(answer) || (norm(answer).length > 6 && norm(v).length >= 4 && norm(answer).includes(norm(v)) && norm(v).length / norm(answer).length > 0.6); inp.disabled = true; api.submit(ok, v); }; go.onclick = submit; inp.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); }); box.appendChild(inp); box.appendChild(go); stage.appendChild(box); setTimeout(() => inp.focus(), 50); };
+      return q; }
+  };
+  KQ.quest.shell();
+  KQ.quest({ world: 'scrolls', title: 'sc_title', sub: 'sc_sub', bands: { 1: ['quiz', 'type'] }, bandKey: 'sc_b', bandIcons: ['📚'], icons: { quiz: '❓', type: '✍️' }, gen: GEN, explain: {}, n: 10, fastMs: 9000 });
+  renderDecks();
+  document.addEventListener('kq:lang', renderDecks);
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('library');</script>
+</body>
+</html>

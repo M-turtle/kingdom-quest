@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Garden</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#2f7a3f; --accent-2:#1a4a24; }
+.bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:600px){ .bands{grid-template-columns:1fr} }
+.garden{display:flex; justify-content:center; gap:4px; font-size:28px; min-height:38px; margin-bottom:6px}
+.garden span{opacity:.25} .garden span.on{opacity:1; animation:pop .4s}
+.bigpic{font-size:clamp(70px,16vw,120px); line-height:1.1}
+.sentence{font:700 clamp(22px,4.6vw,32px)/1.4 var(--font-body); margin:6px 0 10px}
+.question{font:800 clamp(18px,3.6vw,24px) var(--font-body); color:var(--accent); margin-bottom:10px}
+.choice.word{font-size:clamp(24px,5vw,34px)}
+.choice.pic{font-size:clamp(40px,9vw,64px); min-height:96px}
+.letterq{font:900 clamp(60px,14vw,110px)/1 var(--font-body); margin:4px 0 12px}
+.tile .m{width:100%; display:grid; gap:3px} .tile .m small{font-size:11px; color:var(--muted); font-weight:700}
+.qtools{display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap}
+.sentence.para{font-size:clamp(17px,3.4vw,22px); line-height:1.65; text-align:start; font-weight:600; max-width:640px; margin:4px auto 12px}
+.vocab{font:900 clamp(34px,8vw,56px)/1.1 var(--font-body); margin:6px 0 10px}
+.clue{font:700 clamp(16px,3.2vw,20px) var(--font-body); color:var(--ink-2); margin:-2px 0 8px}
+.bigpic.sm{font-size:clamp(48px,10vw,72px)}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap">
+  <header class="kq-header"></header>
+  <main class="play" style="margin-top:18px">
+    <div id="potions"></div>
+    <section class="card" id="pick">
+      <h2 data-i18n="ageBand">Age</h2>
+      <div class="bands" id="bands"></div>
+      <div class="sec" style="margin-top:18px" data-i18n="r_skill">Choose a game</div>
+      <div class="tiles" id="skills"></div>
+    </section>
+    <section class="card" id="round" hidden>
+      <div class="rhead"><button class="back" id="btnQuit" type="button"><span class="chev">‹</span><span data-i18n="back">Back</span></button><div class="prog"><div class="qbar" id="qbar"><i></i></div><span class="qcount" id="qcount"></span></div><div class="pill" id="skillName"></div><div class="dots" id="dots" hidden></div><div class="streak" id="streak" hidden></div></div>
+      <div class="qcard">
+        <div class="garden" id="garden"></div>
+        <div id="stage"></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="choices" id="choices"></div>
+        <div class="qtools"><button class="ibtn" id="btnSpeak" title="🔊">🔊</button></div>
+        <div id="howto"></div>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script>
+(function () {
+  'use strict';
+  const { t, store, sfx, ui } = KQ; const { el } = ui;
+  const $ = s => document.querySelector(s);
+  const profile = KQ.requireProfile('../index.html'); if (!profile) return;
+  KQ.i18n.extend({
+    en: { r_title: 'Word Garden', r_sub: 'Letters, words, stories', r_skill: 'Choose a game', rb1: 'Sprout (4–5)', rb2: 'Bud (6–7)', rb3: 'Bloom (8–10)', r_answered: '{n} answered',
+      s_focus: 'Practice the tricky bits', s_findLetter: 'Find the letter', s_caseMatch: 'Big & small letters', s_firstLetter: 'First letter', s_pickWord: 'Pick the word', s_buildWord: 'Build the word', s_listenPick: 'Listen & find', s_sentence: 'Read & answer', s_fillBlank: 'Fill the blank',
+      q_findLetter: 'Which letter is this?', q_caseMatch: 'Find the small letter for', q_firstLetter: 'Which letter starts the word?', q_pickWord: 'Which word is it?', q_buildWord: 'Tap the letters in order', q_listenPick: 'Listen. Which picture is it?', q_fillBlank: 'Which word fits?', clear: 'Clear',
+      k_word: 'The word', k_sounds: 'Sound it out', k_rhymes: 'Rhymes with', k_letter: 'The letter', k_like: '{L} like in', k_root: 'The root (shoresh)', k_family: 'Word family', k_answer: 'The answer', k_because: 'Look in the story', r_focusHint: 'Extra practice on: {tags}',
+      s_spell: 'Spell it', s_story: 'Story time', s_synonym: 'Same meaning', s_antonym: 'Opposites', s_grammar: 'Word forms', s_root: 'Word parts', s_homophone: 'Sounds alike', q_spell: 'Read the clue and spell the word', q_synonym: 'Which word means the same as "{w}"?', q_antonym: 'What is the opposite of "{w}"?', q_grammar: 'Which form fits?', q_root: 'What is the root?', q_homophone: 'Which spelling is right here?', k_rule: 'The rule', k_same: '{a} and {b} mean the same', k_opp: 'The opposite of {a} is {b}', k_example: 'For example' },
+    he: { r_title: 'גן המילים', r_sub: 'אותיות, מילים, סיפורים', r_skill: 'בחרו משחק', rb1: 'נבט (4–5)', rb2: 'ניצן (6–7)', rb3: 'פריחה (8–10)', r_answered: '{n} תשובות',
+      s_focus: 'תרגול של מה שקשה', s_findLetter: 'מוצאים את האות', s_caseMatch: 'אותיות סופיות', s_firstLetter: 'האות הראשונה', s_pickWord: 'בוחרים את המילה', s_buildWord: 'בונים את המילה', s_listenPick: 'מקשיבים ומוצאים', s_sentence: 'קוראים ועונים', s_fillBlank: 'משלימים את החסר',
+      q_findLetter: 'איזו אות זו?', q_caseMatch: 'מה האות הסופית של', q_firstLetter: 'באיזו אות מתחילה המילה?', q_pickWord: 'איזו מילה זו?', q_buildWord: 'לוחצים על האותיות לפי הסדר', q_listenPick: 'מקשיבים. איזו תמונה זו?', q_fillBlank: 'איזו מילה מתאימה?', clear: 'ניקוי',
+      k_word: 'המילה', k_sounds: 'מפרקים לצלילים', k_rhymes: 'מתחרז עם', k_letter: 'האות', k_like: '{L} כמו במילה', k_root: 'השורש', k_family: 'מילים מאותה משפחה', k_answer: 'התשובה', k_because: 'מחפשים בסיפור', r_focusHint: 'תרגול נוסף של: {tags}',
+      s_spell: 'מאייתים', s_story: 'סיפור קצר', s_synonym: 'מילים נרדפות', s_antonym: 'הפכים', s_grammar: 'צורות המילה', s_root: 'השורש', s_homophone: 'נשמע דומה', q_spell: 'קוראים את הרמז ומאייתים את המילה', q_synonym: 'איזו מילה דומה במשמעות ל"{w}"?', q_antonym: 'מה ההפך מ"{w}"?', q_grammar: 'איזו צורה מתאימה?', q_root: 'מה השורש של המילה?', q_homophone: 'איזה כתיב נכון כאן?', k_rule: 'הכלל', k_same: '{a} ו{b} הן מילים נרדפות', k_opp: 'ההפך מ{a} הוא {b}', k_example: 'לדוגמה' }
+  });
+  const DATA = window.KQ_WORDS;   // shared/words.js
+  const BANDS = { 1: ['findLetter', 'caseMatch', 'firstLetter', 'pickWord'], 2: ['pickWord', 'buildWord', 'listenPick', 'sentence', 'fillBlank'], 3: ['spell', 'story', 'synonym', 'antonym', 'grammar', 'root', 'homophone', 'fillBlank'] };
+  const ICONS = { focus: '🎯', findLetter: '🔤', caseMatch: '🔠', firstLetter: '🅰️', pickWord: '🖼️', buildWord: '🧩', listenPick: '🔊', sentence: '📖', fillBlank: '✍️', spell: '📝', story: '📚', synonym: '🟰', antonym: '↔️', grammar: '🔁', root: '🌳', homophone: '👂' };
+  const FINALS_BACK = { ך: 'כ', ם: 'מ', ן: 'נ', ף: 'פ', ץ: 'צ' };
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const L = () => DATA[KQ.i18n.lang] || DATA.en;
+  const isHe = () => KQ.i18n.lang === 'he';
+  const others = (arr, not, n) => shuffle(arr.filter(x => x !== not)).slice(0, n);
+  const wordOf = w => L().words.find(x => x[0] === w) || null;
+  const EGG = new URLSearchParams(location.search).get('egg'); const eggId = EGG && KQ.eggs.world['egg:' + EGG] === 'reading' ? 'egg:' + EGG : null;
+  const R = { band: KQ.ladder.band(profile.id, 'reading', [1, 2, 3]), level: 1, egg: null, skill: null, i: 0, n: 8, correct: 0, streak: 0, best: 0, points: 0, times: [], t0: 0, q: null, locked: false, results: [], built: '', seen: new Set(), weak: [], potion: null, shield: false, howtos: 0 };
+
+  // Generators return {kind, question, answer, choices, speak, tags, word (the target word entry), letter}
+  const GEN = {
+    findLetter() { const d = L(), l = pick(d.letters); return { kind: 'letter', big: l, question: t('q_findLetter'), answer: l, choices: shuffle([l, ...others(d.letters, l, 3)]), speak: d.letterName(l), speakFirst: true, hideBig: true, tags: [l], letter: l }; },
+    caseMatch() { const d = L(); if (isHe()) { const base = pick(Object.keys(d.finals)); return { kind: 'letter', big: base, question: t('q_caseMatch'), answer: d.finals[base], choices: shuffle([d.finals[base], ...others(Object.values(d.finals), d.finals[base], 3)]), speak: d.letterName(base), tags: [base, 'finals'], letter: base }; } const l = pick(d.letters); return { kind: 'letter', big: l, question: t('q_caseMatch'), answer: d.lower(l), choices: shuffle([d.lower(l), ...others(d.letters.map(d.lower), d.lower(l), 3)]), speak: l, tags: [l, 'case'], letter: l }; },
+    firstLetter() { const d = L(), w = pick(d.words), first = w[0][0], up = isHe() ? first : first.toUpperCase(); return { kind: 'word', pic: w[1], word: w, question: t('q_firstLetter'), answer: up, choices: shuffle([up, ...others(d.letters, up, 3)]), speak: w[0], speakFirst: true, tags: [up, 'first'], letter: up }; },
+    pickWord() { const d = L(), w = pick(d.words); return { kind: 'word', pic: w[1], word: w, question: t('q_pickWord'), answer: w[0], choices: shuffle([w[0], ...others(d.words.map(x => x[0]), w[0], 2)]), speak: w[0], wordChoices: true, tags: ['w:' + w[0], 'words'] }; },
+    buildWord() { const d = L(), pool = d.words.filter(x => x[0].length >= 3 && x[0].length <= 5), w = pick(pool); return { kind: 'build', pic: w[1], word: w, question: t('q_buildWord'), answer: w[0], letters: shuffle(w[0].split('')), speak: w[0], speakFirst: true, tags: ['w:' + w[0], 'spell'] }; },
+    listenPick() { const d = L(), w = pick(d.words); const ch = shuffle([w, ...shuffle(d.words.filter(x => x !== w)).slice(0, 3)]); return { kind: 'listen', word: w, question: t('q_listenPick'), answer: w[1], choices: ch.map(x => x[1]), speak: w[0], speakFirst: true, picChoices: true, tags: ['w:' + w[0], 'listen'] }; },
+    sentence() { const d = L(), s = pick(d.sentences); return { kind: 'sentence', text: s[0], question: s[1], answer: s[2][0], choices: shuffle(s[2]), speak: [s[0], s[1]], wordChoices: true, tags: ['sentence'] }; },
+    // ---- ages 8–10 ----
+    // spell a longer word from its meaning: the word's letters plus three decoys, so the kid has to know the spelling, not just the order
+    spell() { const d = L(), w = pick(d.words3), letters = w[0].split(''); const decoys = shuffle(d.letters.map(l => d.lower ? d.lower(l) : l).filter(l => !letters.includes(l))).slice(0, 3); return { kind: 'build', pic: w[1], word: w, clue: w[5], question: t('q_spell'), answer: w[0], letters: shuffle(letters.concat(decoys)), speak: w[0], tags: ['w:' + w[0], 'spell'] }; },
+    story() { const d = L(), s = pick(d.stories), q = pick(s.qs); return { kind: 'sentence', para: true, text: s.text, question: q[0], answer: q[1][0], choices: shuffle(q[1]), evidence: q[2], speak: [s.text, q[0]], wordChoices: true, tags: ['story'] }; },
+    synonym() { const d = L(), it = pick(d.synonyms); return { kind: 'vocab', big: it[0], question: t('q_synonym', { w: it[0] }), answer: it[1], choices: shuffle([it[1], ...it[2]]), speak: t('q_synonym', { w: it[0] }), wordChoices: true, pair: it, tags: ['synonym'] }; },
+    antonym() { const d = L(), it = pick(d.antonyms); return { kind: 'vocab', big: it[0], question: t('q_antonym', { w: it[0] }), answer: it[1], choices: shuffle([it[1], ...it[2]]), speak: t('q_antonym', { w: it[0] }), wordChoices: true, pair: it, tags: ['antonym'] }; },
+    grammar() { const d = L(), it = pick(d.grammar); return { kind: 'sentence', text: it[0], question: t('q_grammar'), answer: it[1], choices: shuffle([it[1], ...it[2]]), rule: it[3], speak: it[0].replace('___', '...'), wordChoices: true, tags: ['grammar'] }; },
+    // Hebrew: find the shoresh (decoys are other three-letter runs of the same word, so guessing by letters fails); English: prefixes and suffixes
+    root() {
+      const d = L();
+      if (!isHe()) { const it = pick(d.parts); return { kind: 'vocab', question: it[0], answer: it[1], choices: shuffle([it[1], ...it[2]]), rule: it[3], speak: it[0], wordChoices: true, tags: ['parts'] }; }
+      const pool = d.words.concat(d.words3).filter(w => w[4] && w[4].length === 3 && w[0].length >= 4), w = pick(pool), r = w[4], dots = s => s.split('').join('.');   // words whose root is hidden inside extra letters
+      const base = w[0].replace(/[ךםןףץ]/g, c => FINALS_BACK[c]).split(''), wrong = new Set();
+      for (const c of [base.slice(0, 3).join(''), base.slice(-3).join(''), base.slice(1, 4).join('')]) if (c.length === 3 && c !== r && wrong.size < 2) wrong.add(c);
+      let guard = 0; while (wrong.size < 2 && guard++ < 20) { const o = pick(pool)[4]; if (o !== r) wrong.add(o); }
+      return { kind: 'vocab', big: w[0], pic: w[1], word: w, question: t('q_root'), answer: dots(r), choices: shuffle([dots(r), ...[...wrong].map(dots)]), speak: w[0], wordChoices: true, tags: ['root', 'w:' + w[0]] };
+    },
+    homophone() { const d = L(), it = pick(d.homophones); return { kind: 'sentence', text: it[0], question: t('q_homophone'), answer: it[1], choices: shuffle([it[1], ...it[2]]), rule: it[3], speak: it[0].replace('___', '...'), wordChoices: true, tags: ['homophone'] }; },
+    fillBlank() { const d = L(), b = pick(R.band >= 3 ? d.blanks3 : d.blanks); return { kind: 'sentence', text: b[0], question: t('q_fillBlank'), answer: b[1], choices: shuffle([b[1], ...b[2].filter(x => x !== b[1])]), speak: b[0].replace('___', '...'), wordChoices: true, word: wordOf(b[1]), tags: ['blank', 'w:' + b[1]] }; }
+  };
+  // The learning card shown after every word: how the word is built, and what it belongs to.
+  function lesson(q) {
+    const steps = [], rtl = isHe(), w = q.word;
+    if (q.kind === 'letter' || (q.kind === 'word' && q.letter && !q.wordChoices)) {
+      const Lt = q.letter, d = L(), ex = d.words.filter(x => (rtl ? x[0][0] : x[0][0].toUpperCase()) === Lt).slice(0, 3);
+      steps.push({ text: t('k_letter') + ': ' + Lt + (rtl ? ' (' + d.letterName(Lt) + ')' : ' ' + Lt.toLowerCase()), big: true });
+      if (ex.length) steps.push({ text: t('k_like', { L: Lt }) + ' ' + ex.map(x => x[0] + ' ' + x[1]).join(', ') });
+      if (q.kind === 'word' && w) steps.push({ text: t('k_word') + ': ' + w[0], vis: { type: 'word', word: w[0], chunks: w[2].split('-'), root: w[4], rtl } });
+      return steps;
+    }
+    if (q.kind === 'vocab') {
+      if (q.pair) { const [a, b, , ex] = q.pair; steps.push({ text: q.skill === 'antonym' ? t('k_opp', { a, b }) : t('k_same', { a, b }), big: true }); if (ex) steps.push({ text: t('k_example') + ': ' + ex }); return steps; }
+      if (q.rule) { steps.push({ text: t('k_answer') + ': ' + q.answer, big: true }); steps.push({ text: t('k_rule') + ': ' + q.rule }); return steps; }
+      if (w) { steps.push({ text: t('k_root') + ': ' + q.answer, big: true, vis: { type: 'word', word: w[0], chunks: w[2].split('-'), root: w[4], rtl } }); steps.push({ text: t('k_family') + ': ' + w[3].join(', '), vis: { type: 'word', word: '', chunks: [], family: w[3], rtl } }); return steps; }
+    }
+    if (q.kind === 'sentence' && q.rule) { steps.push({ text: t('k_answer') + ': ' + q.answer, big: true }); steps.push({ text: t('k_rule') + ': ' + q.rule }); return steps; }
+    if (q.kind === 'sentence' && q.evidence) { steps.push({ text: t('k_because') + ': ' + q.evidence }); steps.push({ text: t('k_answer') + ': ' + q.answer, big: true }); return steps; }
+    if (w) {
+      steps.push({ text: t('k_word') + ': ' + w[0] + ' ' + w[1], big: true });
+      steps.push({ text: t('k_sounds') + ': ' + w[2].split('-').join(' · '), vis: { type: 'word', word: w[0], chunks: w[2].split('-'), root: w[4], rtl } });
+      if (rtl && w[4]) steps.push({ text: t('k_root') + ': ' + w[4].split('').join('.') + ' — ' + t('k_family') + ': ' + w[3].join(', '), vis: { type: 'word', word: '', chunks: [], family: w[3], rtl } });
+      else if (w[3] && w[3].length) steps.push({ text: (rtl ? t('k_family') : t('k_rhymes')) + ': ' + w[3].join(', '), vis: { type: 'word', word: '', chunks: [], family: w[3], rtl } });
+      return steps;
+    }
+    if (q.kind === 'sentence') { steps.push({ text: t('k_because') + ': ' + q.text }); steps.push({ text: t('k_answer') + ': ' + q.answer, big: true }); }
+    return steps;
+  }
+  function mastery(skill) { const st = KQ.skills.stats(profile.id, 'reading')[skill]; return st && st.recent >= 3 ? st : null; }
+  const tagName = k => KQ.tagLabel('reading', k);
+  function renderPick() {
+    KQ.ui.potionBar($('#potions'));
+    const bb = $('#bands'); bb.replaceChildren();
+    for (const b of [1, 2, 3]) { const d = el('div', 'tile' + (R.band === b ? ' on' : '')); d.appendChild(el('div', 'e', ['🌱', '🌷', '🌸'][b - 1])); d.appendChild(el('div', 'n', t('rb' + b))); if (KQ.ladder.get(profile.id, 'reading', b).complete) d.appendChild(el('span', 'done', '✅')); d.onclick = () => { R.band = b; KQ.ladder.setBand(profile.id, 'reading', b); sfx.play('tap'); renderPick(); }; bb.appendChild(d); }
+    { const lad = KQ.ladder.get(profile.id, 'reading', R.band); ui.ladder(bb, Object.assign({ steps: KQ.ladder.steps, nextName: R.band < 3 ? t('rb' + (R.band + 1)) : '' }, lad)); }
+    const sk = $('#skills'); sk.replaceChildren();
+    const weak = KQ.skills.weak(profile.id, 'reading', 5).map(w => w.key).filter(k => k.length <= 1 || k.startsWith('w:'));
+    const f = el('div', 'tile focus'); f.appendChild(el('div', 'e', ICONS.focus)); f.appendChild(el('div', 'n', t('s_focus'))); f.appendChild(el('div', 'd', weak.length ? weak.map(tagName).join(' · ') : t('focusEmpty'))); if (weak.length) f.onclick = () => startRound('focus'); else f.classList.add('locked'); sk.appendChild(f);
+    for (const s of BANDS[R.band]) { const d = el('div', 'tile'); d.appendChild(el('div', 'e', ICONS[s])); d.appendChild(el('div', 'n', t('s_' + s))); { const gs = KQ.growth.stats(profile.id, 'reading', R.band, s); if (gs.n) d.appendChild(el('span', 'gchip g-' + gs.status, t('g_status_' + gs.status))); } const m = mastery(s); if (m) { const box = el('div', 'm'); const bar = el('div', 'mastery'); const fill = el('i', m.rate >= 0.8 ? '' : m.rate >= 0.5 ? 'mid' : 'low'); fill.style.width = Math.round(m.rate * 100) + '%'; bar.appendChild(fill); box.appendChild(bar); box.appendChild(el('small', null, Math.round(m.rate * 100) + '% · ' + t('r_answered', { n: m.n }))); d.appendChild(box); } d.onclick = () => startRound(s); sk.appendChild(d); }
+  }
+  function startRound(skill, o) {
+    if (!(o && o.egg) && window.KQHeart && KQHeart.gate('reading', () => { renderPick(); startRound(skill, o); })) return;   /* the Heart Garden scene comes first after a level (shared/heart.js) */
+    if (!(o && o.egg) && KQ.tickets.waiting(profile.id, 'reading') && KQ.bridge.available(profile.id)) { KQ.bridge.open('reading', () => { renderPick(); startRound(skill, o); }); return; }   /* the second-language lesson after a level is mandatory (Yoni 2026-10-03) */
+    const egg = !!(o && o.egg); if (egg) R.band = 3;
+    const lad = KQ.ladder.get(profile.id, 'reading', R.band), tune = KQ.ladder.tune(egg ? KQ.ladder.steps : lad.level);
+    Object.assign(R, { skill, egg: egg ? eggId : null, level: egg ? KQ.ladder.steps : lad.level, i: 0, n: egg ? 12 : tune.n, correct: 0, streak: 0, best: 0, points: 0, times: [], locked: false, results: [], seen: new Set(), shield: false, howtos: 0 });
+    R.potion = store.activePotion(profile.id); R.plan = KQ.skills.plan(profile.id, 'reading'); R.weak = R.plan.focus.filter(k => k.length <= 1 || k.startsWith('w:')); R.helped = false;
+    R.G = KQ.growth.round(profile.id, 'reading', R.band, skill === 'focus' ? null : skill, BANDS[R.band]); if (!egg && skill !== 'focus') R.n = Math.max(5, R.n + R.G.plan(skill).dn);   /* the growth detector watches this round */
+    if (R.egg) { R.plan = { focus: [], easy: {}, boost: 0 }; R.weak = []; }
+    $('#pick').hidden = true; $('#round').hidden = false; document.body.classList.add('focus'); $('#skillName').textContent = skill === 'focus' ? t('r_focusHint', { tags: R.weak.map(tagName).join(', ') }) : t('s_' + skill) + ' · ' + t('rb' + R.band); sfx.play('tap'); nextQ();
+  }
+  function renderDots() { KQ.ui.progress(R.i, R.n); const d = $('#dots'); d.replaceChildren(); for (let i = 0; i < R.n; i++) d.appendChild(el('i', i < R.i ? (R.results[i] ? 'ok' : 'bad') : i === R.i ? 'cur' : '')); $('#streak').textContent = (R.streak >= 2 ? `🔥 ${R.streak}` : '') + (R.potion ? ' ' + KQ.POTIONS.find(p => p.id === R.potion).e : ''); const g = $('#garden'); g.replaceChildren(); for (let i = 0; i < R.n; i++) g.appendChild(el('span', i < R.i && R.results[i] ? 'on' : '', ['🌷', '🌸', '🌼', '🌻', '🌺'][i % 5])); }
+  // pick the next item: focus mode and half of normal rounds lean towards the kid's tricky letters and words
+  function pickQuestion() {
+    const want = R.weak.length && (R.skill === 'focus' || Math.random() < R.plan.boost) ? R.weak : null;
+    let skill = R.skill; if (skill === 'focus') skill = R.G ? R.G.pickSkill(BANDS[R.band]) : pick(BANDS[R.band]);
+    const keyOf = x => String(x.answer) + '|' + (x.text || x.big || x.pic || '');
+    let q = null;
+    const gen = () => GEN[skill](), fresh = c => !R.seen.has(keyOf(c));   // rotation across rounds, see KQ.rotate
+    q = want ? KQ.rotate.pick(profile.id, 'reading', R.band, skill, gen, keyOf, c => fresh(c) && c.tags.some(x => want.includes(x)), 14) : null;
+    q = q || KQ.rotate.pick(profile.id, 'reading', R.band, skill, gen, keyOf, fresh, 24) || gen();
+    q.skill = skill; R.seen.add(keyOf(q)); if (KQ.ui.peek) KQ.ui.peek({ repeat: KQ.rotate.seen(profile.id, 'reading', R.band, skill, keyOf(q)), band: R.band, level: R.level, rate: (KQ.skills.stats(profile.id, 'reading')[skill] || {}).rate });   /* the parents' corner code */ return q;
+  }
+  function nextQ() { if (R.i >= R.n) return renderQ(); const qc = document.querySelector('.qcard'); if (!qc || qc.classList.contains('swap')) return renderQ(); qc.classList.add('swap'); setTimeout(() => { renderQ(); setTimeout(() => qc.classList.remove('swap'), 30); }, 190); }   // the card fades out, changes, fades back: no jump
+  function renderQ() {
+    if (R.i >= R.n) return finish();
+    const q = pickQuestion(); R.q = q; R.locked = false; R.t0 = performance.now(); R.built = ''; if (R.G) R.G.begin(); renderDots(); $('#howto').replaceChildren();
+    const st = $('#stage'); st.replaceChildren(); $('#feedback').textContent = ''; $('#feedback').className = 'feedback';
+    const rtl = isHe();
+    if (q.kind === 'letter') { st.appendChild(q.hideBig ? el('div', 'bigpic', '🔊') : el('div', 'letterq', q.big)); st.appendChild(el('div', 'question', q.question)); }
+    else if (q.kind === 'word') { st.appendChild(el('div', 'bigpic', q.pic)); st.appendChild(el('div', 'question', q.question)); }
+    else if (q.kind === 'build') { st.appendChild(el('div', 'bigpic' + (q.clue ? ' sm' : ''), q.pic)); if (q.clue) { const c = el('div', 'clue', q.clue); c.style.direction = rtl ? 'rtl' : 'ltr'; st.appendChild(c); } st.appendChild(el('div', 'question', q.question)); const b = el('div', 'built', '\u00a0'); b.id = 'built'; b.style.direction = rtl ? 'rtl' : 'ltr'; st.appendChild(b); const ls = el('div', 'letters'); ls.style.marginTop = '12px'; const used = []; q.letters.forEach(ch => { const btn = el('button', null, ch); btn.onclick = () => { if (R.locked || btn.classList.contains('used')) return; btn.classList.add('used'); used.push(btn); R.built += ch; $('#built').textContent = R.built; sfx.play('tap'); if (R.built.length === q.answer.length) answer(R.built); }; ls.appendChild(btn); }); st.appendChild(ls); const bar = el('div', 'qtools'); const undo = el('button', 'btn ghost sm', '⌫'); undo.onclick = () => { if (R.locked || !used.length) return; used.pop().classList.remove('used'); R.built = R.built.slice(0, -1); $('#built').textContent = R.built || '\u00a0'; }; const clr = el('button', 'btn ghost sm', t('clear')); clr.onclick = () => { if (R.locked) return; R.built = ''; $('#built').textContent = '\u00a0'; used.length = 0; for (const x of ls.children) x.classList.remove('used'); }; bar.appendChild(undo); bar.appendChild(clr); st.appendChild(bar); }
+        else if (q.kind === 'vocab') { if (q.pic) st.appendChild(el('div', 'bigpic sm', q.pic)); if (q.big) { const b = el('div', 'vocab', q.big); b.style.direction = rtl ? 'rtl' : 'ltr'; st.appendChild(b); } st.appendChild(el('div', 'question', q.question)); }
+    else if (q.kind === 'listen') { st.appendChild(el('div', 'bigpic', '🔊')); st.appendChild(el('div', 'question', q.question)); }
+    else if (q.kind === 'sentence') { const s = el('div', 'sentence' + (q.para ? ' para' : ''), q.text); s.style.direction = rtl ? 'rtl' : 'ltr'; st.appendChild(s); st.appendChild(el('div', 'question', q.question)); }
+    const ch = $('#choices'); ch.replaceChildren(); ch.hidden = !q.choices;
+    if (q.choices) for (const c of q.choices) { const b = el('button', 'choice' + (q.picChoices ? ' pic' : q.wordChoices ? ' word' : ''), c); b.style.direction = rtl ? 'rtl' : 'ltr'; b.onclick = () => answer(c, b); ch.appendChild(b); }
+    if (q.kind === 'listen' || (q.speakFirst && R.band === 1)) setTimeout(() => KQ.speak(q.speak, null, { force: q.kind === 'listen' }), 250);   // listening questions must be heard even with the voice switch off
+    // extra help for letters and words this kid keeps missing: say it slowly, twice, and show the letter card
+    const struggling = q.tags.filter(x => R.plan.easy[x]);
+    if (struggling.length) { if (q.kind === 'letter' && !q.hideBig) { const st2 = $('#stage'); const d = L(); const ex = d.words.filter(w => (isHe() ? w[0][0] : w[0][0].toUpperCase()) === q.big).slice(0, 2); if (ex.length) st2.appendChild(el('div', 'muted', t('k_like', { L: q.big }) + ' ' + ex.map(w => w[0] + ' ' + w[1]).join(', '))); } if (!R.helped) { R.helped = true; ui.toast('🧙 ' + t('j_help', { tags: struggling.map(tagName).join(', ') })); } }
+  }
+  function answer(val, btn) {
+    if (R.locked) return; R.locked = true;
+    const ms = performance.now() - R.t0; R.times.push(ms); const q = R.q, ok = val === q.answer; R.results[R.i] = ok; if (window.KQStage) KQStage.reward(ok); const fb = $('#feedback');
+    KQ.skills.note('reading', { key: q.skill, tags: q.tags, ok }); KQ.rotate.note(profile.id, 'reading', R.band, q.skill, String(q.answer) + '|' + (q.text || q.big || q.pic || '')); if (R.G && !R.egg) R.G.answer(q.skill, ok, ms, {});
+    if (ok) { R.correct++; R.streak++; R.best = Math.max(R.best, R.streak); const pts = KQ.score.answer({ ok: true, ms, streak: R.streak, fastMs: KQ.score.FAST_MS.reading, potion: R.potion }); R.points += pts; fb.textContent = KQ.praise.ok({ fast: ms < KQ.score.FAST_MS.reading * 0.6 }); fb.className = 'feedback ok'; sfx.play('correct'); if (R.streak === 5) ui.toast(KQ.praise.steady(5)); if (btn) btn.classList.add('ok'); const bl = $('#built'); if (bl) bl.classList.add('ok'); }
+    else { if (R.potion === 'shield' && !R.shield) { R.shield = true; ui.toast('🛡️ ' + t('p_shield')); } else R.streak = 0; fb.textContent = KQ.praise.bad(q.answer); fb.className = 'feedback bad'; sfx.play('wrong'); ui.toast(KQ.praise.grow()); KQ.journal.add('reading', { skill: q.skill, tags: q.tags, prompt: q.para ? q.question : (q.text || q.big || (q.word ? (q.clue ? q.word[0] : q.word[1]) : '') || q.question), given: String(val), answer: String(q.answer), label: t('s_' + q.skill) }); if (btn) { btn.classList.add('bad'); for (const b of $('#choices').children) if (b.textContent === String(q.answer)) b.classList.add('ok'); } const bl = $('#built'); if (bl) { bl.classList.add('bad'); bl.textContent = q.answer; } $('.qcard').classList.add('shake'); setTimeout(() => $('.qcard').classList.remove('shake'), 450); }
+    R.i++; renderDots();
+    // the learning card: after a mistake always; after a right answer for words (sounds, root, family) so the kid learns the word, not just the picture
+    const steps = lesson(q);
+    if (!ok) KQ.speak(q.word ? q.word[0] : String(q.answer));   // hear the right word once; the card itself is read, not spoken
+    if (steps.length && (!ok || q.word)) { R.howtos++; ui.howto($('#howto'), steps, { doneLabel: R.i < R.n ? t('next') : t('gotIt'), onDone: nextQ, speak: false, stepwise: false }); }
+    else setTimeout(nextQ, ok ? 1000 : 2000);
+  }
+  function finish() {
+    const bonus = KQ.score.perfectBonus(R.correct, R.n); R.points += bonus; if (R.potion === 'double') R.points *= 2;
+    const stars = KQ.score.stars(R.correct, R.n), avgMs = Math.round(R.times.reduce((a, b) => a + b, 0) / Math.max(1, R.times.length));
+    const label = R.skill === 'focus' ? t('s_focus') : t('s_' + R.skill);
+    const rec = store.record('reading', { stars, points: R.points, correct: R.correct, total: R.n, avgMs, mode: R.skill, level: R.band, label, bestStreak: R.best, howtos: R.howtos });
+    const skills = BANDS[R.band], nextSkill = skills[(skills.indexOf(R.skill) + 1) % skills.length];
+    const extra = []; if (bonus) extra.push([t('perfectBonus'), '+' + bonus]); if (R.potion === 'double') extra.push([t('p_double'), '×2']);
+    const lad = R.egg ? { passed: true } : R.G ? R.G.finish(stars, R.level, [1, 2, 3], BANDS) : KQ.ladder.complete(profile.id, 'reading', R.band, R.level, stars, [1, 2, 3]); if (lad.lines) extra.push(...lad.lines);
+    if (lad.unlocked && !lad.bandUp) extra.push(['🪜 ' + t('ladderUnlocked', { l: lad.level }), '']); else if (!lad.passed && !lad.held && !lad.rolledBack) extra.push(['🪜 ' + t('ladderNeed'), '']);
+    if (lad.bandUp) R.band = lad.nextBand;
+    let hatched = null; if (R.egg) { if (stars >= 2) { hatched = KQ.eggs.win(profile.id, R.egg); KQ.profiles.update(profile.id, { avatar: hatched }); extra.push(['🐰 ' + t('eggWin'), ui.avatarTitle(hatched)[0]]); } else extra.push(['🥚 ' + t('eggLose'), '']); R.egg = null; }
+    const openReport = () => ui.report({ title: t('reportTitle'), stars, points: R.points, correct: R.correct, total: R.n, avgMs, bestStreak: R.best, extra, rec, workingOn: KQ.skills.weak(profile.id, 'reading', 4).map(w => w.key).filter(k => k.length <= 1 || k.startsWith('w:')).map(tagName), onAgain: () => startRound(R.skill), onNext: () => startRound(nextSkill), homeHref: '../index.html' });
+    const afterBand = lad.bandUp ? () => ui.celebrate({ emoji: '🎓', title: t('ladderBandUp', { n: KQ.ladder.steps, name: t('rb' + lad.nextBand) }), sub: t('rb' + lad.nextBand), onDone: openReport }) : openReport;
+    const afterCastle = hatched ? () => ui.celebrate({ emoji: '🐰', title: t('eggWin'), sub: ui.avatarTitle(hatched)[0], onDone: afterBand }) : afterBand;
+    if (rec && rec.castleUp) ui.celebrate({ emoji: '🏰', title: t('levelUp'), sub: t('welcomeTo', { name: t('castle' + rec.progress.castle) }), onDone: afterCastle }); else afterCastle();
+    $('#round').hidden = true; if (KQ.ui.peek) KQ.ui.peek(null); $('#pick').hidden = false; document.body.classList.remove('focus'); renderPick();
+  }
+  document.addEventListener('kq:ladder', () => { R.band = KQ.ladder.band(profile.id, 'reading', [1, 2, 3]) || R.band; if ($('#round').hidden) renderPick(); });
+  $('#btnQuit').onclick = () => { $('#round').hidden = true; if (KQ.ui.peek) KQ.ui.peek(null); $('#pick').hidden = false; document.body.classList.remove('focus'); renderPick(); };
+  $('#btnSpeak').onclick = () => { if (R.q) KQ.speak(R.q.speak, null, { force: true }); };
+  function boot() { ui.header({ title: t('r_title'), sub: t('r_sub'), homeHref: '../index.html' }); renderPick(); if (eggId && !R.egg && $('#round').hidden) startRound(BANDS[3][BANDS[3].length - 1], { egg: true }); }
+  document.addEventListener('kq:lang', () => { boot(); if (!$('#round').hidden && !R.egg) { $('#round').hidden = true; if (KQ.ui.peek) KQ.ui.peek(null); $('#pick').hidden = false; } });   // a language switch resets a normal round, never the egg challenge
+  KQ.i18n.apply(); boot();
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('leaf');</script>
+</body>
+</html>

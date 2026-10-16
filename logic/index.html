@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Logic Gate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#3b7f8c; --accent-2:#1f4a52; }
+.bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:600px){ .bands{grid-template-columns:1fr} }
+.pattern{font-size:clamp(34px,7vw,52px); letter-spacing:8px; line-height:1.3}
+.lgrid{display:inline-grid; gap:8px; margin:6px auto 10px; direction:ltr}
+.lgrid span{width:clamp(44px,10vw,64px); height:clamp(44px,10vw,64px); display:grid; place-items:center; font-size:clamp(26px,6vw,40px); border-radius:12px; background:var(--paper-2); border:2px solid var(--line)}
+.lgrid span.q{background:#fff3c4; border-color:var(--gold-2); font-weight:900; color:var(--accent-2)}
+.lgrid span.n{font:900 clamp(22px,5vw,32px) var(--font-body)}
+.riddle{font:700 clamp(18px,3.8vw,26px)/1.5 var(--font-body); text-align:start; max-width:620px; margin:6px auto 12px}
+.choice.pic{font-size:clamp(36px,8vw,56px); min-height:90px}
+.tile .m{width:100%; display:grid; gap:3px} .tile .m small{font-size:11px; color:var(--muted); font-weight:700}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header><main class="play" style="margin-top:18px"></main></div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script src="../shared/quest.js?v=18"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { s_seq2: 'Number sequences', s_code: 'Secret codes', s_truth: 'True or false logic', s_venn: 'Overlapping groups', s_deduce: 'Who has what?', lg_code: 'Shift every letter forward by {k}. What does {w} become?', lg_true: 'TRUE', lg_false: 'FALSE', lg_truth: 'A is {a}. B is {b}. What is A {op} B?', lg_truthNot: 'A is {a}. What is NOT A?', lg_venn_neither: 'In a class of {total}, {a} play football, {b} play chess and {both} play both. How many play neither?', lg_venn_onlyA: 'In a class of {total}, {a} play football, {b} play chess and {both} play both. How many play only football?', lg_venn_either: 'In a class of {total}, {a} play football, {b} play chess and {both} play both. How many play at least one?', lg_names: 'Maya,Omer,Tal,Noa,Ari,Dana', lg_items: 'the red hat,the blue hat,the green hat', lg_notHave: 'does not have', lg_whoHas: 'What does {name} have?', x_seq2_sq: 'Square numbers: 1, 4, 9, 16, 25… → {seq}', x_seq2_tri: 'Add 2, then 3, then 4, then 5 → {seq}', x_seq2_fib: 'Each number is the sum of the two before it → {seq}', x_seq2_alt: 'The steps alternate: up, then down, up, down → {seq}', x_seq2_double: 'Each number doubles → {seq}', x_seq2_step2: 'The gaps grow each time → {seq}', x_code: 'Move each letter of {w} forward {k} places → {ans}', x_truth_AND: 'AND is true only when both are true → {ans}', x_truth_OR: 'OR is true when at least one is true → {ans}', x_truth_XOR: 'XOR is true when exactly one is true → {ans}', x_truth_NAND: 'NAND is the opposite of AND → {ans}', x_truth_NOT: 'NOT flips it → {ans}', x_venn: 'Football or chess = {a} + {b} − {both} = {either}. The rest of {total} play neither. Answer: {ans}', x_deduce: 'Cross out what each one cannot have; the only hat left for {name} is {item}', lg_title: 'Logic Gate', lg_sub: 'Patterns, puzzles, careful thinking', s_next: 'What comes next?', s_odd: 'Odd one out', s_grid: 'Finish the grid', s_seq: 'Number patterns', s_riddle: 'Riddles', s_sudoku: 'Mini sudoku', lg_next: 'What comes next?', lg_odd: 'Which one does not belong?', lg_grid: 'Which piece fits the ❓?', lg_seq: 'What is the next number?', lg_sudoku: 'Every row and every column needs 1, 2, 3 and 4. What goes in the ❓?',
+      x_rep: 'The pattern repeats: {unit}. After {last} comes {ans}.', x_odd: '{keep} are all {cat}. {odd} is not.', x_grid: 'Each row has the same shape and each column has the same colour. The ❓ is a {shape} in the {col} column.', x_rule: 'Each step {rule}: {seq}.', x_ans: 'So the next one is {ans}.', x_row: 'Look at the row of the ❓: it already has {have}. The missing number is {ans}.', x_riddle: 'Think step by step: {why}',
+      c_animals: 'animals', c_fruit: 'fruit', c_vehicles: 'things that drive or fly', c_clothes: 'clothes', c_sea: 'sea creatures', c_tools: 'tools', sh_circle: 'circle', sh_square: 'square', sh_heart: 'heart', co_red: 'red', co_blue: 'blue', co_green: 'green', co_yellow: 'yellow', r_add: 'adds {n}', r_sub: 'takes away {n}', r_mul: 'doubles', r_sq: 'is the next square number', r_alt: 'alternates: +{a} then +{b}', tg_patterns: 'patterns', tg_sorting: 'sorting', tg_deduce: 'reasoning' },
+    he: { s_seq2: 'סדרות מספרים', s_code: 'צפנים סודיים', s_truth: 'אמת או שקר', s_venn: 'קבוצות חופפות', s_deduce: 'למי יש מה?', lg_code: 'מזיזים כל אות קדימה ב-{k}. מה יוצא מ-{w}?', lg_true: 'אמת', lg_false: 'שקר', lg_truth: 'A הוא {a}. B הוא {b}. מה זה A {op} B?', lg_truthNot: 'A הוא {a}. מה זה NOT A?', lg_venn_neither: 'בכיתה של {total}, {a} משחקים כדורגל, {b} שחמט ו-{both} את שניהם. כמה לא משחקים אף אחד?', lg_venn_onlyA: 'בכיתה של {total}, {a} משחקים כדורגל, {b} שחמט ו-{both} את שניהם. כמה משחקים רק כדורגל?', lg_venn_either: 'בכיתה של {total}, {a} משחקים כדורגל, {b} שחמט ו-{both} את שניהם. כמה משחקים לפחות אחד?', lg_names: 'מאיה,עומר,טל,נועה,ארי,דנה', lg_items: 'הכובע האדום,הכובע הכחול,הכובע הירוק', lg_notHave: 'לא מחזיק/ה את', lg_whoHas: 'מה יש ל{name}?', x_seq2_sq: 'מספרים ריבועיים: 1, 4, 9, 16, 25… → {seq}', x_seq2_tri: 'מוסיפים 2, אחר כך 3, 4, 5 → {seq}', x_seq2_fib: 'כל מספר הוא סכום שני הקודמים → {seq}', x_seq2_alt: 'הצעדים מתחלפים: למעלה, למטה, למעלה, למטה → {seq}', x_seq2_double: 'כל מספר מוכפל → {seq}', x_seq2_step2: 'הפערים גדלים כל פעם → {seq}', x_code: 'מזיזים כל אות של {w} קדימה {k} מקומות → {ans}', x_truth_AND: 'AND נכון רק כששניהם נכונים → {ans}', x_truth_OR: 'OR נכון כשלפחות אחד נכון → {ans}', x_truth_XOR: 'XOR נכון כשבדיוק אחד נכון → {ans}', x_truth_NAND: 'NAND הוא ההפך מ-AND → {ans}', x_truth_NOT: 'NOT הופך → {ans}', x_venn: 'כדורגל או שחמט = {a} + {b} − {both} = {either}. השאר מתוך {total} לא משחקים. תשובה: {ans}', x_deduce: 'מוחקים מה שכל אחד לא יכול להחזיק; הכובע היחיד שנשאר ל{name} הוא {item}', lg_title: 'שער ההיגיון', lg_sub: 'דפוסים, חידות, חשיבה זהירה', s_next: 'מה בא אחר כך?', s_odd: 'מי לא שייך?', s_grid: 'משלימים את הלוח', s_seq: 'דפוסי מספרים', s_riddle: 'חידות', s_sudoku: 'סודוקו קטן', lg_next: 'מה בא אחר כך?', lg_odd: 'מי לא שייך לקבוצה?', lg_grid: 'איזה חלק מתאים ל-❓?', lg_seq: 'מה המספר הבא?', lg_sudoku: 'בכל שורה ובכל עמודה צריכים להיות 1, 2, 3 ו-4. מה בא במקום ה-❓?',
+      x_rep: 'הדפוס חוזר: {unit}. אחרי {last} בא {ans}.', x_odd: '{keep} כולם {cat}. {odd} לא.', x_grid: 'בכל שורה אותה צורה ובכל עמודה אותו צבע. ה-❓ הוא {shape} בעמודה ה{col}.', x_rule: 'בכל צעד {rule}: {seq}.', x_ans: 'ולכן הבא הוא {ans}.', x_row: 'מסתכלים על השורה של ה-❓: יש בה כבר {have}. המספר החסר הוא {ans}.', x_riddle: 'חושבים צעד אחרי צעד: {why}',
+      c_animals: 'חיות', c_fruit: 'פירות', c_vehicles: 'כלי תחבורה', c_clothes: 'בגדים', c_sea: 'יצורי ים', c_tools: 'כלי עבודה', sh_circle: 'עיגול', sh_square: 'ריבוע', sh_heart: 'לב', co_red: 'אדומה', co_blue: 'כחולה', co_green: 'ירוקה', co_yellow: 'צהובה', r_add: 'מוסיפים {n}', r_sub: 'מורידים {n}', r_mul: 'מכפילים פי 2', r_sq: 'המספר הריבועי הבא', r_alt: 'לסירוגין: +{a} ואז +{b}', tg_patterns: 'דפוסים', tg_sorting: 'מיון', tg_deduce: 'הסקה' }
+  });
+  const { t } = KQ;
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), pick = a => a[Math.floor(Math.random() * a.length)];
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const CATS = { animals: ['🐱', '🐶', '🐭', '🐰', '🐻', '🦊'], fruit: ['🍎', '🍌', '🍇', '🍓', '🍊', '🍐'], vehicles: ['🚗', '🚌', '🚲', '✈️', '🚂', '⛵'], clothes: ['👕', '👖', '🧢', '👟', '🧦', '🧤'], sea: ['🐟', '🐙', '🦀', '🐬', '🦈', '🐚'], tools: ['🔨', '🪛', '🔧', '🪚', '📏', '✂️'] };
+  const SHAPES = [['circle', ['🔴', '🔵', '🟢', '🟡']], ['square', ['🟥', '🟦', '🟩', '🟨']], ['heart', ['❤️', '💙', '💚', '💛']]], COLS = ['red', 'blue', 'green', 'yellow'];
+  const ICONS_POOL = ['⭐', '🌙', '☀️', '🍀', '🔔', '🎈', '🍄', '🐝'];
+  const gridEl = (cells, cols, numeric) => { const g = document.createElement('div'); g.className = 'lgrid'; g.style.gridTemplateColumns = `repeat(${cols}, auto)`; cells.forEach(c => { const s = document.createElement('span'); if (c === '?') { s.className = 'q'; s.textContent = '❓'; } else { s.textContent = c; if (numeric) s.className = 'n'; } g.appendChild(s); }); return g; };
+  const RIDDLES = {
+    en: [['Noa is taller than Ben. Ben is taller than Dan. Who is the shortest?', 'Dan', ['Noa', 'Ben'], 'Noa > Ben > Dan, so Dan is at the bottom.'], ['A red box is heavier than a blue box. The blue box is heavier than a green box. Which box is the lightest?', 'the green box', ['the red box', 'the blue box'], 'red > blue > green.'], ['Mia has more coins than Tom. Tom has more coins than Lia. Who has the most?', 'Mia', ['Tom', 'Lia'], 'Mia > Tom > Lia.'], ['All cats have whiskers. Pip is a cat. Does Pip have whiskers?', 'yes', ['no', 'cannot know'], 'If every cat has whiskers and Pip is a cat, Pip must have whiskers.'], ['Every knight carries a shield. Sam carries no shield. Is Sam a knight?', 'no', ['yes', 'cannot know'], 'A knight would carry a shield, so Sam cannot be a knight.'], ['Some birds can swim. Kiki is a bird. Can Kiki swim?', 'cannot know', ['yes', 'no'], 'Only SOME birds swim, so we cannot be sure about Kiki.'], ['The bakery is left of the school. The park is right of the school. What is in the middle?', 'the school', ['the bakery', 'the park'], 'bakery — school — park.'], ['Ari is older than Gal but younger than Rom. Who is the oldest?', 'Rom', ['Ari', 'Gal'], 'Rom > Ari > Gal.'], ['If it rains, the match is cancelled. The match was played. Did it rain?', 'no', ['yes', 'cannot know'], 'Rain would have cancelled it; it was played, so no rain.'], ['Two friends share 6 apples equally. Then each eats one. How many are left in all?', '4', ['5', '2'], '3 each, minus 1 each = 2 each, 4 in all.'], ['A week has 7 days. Today is Tuesday. What day was it 7 days ago?', 'Tuesday', ['Monday', 'Wednesday'], '7 days is exactly one week.'], ['Dana sits between Eli and Yuval. Eli is not next to Yuval. Who is in the middle?', 'Dana', ['Eli', 'Yuval'], 'Eli — Dana — Yuval.']],
+    he: [['נועה גבוהה מבן. בן גבוה מדן. מי הכי נמוך?', 'דן', ['נועה', 'בן'], 'נועה > בן > דן, ולכן דן בתחתית.'], ['קופסה אדומה כבדה מקופסה כחולה. הכחולה כבדה מהירוקה. איזו קופסה הכי קלה?', 'הירוקה', ['האדומה', 'הכחולה'], 'אדומה > כחולה > ירוקה.'], ['למיה יש יותר מטבעות מלתום. לתום יש יותר מללאה. למי הכי הרבה?', 'מיה', ['תום', 'לאה'], 'מיה > תום > לאה.'], ['לכל החתולים יש שפם. פיפ הוא חתול. האם לפיפ יש שפם?', 'כן', ['לא', 'אי אפשר לדעת'], 'אם לכל חתול יש שפם ופיפ חתול, חייב להיות לו שפם.'], ['כל אביר נושא מגן. סם לא נושא מגן. האם סם אביר?', 'לא', ['כן', 'אי אפשר לדעת'], 'אביר היה נושא מגן, ולכן סם לא יכול להיות אביר.'], ['חלק מהציפורים יודעות לשחות. קיקי היא ציפור. האם קיקי יודעת לשחות?', 'אי אפשר לדעת', ['כן', 'לא'], 'רק חלק מהציפורים שוחות, אז אי אפשר להיות בטוחים לגבי קיקי.'], ['המאפייה משמאל לבית הספר. הפארק מימין לבית הספר. מה באמצע?', 'בית הספר', ['המאפייה', 'הפארק'], 'מאפייה — בית ספר — פארק.'], ['ארי מבוגר מגל אבל צעיר מרום. מי הכי מבוגר?', 'רום', ['ארי', 'גל'], 'רום > ארי > גל.'], ['אם יורד גשם, המשחק מבוטל. המשחק התקיים. האם ירד גשם?', 'לא', ['כן', 'אי אפשר לדעת'], 'גשם היה מבטל את המשחק; הוא התקיים, אז לא ירד גשם.'], ['שני חברים מתחלקים שווה ב-6 תפוחים. אחר כך כל אחד אוכל אחד. כמה נשארו בסך הכול?', '4', ['5', '2'], '3 לכל אחד, פחות 1 לכל אחד = 2 לכל אחד, 4 ביחד.'], ['בשבוע יש 7 ימים. היום יום שלישי. איזה יום היה לפני 7 ימים?', 'יום שלישי', ['יום שני', 'יום רביעי'], '7 ימים הם בדיוק שבוע.'], ['דנה יושבת בין אלי ליובל. אלי לא ליד יובל. מי באמצע?', 'דנה', ['אלי', 'יובל'], 'אלי — דנה — יובל.']]
+  };
+  const GEN = {
+    // ---- ages 10–15: number sequences, ciphers, truth tables, overlapping sets, deduction ----
+    seq2(tier, band) { const kind = pick(band >= 5 ? ['sq', 'tri', 'fib', 'alt', 'double'] : ['sq', 'alt', 'double', 'step2']); let seq; if (kind === 'sq') { const o = ri(0, 3); seq = [1, 2, 3, 4, 5].map(i => (i + o) * (i + o)); } else if (kind === 'tri') seq = [1, 3, 6, 10, 15]; else if (kind === 'fib') { const a = ri(1, 3), b = ri(2, 5); seq = [a, b]; while (seq.length < 5) seq.push(seq.at(-1) + seq.at(-2)); } else if (kind === 'alt') { const s = ri(1, 9), p = ri(2, 6), q = ri(1, 4); seq = [s]; for (let i = 0; i < 4; i++) seq.push(i % 2 ? seq.at(-1) - q : seq.at(-1) + p); } else if (kind === 'double') { const s = ri(1, 5); seq = [s, s * 2, s * 4, s * 8, s * 16]; } else { const s = ri(1, 9), d = ri(2, 5); seq = [s]; for (let i = 1; i < 5; i++) seq.push(seq.at(-1) + d * i); } const ans = seq[4]; return { key: 'q' + seq.join(','), prompt: seq.slice(0, 4).join(', ') + ', ?', answer: ans, choices: shuffle([...new Set([ans, ans + 1, ans - 2, ans + ri(3, 9)])]).slice(0, 4), tags: ['seq2'], x: { kind, seq } }; },
+    code(tier) { const W = ['CAT', 'DOG', 'SUN', 'MAP', 'KEY', 'BOX', 'HAT', 'JAM', 'OWL', 'FOX', 'BEE', 'RUN']; const w = pick(W), k = ri(1, tier ? 5 : 3), enc = s => s.replace(/[A-Z]/g, ch => String.fromCharCode((ch.charCodeAt(0) - 65 + k) % 26 + 65)); const ans = enc(w); const wrong = [1, 2, 3, 4, 5, 6].filter(j => j !== k).map(j => w.replace(/[A-Z]/g, ch => String.fromCharCode((ch.charCodeAt(0) - 65 + j) % 26 + 65))); return { key: 'code' + w + k, prompt: t('lg_code', { k, w }), answer: ans, choices: shuffle([ans, ...shuffle(wrong).slice(0, 3)]), tags: ['code'], x: { w, k, ans } }; },
+    truth(tier) { const A = Math.random() < 0.5, B = Math.random() < 0.5, op = pick(tier ? ['AND', 'OR', 'XOR', 'NAND'] : ['AND', 'OR', 'NOT']); let ans; if (op === 'AND') ans = A && B; else if (op === 'OR') ans = A || B; else if (op === 'XOR') ans = A !== B; else if (op === 'NAND') ans = !(A && B); else ans = !A; const tf = v => t(v ? 'lg_true' : 'lg_false'); const prompt = op === 'NOT' ? t('lg_truthNot', { a: tf(A) }) : t('lg_truth', { a: tf(A), b: tf(B), op }); return { key: 'tr' + op + A + B, prompt, answer: tf(ans), choices: [tf(true), tf(false)], tags: ['truth'], x: { A, B, op, ans, tf: tf(ans) } }; },
+    venn(tier) { const total = ri(tier ? 24 : 16, tier ? 40 : 24), both = ri(2, 6), a = both + ri(3, 8), b = both + ri(3, 8); const neither = total - (a + b - both); if (neither < 0) return GEN.venn(tier); const ask = pick(['neither', 'onlyA', 'either']); const ans = ask === 'neither' ? neither : ask === 'onlyA' ? a - both : a + b - both; return { key: 'v' + [total, a, b, both, ask].join(','), prompt: t('lg_venn_' + ask, { total, a, b, both }), answer: ans, choices: null, tags: ['venn'], x: { total, a, b, both, ask, ans } }; },
+    deduce(tier) { const names = shuffle(t('lg_names').split(',')).slice(0, 3), items = shuffle(t('lg_items').split(',')).slice(0, 3); const owner = names.slice(); const c1 = `${names[0]} ${t('lg_notHave')} ${items[0]}.`, c2 = `${names[1]} ${t('lg_notHave')} ${items[0]}.`, c3 = `${names[0]} ${t('lg_notHave')} ${items[1]}.`; const has = { [names[2]]: items[0], [names[1]]: items[1], [names[0]]: items[2] }; const askName = pick(names); return { key: 'd' + names.join('') + items.join('') + askName, prompt: `${c1} ${c2} ${c3} ${t('lg_whoHas', { name: askName })}`, wordy: true, answer: has[askName], choices: shuffle(items.slice()), tags: ['deduce'], x: { has, askName } }; },
+
+    next(tier, band) {
+      const icons = shuffle(ICONS_POOL); const unit = band === 1 && !tier ? [icons[0], icons[1]] : pick([[icons[0], icons[1]], [icons[0], icons[1], icons[2]], [icons[0], icons[0], icons[1]], [icons[0], icons[1], icons[1]]]);
+      const len = unit.length * 2 + (band === 1 ? 1 : 2), seq = Array.from({ length: len }, (_, i) => unit[i % unit.length]), ans = unit[len % unit.length];
+      return { key: 'n' + seq.join(''), prompt: t('lg_next'), visualEl: Object.assign(document.createElement('div'), { className: 'pattern', textContent: seq.join(' ') + ' ❓' }), answer: ans, choices: shuffle([...new Set([ans, ...unit, icons[3], icons[4]])].slice(0, 4)), picChoices: true, tags: ['next', 'patterns'], x: { unit, last: seq[len - 1], ans } };
+    },
+    odd(tier, band) { const keys = shuffle(Object.keys(CATS)), cat = keys[0], other = keys[1]; const keep = shuffle(CATS[cat]).slice(0, band === 1 ? 3 : 4), odd = pick(CATS[other]); const items = shuffle(keep.concat(odd)); return { key: 'o' + items.join(''), prompt: t('lg_odd'), answer: odd, choices: items, picChoices: true, tags: ['odd', 'sorting'], x: { keep, odd, cat } }; },
+    grid(tier, band) {
+      const size = band === 3 || tier ? 3 : 2, shapes = shuffle(SHAPES).slice(0, size), colIdx = shuffle([0, 1, 2, 3]).slice(0, size);
+      const cells = []; for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) cells.push(shapes[r][1][colIdx[c]]);
+      const miss = ri(0, cells.length - 1), ans = cells[miss]; const shown = cells.slice(); shown[miss] = '?';
+      const r = Math.floor(miss / size), c = miss % size; const wrong = shuffle([shapes[r][1][pick(colIdx.filter(x => x !== colIdx[c]))], shapes[(r + 1) % size][1][colIdx[c]], SHAPES.find(s => s[0] !== shapes[r][0])[1][colIdx[c]]]);
+      return { key: 'g' + cells.join('') + miss, prompt: t('lg_grid'), visualEl: gridEl(shown, size), answer: ans, choices: shuffle([...new Set([ans, ...wrong])]).slice(0, 4), picChoices: true, tags: ['grid', 'patterns'], x: { shape: shapes[r][0], col: COLS[colIdx[c]] } };
+    },
+    seq(tier) {
+      const kind = pick(tier ? ['add', 'sub', 'mul', 'sq', 'alt'] : ['add', 'sub', 'add']); let seq = [], rule, ruleVars = {};
+      if (kind === 'add') { const n = ri(2, 9), s = ri(1, 20); seq = [0, 1, 2, 3].map(i => s + i * n); rule = 'r_add'; ruleVars = { n }; }
+      else if (kind === 'sub') { const n = ri(2, 9), s = ri(40, 90); seq = [0, 1, 2, 3].map(i => s - i * n); rule = 'r_sub'; ruleVars = { n }; }
+      else if (kind === 'mul') { const s = ri(1, 4); seq = [0, 1, 2, 3].map(i => s * Math.pow(2, i)); rule = 'r_mul'; }
+      else if (kind === 'sq') { const s = ri(1, 4); seq = [0, 1, 2, 3].map(i => (s + i) * (s + i)); rule = 'r_sq'; }
+      else { const a = ri(1, 5), b = ri(6, 10), s = ri(1, 10); seq = [s, s + a, s + a + b, s + 2 * a + b]; rule = 'r_alt'; ruleVars = { a, b }; }
+      const ans = kind === 'add' ? seq[3] + ruleVars.n : kind === 'sub' ? seq[3] - ruleVars.n : kind === 'mul' ? seq[3] * 2 : kind === 'sq' ? Math.pow(Math.sqrt(seq[3]) + 1, 2) : seq[3] + ruleVars.b;
+      return { key: 's' + seq.join(','), prompt: t('lg_seq'), visualEl: gridEl(seq.map(String).concat('?'), 5, true), answer: ans, tags: ['seq', 'patterns'], x: { seq, ans, rule: t(rule, ruleVars) } };
+    },
+    riddle() { const it = pick(RIDDLES[KQ.i18n.lang] || RIDDLES.en); return { key: 'r' + it[0].slice(0, 20), prompt: '', visualEl: Object.assign(document.createElement('div'), { className: 'riddle', textContent: it[0], dir: KQ.i18n.lang === 'he' ? 'rtl' : 'ltr' }), journal: it[0].slice(0, 60), answer: it[1], choices: shuffle([it[1], ...it[2]]), tags: ['riddle', 'deduce'], x: { why: it[3] } }; },
+    sudoku() {
+      const base = [[1, 2, 3, 4], [3, 4, 1, 2], [2, 3, 4, 1], [4, 1, 2, 3]], perm = shuffle([1, 2, 3, 4]), rows = shuffle([0, 1, 2, 3]), cols = shuffle([0, 1, 2, 3]);
+      const g = rows.map(r => cols.map(c => perm[base[r][c] - 1])); const miss = ri(0, 15), r = Math.floor(miss / 4), c = miss % 4, ans = g[r][c];
+      const cells = g.flat().map(String); cells[miss] = '?';
+      return { key: 'k' + cells.join(''), prompt: t('lg_sudoku'), wordy: true, visualEl: gridEl(cells, 4, true), answer: ans, choices: [1, 2, 3, 4], tags: ['sudoku', 'deduce'], x: { have: g[r].filter((_, i) => i !== c).join(', '), ans } };
+    }
+  };
+  const EXPLAIN = {
+    seq2: q => [{ text: t('x_seq2_' + q.x.kind, { seq: q.x.seq.join(', ') }), big: true }],
+    code: q => [{ text: t('x_code', { k: q.x.k, w: q.x.w, ans: q.x.ans }), big: true }],
+    truth: q => [{ text: t('x_truth_' + q.x.op, { ans: q.x.tf }), big: true }],
+    venn: q => [{ text: t('x_venn', { a: q.x.a, b: q.x.b, both: q.x.both, either: q.x.a + q.x.b - q.x.both, total: q.x.total, ans: q.x.ans }), big: true }],
+    deduce: q => [{ text: t('x_deduce', { name: q.x.askName, item: q.x.has[q.x.askName] }), big: true }],
+
+    next: q => [{ text: t('x_rep', { unit: q.x.unit.join(' '), last: q.x.last, ans: q.x.ans }), big: true }],
+    odd: q => [{ text: t('x_odd', { keep: q.x.keep.join(' '), cat: t('c_' + q.x.cat), odd: q.x.odd }), big: true }],
+    grid: q => [{ text: t('x_grid', { shape: t('sh_' + q.x.shape), col: t('co_' + q.x.col) }) }, { text: q.answer, big: true }],
+    seq: q => [{ text: t('x_rule', { rule: q.x.rule, seq: q.x.seq.join(', ') }) }, { text: t('x_ans', { ans: q.x.ans }), big: true }],
+    riddle: q => [{ text: t('x_riddle', { why: q.x.why }) }, { text: q.answer, big: true }],
+    sudoku: q => [{ text: t('x_row', { have: q.x.have, ans: q.x.ans }), big: true }]
+  };
+  KQ.quest.shell();
+  KQ.quest({ world: 'logic', title: 'lg_title', sub: 'lg_sub', bands: { 1: ['next', 'odd'], 2: ['next', 'grid', 'odd'], 3: ['seq', 'grid', 'riddle', 'sudoku'], 4: ['seq2', 'code', 'riddle', 'sudoku'], 5: ['truth', 'venn', 'seq2', 'code'], 6: ['deduce', 'truth', 'venn', 'seq2'] }, bandKey: 'band', bandIcons: ['🛡️', '⚔️', '🐴'], icons: { seq2: '🔢', code: '🔐', truth: '⚡', venn: '🫧', deduce: '🕵️',  next: '➡️', odd: '🔎', grid: '🧩', seq: '🔢', riddle: '🦉', sudoku: '🔲' }, n: 8, fastMs: 8000, gen: GEN, explain: EXPLAIN });
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('violet');</script>
+</body>
+</html>

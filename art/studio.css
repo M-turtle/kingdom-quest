@@ -1,0 +1,38 @@
+/* the Music Hall studio shell (.mc …) is shared: the Paint Studio and the Gallery use the same glass full-screen panel */
+.mc{position:fixed; inset:0; z-index:40; overflow:auto; padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; gap:12px; background:radial-gradient(120% 90% at 50% 0%, #4a2a14, #140c08 70%); color:#fff4e6; font-family:var(--font-body, Rubik, sans-serif)}
+.mc > *{flex-shrink:0}
+body.mc-open{overflow:hidden}
+.mc-head{display:flex; align-items:center; gap:12px} .mc-head h2{margin:0; flex:1; font:900 clamp(22px,4vw,32px)/1.1 Cinzel, 'Frank Ruhl Libre', serif; color:#ffe7a8}
+.mc-x{width:44px; height:44px; border-radius:50%; border:0; background:rgba(255,255,255,.14); color:#fff; font:400 28px/1 sans-serif; cursor:pointer}
+.mc-guide{display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:14px; background:rgba(255,224,138,.14); border:1px solid rgba(255,224,138,.5); font:700 clamp(16px,2.6vw,20px)/1.3 var(--font-body, Rubik)} .mc-guide span{flex:1}
+.mc-say{width:42px; height:42px; border-radius:50%; border:0; background:#ffe08a; color:#3a1020; display:grid; place-items:center; cursor:pointer; flex:none} .mc-say .kq-g, .mc-say .kq-i{width:22px; height:22px}
+.mc-ctl{display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center} .mc-ctl .btn.on{outline:3px solid #ffe08a}
+.mc-tempo{display:flex; align-items:center; gap:8px; font-weight:700} .mc-tempo input{width:130px}
+.mc-concert{padding:12px 14px; border-radius:16px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12)} .mc-concert h3{margin:0 0 8px; font:800 18px Cinzel, 'Frank Ruhl Libre', serif; color:#ffe7a8} .mc-concert p{margin:0; opacity:.8}
+.frame{display:inline-block; padding:8px; border-radius:5px; background:linear-gradient(135deg,#e8c068,#9a6a1e 45%,#f2d088 70%,#8a5a18); box-shadow:0 8px 24px rgba(0,0,0,.45), inset 0 0 0 2px rgba(0,0,0,.25)} .frame img{display:block; max-width:100%; height:auto}
+.cap{text-align:center; display:grid; gap:2px} .cap b{font-size:16px} .cap span{font-size:13px; opacity:.85}
+/* Paint Studio */
+.ps-like{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px}
+.ps-likeb{flex:none; display:flex; flex-direction:column; align-items:center; gap:4px; width:96px; padding:6px; border-radius:12px; border:2px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:#fff4e6; font:700 11.5px var(--font-body, Rubik); cursor:pointer}
+.ps-likeb img{width:80px; height:58px; object-fit:cover; border-radius:4px} .ps-likeb.on{border-color:#ffe08a; background:rgba(255,224,138,.18)}
+.ps-stage{display:flex; gap:14px; align-items:flex-start; justify-content:center; flex-wrap:wrap}
+.ps-ref{display:grid; gap:6px; justify-items:center; width:min(36vw,300px)} .ps-ref .frame img{max-height:34vh; width:auto}
+.ps-canvas{flex:1 1 420px; max-width:900px} .ps-canvas canvas{display:block; width:100%; height:auto; border-radius:6px; box-shadow:0 0 0 8px #c8962e, 0 10px 30px rgba(0,0,0,.5); touch-action:none; cursor:crosshair; background:#fffdf8}
+.ps-tools, .ps-stamps, .ps-pal{display:flex; flex-wrap:wrap; gap:8px; justify-content:center}
+.ps-tool{display:flex; align-items:center; gap:6px; padding:8px 12px; border-radius:12px; border:2px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:#fff4e6; font:800 14px var(--font-body, Rubik); cursor:pointer} .ps-tool.on{border-color:#ffe08a; background:rgba(255,224,138,.18)} .ps-ti{width:24px; height:24px}
+.ps-stampb{width:58px; height:58px; border-radius:14px; border:2px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); display:grid; place-items:center; cursor:pointer} .ps-stampb .kq-i{width:40px; height:40px} .ps-stampb.on{border-color:#ffe08a; background:rgba(255,224,138,.22)}
+.ps-col{width:46px; height:46px; border-radius:50%; border:3px solid rgba(255,255,255,.5); cursor:pointer; box-shadow:inset 0 -5px 0 rgba(0,0,0,.18)} .ps-col.on{outline:4px solid #ffe08a; outline-offset:2px} .ps-col.mixed{border-style:dashed}
+.ps-mine{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px}
+.ps-minei{display:grid; gap:6px; justify-items:center}
+/* the Gallery */
+.gl{position:fixed; inset:0; z-index:40; overflow:auto; padding:calc(14px + env(safe-area-inset-top,0px)) 16px 24px; background:radial-gradient(120% 90% at 50% 0%, #3a2a1a, #120c08 70%); color:#fff4e6; display:flex; flex-direction:column; gap:12px}
+.gl > *{flex-shrink:0}
+.gl-head{display:flex; align-items:center; gap:12px} .gl-head h2{margin:0; font:900 clamp(22px,4vw,32px) Cinzel, 'Frank Ruhl Libre', serif; color:#ffe7a8} .gl-n{flex:1; opacity:.8}
+.gl-chips{display:flex; gap:6px; flex-wrap:wrap} .gl-chip{padding:7px 12px; border-radius:999px; border:1px solid rgba(255,224,138,.5); background:transparent; color:#ffe7a8; font:700 13px var(--font-body, Rubik); cursor:pointer} .gl-chip.on{background:linear-gradient(180deg,#ffe08a,#f2b84a); color:#3a1a08}
+.gl-about{margin:0; font-size:15px; line-height:1.5; opacity:.92; max-width:760px}
+.gl-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:18px}
+.gl-item{display:grid; gap:8px; justify-items:center; align-content:start; background:none; border:0; color:inherit; cursor:pointer; font:inherit}
+.gl-item .frame img{width:100%; height:170px; object-fit:contain; background:#1a1410}
+.gl-big{position:fixed; inset:0; z-index:41; background:rgba(10,6,4,.94); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:20px; overflow:auto; cursor:zoom-out}
+.gl-big .frame img{max-width:min(92vw,1100px); max-height:66vh; width:auto}
+.gl-note{opacity:.6}

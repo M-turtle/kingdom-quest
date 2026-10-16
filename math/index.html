@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Math Tower</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#2b5fa8; --accent-2:#1a3c6e; }
+.bands{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
+@media (max-width:700px){ .bands{grid-template-columns:repeat(2,1fr)} }
+.tile .m{width:100%; display:grid; gap:3px} .tile .m small{font-size:11px; color:var(--muted); font-weight:700}
+.qtools{display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap}
+.howto.path{border-color:var(--gold-2); box-shadow:0 0 0 3px color-mix(in srgb, var(--gold) 35%, transparent)}
+.howto.path .sub{font-size:14px; color:var(--muted); font-weight:700; margin:2px 0 8px}
+.howto.path .pprompt{font:800 clamp(20px,4.2vw,28px)/1.3 var(--font-body); margin:6px 0 10px}
+.howto.path .choices{margin-top:8px}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap">
+  <header class="kq-header"></header>
+  <main class="play" style="margin-top:18px">
+    <div id="potions"></div>
+    <section class="card" id="pick">
+      <h2 data-i18n="ageBand">Age</h2>
+      <div class="bands" id="bands"></div>
+      <div class="sec" style="margin-top:18px" data-i18n="m_skill">Choose a challenge</div>
+      <div class="tiles" id="skills"></div>
+    </section>
+
+    <section class="card" id="round" hidden>
+      <div class="rhead"><button class="back" id="btnQuit" type="button"><span class="chev">‹</span><span data-i18n="back">Back</span></button><div class="prog"><div class="qbar" id="qbar"><i></i></div><span class="qcount" id="qcount"></span></div><div class="pill" id="skillName"></div><div class="dots" id="dots" hidden></div><div class="streak" id="streak" hidden></div></div>
+      <div class="qcard">
+        <div class="visual" id="visual" hidden></div>
+        <div class="prompt" id="prompt"></div>
+        <div id="answerBox" hidden><div class="answer" id="answer">&nbsp;</div></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="choices" id="choices" hidden></div>
+        <div class="numpad" id="numpad" hidden></div>
+        <div class="muted" id="fracHint" hidden data-i18n="m_fracHint">Use . for a point and / for a fraction</div>
+        <div class="qtools"><button class="btn gold sm" id="btnHow">💡 <span data-i18n="howTo">How?</span></button><button class="ibtn" id="btnSpeak" title="🔊">🔊</button></div>
+        <div id="howto"></div>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/words.js?v=2"></script>
+<script>window.KQ_PERSONA = 'daddy';</script>   <!-- Hebrew here is read by daddy (Calm man C); Word Garden and the rest by mommy -->
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script>
+(function () {
+  'use strict';
+  const { t, store, sfx, ui } = KQ; const { el } = ui;
+  const $ = s => document.querySelector(s);
+  const profile = KQ.requireProfile('../index.html'); if (!profile) return;
+  KQ.i18n.extend({
+    en: { s_percent: 'Percent', s_negatives: 'Negative numbers', s_fracmul: 'Multiply fractions', s_decmul: 'Decimals × whole', s_ratio: 'Ratios', s_area: 'Area & perimeter', s_lineq: 'Solve for x', s_lineq2: 'x on both sides', s_expo: 'Powers & roots', s_pythag: 'Pythagoras', s_expand: 'Expand brackets', s_pctchange: 'Percent change', s_mean: 'Averages', m_percent: 'What is {p}% of {n}?', m_ratio: 'Simplify the ratio {a}:{b}', m_perim: 'Perimeter of a {w} × {h} rectangle?', m_area: 'Area of a {w} × {h} rectangle?', m_solve: 'Solve for x:', m_pythag: 'A right triangle has legs {a} and {b}. How long is the hypotenuse?', m_expand: 'Expand:', m_pctUp: 'Increase {n} by {p}%', m_pctDown: 'Decrease {n} by {p}%', m_mean: 'What is the mean of {list}?', x_pct: '{p}% of {n} = {n} × {p} ÷ 100 = {a}', x_neg: 'On the number line: {a} {op} {b} = {ans}', x_fracmul: 'Multiply tops, multiply bottoms: {n}/{d}, then simplify → {ans}', x_decmul: 'Ignore the point, multiply, put it back: {a} × {b} = {ans}', x_ratio: 'Both sides divide by {g} → {ans}', x_perim: 'Perimeter = 2 × ({w} + {h}) = {ans}', x_area: 'Area = {w} × {h} = {ans}', x_lineq1: 'Take {b} from both sides: {r} − {b} = {v}', x_lineq2: 'Divide by {a}: {v} ÷ {a} = {x}', x_lineq3: 'Move {c}x to the left: {a}x + {b} = {d}', x_root: '{r} × {r} = {sq}, so √{sq} = {r}', x_pow: '{b} multiplied by itself {e} times = {ans}', x_pyth: '{a}² + {b}² = {s}, and √{s} = {c}', x_expand: 'Multiply each term inside by {a}: {ans}', x_pctchange: '{p}% of {n} is {part}, so the answer is {ans}', x_mean: 'Add them: {sum}. Divide by {k}: {mean}', m_title: 'Math Tower', m_sub: 'Count, add, multiply', m_skill: 'Choose a challenge', m_howMany: 'How many?', m_more: 'Which group has more?', m_next: 'What comes next?', m_missing: 'What is the missing number?', m_half: 'What is half of {n}?', m_quarter: 'What is a quarter of {n}?', m_round: 'Round {n} to the nearest ten', m_bigger: 'Which is bigger?', m_solve: 'Solve', m_rem: 'What is the whole part of {a} ÷ {b}?', m_halfOdd: 'What is half of {n}?', m_fracOf: 'What is {n}/{d} of {t}?', m_simplify: 'Write {n}/{d} in its simplest form', m_decAdd: 'Add them up', m_fracHint: 'Use . for a point and / for a fraction', s_fracadd: 'Fractions of things', s_decimals: 'Decimals', m_answered: '{n} answered',
+      s_focus: 'Practice the tricky bits', s_count: 'Counting', s_compare: 'More or less', s_addPic: 'Add with pictures', s_nextNum: 'What comes next', s_add20: 'Add to 20', s_sub20: 'Take away', s_missing: 'Missing number', s_double: 'Doubles', s_tens: 'Tens', s_add100: 'Add to 100', s_sub100: 'Subtract to 100', s_times: 'Times tables', s_divide: 'Division', s_fraction: 'Halves & quarters', s_round: 'Rounding', s_mult2: 'Big multiplication', s_mult22: 'Two-digit times', s_longdiv: 'Division with leftovers', s_fraccmp: 'Compare fractions', s_order: 'Order of operations', s_word: 'Word problems',
+      w1: '{name} has {a} apples and gets {b} more. How many apples now?', w2: 'A dragon has {a} gold coins and spends {b}. How many are left?', w3: 'There are {a} knights and each has {b} arrows. How many arrows in all?', w4: '{a} cookies are shared equally by {b} friends. How many does each get?', w5: 'A tower has {a} steps. {name} climbs {b} and then {c} more. How many steps in all?',
+      kw1: 'gets more', kw2: 'spends', kw3: 'each has', kw4: 'shared equally', kw5: 'and then more', op_add: 'add', op_sub: 'take away', op_mul: 'multiply', op_div: 'divide',
+      x_count1: 'Touch each one and count out loud.', x_count2: 'There are {n}!', x_cmp1: 'Count the first group: {a}.', x_cmp2: 'Count the second group: {b}.', x_cmp3: '{big} is more than {small}. The bigger group wins!',
+      x_add_start: 'Start with {a}.', x_add_on: 'Count on {b} more: {seq}.', x_ten1: '{a} needs {k} more to make 10.', x_ten2: 'Take {k} from {b}. {b} − {k} = {r} left over.', x_ten3: '10 and {r} make {s}.',
+      x_sub_back: 'Start at {a} and count back {b}: {seq}.', x_sub_think: 'Think of it as adding: {b} + ? = {a}.', x_sub_up: 'Count up from {b} to {a}: {seq}.', x_sub_res: 'That is {d} jumps, so {a} − {b} = {d}.',
+      x_miss1: 'Count up from {a} until you reach {s}: {seq}.', x_miss2: 'You made {k} jumps, so {a} + {k} = {s}.',
+      x_dbl1: 'Double means the same number twice: {a} and {a}.', x_dbl2: 'Count on from {a} by {a}: {seq}.',
+      x_tens1: '{a} is {at} tens and {b} is {bt} tens.', x_tens2: '{at} tens + {bt} tens = {st} tens, which is {s}.',
+      x_col_ones: 'Ones first: {a1} + {b1} = {o}.', x_col_carry: 'That is 10 or more, so carry one ten to the tens column.', x_col_tens: 'Now the tens: {a2} + {b2}{c} = {tt}.', x_col_sub_ones: 'Ones first: {a1} − {b1} = {o}.', x_col_sub_tens: 'Now the tens: {a2} − {b2} = {tt}.', x_bor1: '{a1} is smaller than {b1}, so borrow a ten from the tens column.', x_bor2: 'Now the ones are {a1p}: {a1p} − {b1} = {o}.', x_bor3: 'The tens lost one: {a2m} − {b2} = {tt}.',
+      x_mul1: '{a} × {b} means {a} rows of {b}.', x_mul2: 'Skip count by {b}: {seq}.', x_div1: 'Share {n} into {b} equal groups.', x_div2: 'Each group gets {q}. Check: {b} × {q} = {n}.',
+      x_halfO1: 'Half of an odd number is not a whole number.', x_halfO2: '{n} splits into {a} and {a}, with 1 left over. Half of that 1 is 0.5.', x_halfO3: 'So half of {n} is {r}.',
+      x_fo1: '{n}/{d} means: cut {t} into {d} equal parts, then take {n} of them.', x_fo2: 'Each part is {t} ÷ {d} = {one}.', x_fo3: '{n} parts of {one} is {r}.',
+      x_si1: 'Find a number that divides both {n} and {d}.', x_si2: 'Both divide by {g}: {n} ÷ {g} = {n2} and {d} ÷ {g} = {d2}.', x_si3: 'So {n}/{d} = {n2}/{d2}.',
+      x_da1: 'Line up the points.', x_da2: 'Add the tenths, then the wholes.', x_da3: '{a} + {b} = {r}.',
+      x_half1: 'Half means two equal parts.', x_half2: 'Split {n} into two equal groups of {h}.', x_q1: 'A quarter means four equal parts.', x_q2: 'Split {n} into four equal groups of {q}.',
+      x_rnd1: '{n} sits between {lo} and {hi}.', x_rnd2: 'Look at the ones digit: {d}. Five or more rounds up, less than five rounds down.', x_rnd3: 'So {n} rounds to {r}.',
+      x_pat1: 'Look at the jump from {a} to {b}: that is +{step}.', x_pat2: 'Keep jumping: {c} + {step} = {ans}.',
+      x_split: 'Break {a} into {tt} + {o}.', x_part: 'Multiply each part: {tt} × {b} = {p1} and {o} × {b} = {p2}.', x_sum: 'Add the parts: {p1} + {p2} = {p}.',
+      x_split2: 'Break both numbers into tens and ones: {a} = {at} + {ao} and {b} = {bt} + {bo}.', x_area: 'Multiply every part by every part.', x_sum4: 'Add the four boxes: {cells} = {p}.',
+      x_ld1: 'How many {b}s fit into {a}? Count by {b}: {seq}.', x_ld2: '{b} × {q} = {bq}. Then {a} − {bq} = {r} left over.', x_ld3: 'Whole part {q}, leftover {r}.',
+      x_fc1: 'Draw both fractions on bars of the same size.', x_fc2: '{A} fills {pa}% of its bar and {B} fills {pb}%.', x_fc3: '{big} is bigger.',
+      x_ord1: 'Rule: × and ÷ first, then + and −.', x_ord2: 'First: {part} = {v}.', x_ord3: 'Then: {rest} = {ans}.',
+      x_w1: 'Find the numbers in the story: {nums}.', x_w2: 'The words "{kw}" tell you to {op}.', x_w3: 'So: {expr} = {ans}.',
+      m_focusHint: 'Mixing questions from: {tags}',
+      path_title: 'Show me the path', path_sub: 'That was quick! Show one step, so we know it was not a lucky guess.', path_ok: 'Real knowledge! +{n}', path_bad: "Let's walk through it together", guessed: 'guessed', half: 'half', quarter: 'quarter',
+      p_count: 'How many are coloured?', p_cmp: 'How many in the first group?', p_add_on: 'Start at {a}. What is {a} + 1?', p_ten: 'How many more does {a} need to make 10?', p_pat: 'How big is each jump?', p_sub_back: 'Count back one: what is {a} − 1?', p_sub_ten: 'How many jumps from {b} up to 10?', p_miss: 'Count on from {a}. Which number do you say first?', p_dbl: 'Near double: what is {a} + {b}?', p_tens: 'How many tens are in {a}?', p_ones_add: 'Ones first: what is {a1} + {b1}?', p_ones_sub: 'Ones first: what is {a1} − {b1}?', p_borrow: '{a1} is smaller than {b1}, so borrow a ten: what is {a1p} − {b1}?', p_skip: 'Skip count by {b}: {seq}, ?', p_div_check: 'Each group gets {q}. Check it: what is {b} × {q}?', p_parts: 'How many equal parts make a {name}?', p_half_first: 'First, what is half of {n}?', p_halfO: 'First the whole part: what is half of {m}?', p_digit: 'What is the ones digit of {n}?', p_split: 'Break {a} into {tt} + {o}. What is {tt} × {b}?', p_area: 'The biggest box: what is {at} × {bt}?', p_ld: 'How many {b}s fit? What is {b} × {q}?', p_one: 'One part: what is {t} ÷ {d}?', p_gcd: 'Which number divides both {n} and {d}?', p_tenths: 'Line up the points. Tenths first: what is {ta} + {tb}?', p_fc_half: 'Which fraction is more than a half?', p_fc_pieces: 'Same number of pieces: which one has the smaller pieces?', p_fc_more: 'Same size pieces: which one has more pieces?', p_order: 'Which part do you work out first?', p_word: 'Which operation does the story need?' },
+    he: { s_percent: 'אחוזים', s_negatives: 'מספרים שליליים', s_fracmul: 'כפל שברים', s_decmul: 'עשרוני × שלם', s_ratio: 'יחסים', s_area: 'שטח והיקף', s_lineq: 'למצוא את x', s_lineq2: 'x בשני הצדדים', s_expo: 'חזקות ושורשים', s_pythag: 'פיתגורס', s_expand: 'פתיחת סוגריים', s_pctchange: 'שינוי באחוזים', s_mean: 'ממוצע', m_percent: 'כמה זה {p}% מתוך {n}?', m_ratio: 'צמצמו את היחס {a}:{b}', m_perim: 'מה ההיקף של מלבן {w} × {h}?', m_area: 'מה השטח של מלבן {w} × {h}?', m_solve: 'מצאו את x:', m_pythag: 'במשולש ישר זווית הניצבים הם {a} ו-{b}. מה אורך היתר?', m_expand: 'פתחו סוגריים:', m_pctUp: 'הגדילו את {n} ב-{p}%', m_pctDown: 'הקטינו את {n} ב-{p}%', m_mean: 'מה הממוצע של {list}?', x_pct: '{p}% מתוך {n} = {n} × {p} ÷ 100 = {a}', x_neg: 'על ציר המספרים: {a} {op} {b} = {ans}', x_fracmul: 'כופלים מונים, כופלים מכנים: {n}/{d}, ומצמצמים → {ans}', x_decmul: 'מתעלמים מהנקודה, כופלים, ומחזירים אותה: {a} × {b} = {ans}', x_ratio: 'מחלקים את שני הצדדים ב-{g} → {ans}', x_perim: 'היקף = 2 × ({w} + {h}) = {ans}', x_area: 'שטח = {w} × {h} = {ans}', x_lineq1: 'מחסרים {b} משני הצדדים: {r} − {b} = {v}', x_lineq2: 'מחלקים ב-{a}: {v} ÷ {a} = {x}', x_lineq3: 'מעבירים {c}x שמאלה: {a}x + {b} = {d}', x_root: '{r} × {r} = {sq}, ולכן √{sq} = {r}', x_pow: '{b} כפול עצמו {e} פעמים = {ans}', x_pyth: '{a}² + {b}² = {s}, ו-√{s} = {c}', x_expand: 'כופלים כל איבר בסוגריים ב-{a}: {ans}', x_pctchange: '{p}% מתוך {n} זה {part}, ולכן התשובה {ans}', x_mean: 'מחברים: {sum}. מחלקים ב-{k}: {mean}', m_title: 'מגדל החשבון', m_sub: 'לספור, לחבר, לכפול', m_skill: 'בחרו אתגר', m_howMany: 'כמה?', m_more: 'באיזו קבוצה יש יותר?', m_next: 'מה בא אחר כך?', m_missing: 'מה המספר החסר?', m_half: 'מה חצי מ-{n}?', m_quarter: 'מה רבע מ-{n}?', m_round: 'מעגלים את {n} לעשרת הקרובה', m_bigger: 'מה גדול יותר?', m_solve: 'פותרים', m_rem: 'מה החלק השלם של {a} ÷ {b}?', m_halfOdd: 'מה חצי מ-{n}?', m_fracOf: 'מה {n}/{d} מתוך {t}?', m_simplify: 'כתבו את {n}/{d} בצורה המצומצמת', m_decAdd: 'מחברים', m_fracHint: 'משתמשים ב-. לנקודה וב-/ לשבר', s_fracadd: 'שברים של דברים', s_decimals: 'מספרים עשרוניים', m_answered: '{n} תשובות',
+      s_focus: 'תרגול של מה שקשה', s_count: 'ספירה', s_compare: 'יותר או פחות', s_addPic: 'חיבור עם ציורים', s_nextNum: 'מה בא אחר כך', s_add20: 'חיבור עד 20', s_sub20: 'חיסור', s_missing: 'המספר החסר', s_double: 'כפולות', s_tens: 'עשרות', s_add100: 'חיבור עד 100', s_sub100: 'חיסור עד 100', s_times: 'לוח הכפל', s_divide: 'חילוק', s_fraction: 'חצאים ורבעים', s_round: 'עיגול', s_mult2: 'כפל גדול', s_mult22: 'כפל דו-ספרתי', s_longdiv: 'חילוק עם שארית', s_fraccmp: 'השוואת שברים', s_order: 'סדר פעולות', s_word: 'בעיות מילוליות',
+      w1: 'ל{name} יש {a} תפוחים, ומגיעים עוד {b}. כמה תפוחים יש עכשיו?', w2: 'לדרקון יש {a} מטבעות זהב, והוא מבזבז {b}. כמה נשארו?', w3: 'יש {a} אבירים ולכל אחד {b} חצים. כמה חצים בסך הכול?', w4: '{a} עוגיות מתחלקות שווה בשווה בין {b} חברים. כמה מקבל כל אחד?', w5: 'במגדל יש {a} מדרגות. {name} עולה {b} מדרגות ואז עוד {c}. כמה מדרגות בסך הכול?',
+      kw1: 'מגיעים עוד', kw2: 'מבזבז', kw3: 'לכל אחד', kw4: 'מתחלקות שווה בשווה', kw5: 'ואז עוד', op_add: 'לחבר', op_sub: 'לחסר', op_mul: 'לכפול', op_div: 'לחלק',
+      x_count1: 'נוגעים בכל אחד וסופרים בקול.', x_count2: 'יש {n}!', x_cmp1: 'סופרים את הקבוצה הראשונה: {a}.', x_cmp2: 'סופרים את הקבוצה השנייה: {b}.', x_cmp3: '{big} זה יותר מ-{small}. הקבוצה הגדולה מנצחת!',
+      x_add_start: 'מתחילים מ-{a}.', x_add_on: 'סופרים עוד {b} קדימה: {seq}.', x_ten1: 'ל-{a} חסר {k} כדי להגיע ל-10.', x_ten2: 'לוקחים {k} מתוך {b}. נשאר {b} − {k} = {r}.', x_ten3: '10 ועוד {r} זה {s}.',
+      x_sub_back: 'מתחילים מ-{a} וסופרים {b} לאחור: {seq}.', x_sub_think: 'חושבים על זה כחיבור: {b} + ? = {a}.', x_sub_up: 'סופרים קדימה מ-{b} עד {a}: {seq}.', x_sub_res: 'אלה {d} קפיצות, ולכן {a} − {b} = {d}.',
+      x_miss1: 'סופרים קדימה מ-{a} עד שמגיעים ל-{s}: {seq}.', x_miss2: 'עשינו {k} קפיצות, ולכן {a} + {k} = {s}.',
+      x_dbl1: 'כפול זה אותו מספר פעמיים: {a} ועוד {a}.', x_dbl2: 'סופרים מ-{a} עוד {a}: {seq}.',
+      x_tens1: '{a} זה {at} עשרות ו-{b} זה {bt} עשרות.', x_tens2: '{at} עשרות + {bt} עשרות = {st} עשרות, כלומר {s}.',
+      x_col_ones: 'קודם האחדות: {a1} + {b1} = {o}.', x_col_carry: 'זה 10 או יותר, אז מעבירים עשרת אחת לטור העשרות.', x_col_tens: 'עכשיו העשרות: {a2} + {b2}{c} = {tt}.', x_col_sub_ones: 'קודם האחדות: {a1} − {b1} = {o}.', x_col_sub_tens: 'עכשיו העשרות: {a2} − {b2} = {tt}.', x_bor1: '{a1} קטן מ-{b1}, אז פורטים עשרת אחת מטור העשרות.', x_bor2: 'עכשיו באחדות יש {a1p}: {a1p} − {b1} = {o}.', x_bor3: 'בעשרות נשאר אחד פחות: {a2m} − {b2} = {tt}.',
+      x_mul1: '{a} × {b} זה {a} שורות של {b}.', x_mul2: 'סופרים בקפיצות של {b}: {seq}.', x_div1: 'מחלקים {n} ל-{b} קבוצות שוות.', x_div2: 'כל קבוצה מקבלת {q}. בדיקה: {b} × {q} = {n}.',
+      x_halfO1: 'חצי ממספר אי-זוגי הוא לא מספר שלם.', x_halfO2: '{n} מתחלק ל-{a} ו-{a}, ונשאר 1. חצי מה-1 הזה הוא 0.5.', x_halfO3: 'ולכן חצי מ-{n} הוא {r}.',
+      x_fo1: '{n}/{d} אומר: לחתוך את {t} ל-{d} חלקים שווים ולקחת {n} מהם.', x_fo2: 'כל חלק הוא {t} ÷ {d} = {one}.', x_fo3: '{n} חלקים של {one} זה {r}.',
+      x_si1: 'מוצאים מספר שמחלק גם את {n} וגם את {d}.', x_si2: 'שניהם מתחלקים ב-{g}: {n} ÷ {g} = {n2} וגם {d} ÷ {g} = {d2}.', x_si3: 'ולכן {n}/{d} = {n2}/{d2}.',
+      x_da1: 'מיישרים את הנקודות.', x_da2: 'מחברים את העשיריות ואז את השלמים.', x_da3: '{a} + {b} = {r}.',
+      x_half1: 'חצי זה שני חלקים שווים.', x_half2: 'מחלקים את {n} לשתי קבוצות של {h}.', x_q1: 'רבע זה ארבעה חלקים שווים.', x_q2: 'מחלקים את {n} לארבע קבוצות של {q}.',
+      x_rnd1: '{n} נמצא בין {lo} ל-{hi}.', x_rnd2: 'מסתכלים על ספרת האחדות: {d}. חמש ומעלה מעגלים למעלה, פחות מחמש מעגלים למטה.', x_rnd3: 'ולכן {n} מתעגל ל-{r}.',
+      x_pat1: 'מסתכלים על הקפיצה מ-{a} ל-{b}: זה +{step}.', x_pat2: 'ממשיכים לקפוץ: {c} + {step} = {ans}.',
+      x_split: 'מפרקים את {a} ל-{tt} + {o}.', x_part: 'כופלים כל חלק: {tt} × {b} = {p1} וגם {o} × {b} = {p2}.', x_sum: 'מחברים את החלקים: {p1} + {p2} = {p}.',
+      x_split2: 'מפרקים את שני המספרים לעשרות ואחדות: {a} = {at} + {ao} וגם {b} = {bt} + {bo}.', x_area: 'כופלים כל חלק בכל חלק.', x_sum4: 'מחברים את ארבע התיבות: {cells} = {p}.',
+      x_ld1: 'כמה פעמים {b} נכנס ב-{a}? סופרים בקפיצות של {b}: {seq}.', x_ld2: '{b} × {q} = {bq}. ואז {a} − {bq} = {r} שארית.', x_ld3: 'החלק השלם {q}, השארית {r}.',
+      x_fc1: 'מציירים את שני השברים על פסים באותו גודל.', x_fc2: '{A} ממלא {pa}% מהפס ו-{B} ממלא {pb}%.', x_fc3: '{big} גדול יותר.',
+      x_ord1: 'הכלל: קודם × ו-÷, ורק אז + ו-−.', x_ord2: 'קודם: {part} = {v}.', x_ord3: 'ואז: {rest} = {ans}.',
+      x_w1: 'מוצאים את המספרים בסיפור: {nums}.', x_w2: 'המילים "{kw}" אומרות לנו {op}.', x_w3: 'ולכן: {expr} = {ans}.',
+      m_focusHint: 'שאלות מעורבות מתוך: {tags}',
+      path_title: 'תראו לי את הדרך', path_sub: 'זה היה מהיר! מראים שלב אחד, כדי שנדע שזה לא ניחוש.', path_ok: 'ידע אמיתי! +{n}', path_bad: 'בואו נעבור על זה יחד', guessed: 'ניחוש', half: 'חצי', quarter: 'רבע',
+      p_count: 'כמה צבועים?', p_cmp: 'כמה יש בקבוצה הראשונה?', p_add_on: 'מתחילים מ-{a}. כמה זה {a} + 1?', p_ten: 'כמה חסר ל-{a} כדי להגיע ל-10?', p_pat: 'מה הגודל של כל קפיצה?', p_sub_back: 'סופרים אחד לאחור: כמה זה {a} − 1?', p_sub_ten: 'כמה קפיצות מ-{b} עד 10?', p_miss: 'סופרים קדימה מ-{a}. איזה מספר אומרים ראשון?', p_dbl: 'כמעט כפול: כמה זה {a} + {b}?', p_tens: 'כמה עשרות יש ב-{a}?', p_ones_add: 'קודם האחדות: כמה זה {a1} + {b1}?', p_ones_sub: 'קודם האחדות: כמה זה {a1} − {b1}?', p_borrow: '{a1} קטן מ-{b1}, אז פורטים עשרת: כמה זה {a1p} − {b1}?', p_skip: 'סופרים בקפיצות של {b}: {seq}, ?', p_div_check: 'כל קבוצה מקבלת {q}. בודקים: כמה זה {b} × {q}?', p_parts: 'לכמה חלקים שווים מחלקים כשעושים {name}?', p_half_first: 'קודם, כמה זה חצי מ-{n}?', p_halfO: 'קודם החלק השלם: כמה זה חצי מ-{m}?', p_digit: 'מה ספרת האחדות של {n}?', p_split: 'מפרקים את {a} ל-{tt} + {o}. כמה זה {tt} × {b}?', p_area: 'התיבה הגדולה: כמה זה {at} × {bt}?', p_ld: 'כמה פעמים {b} נכנס? כמה זה {b} × {q}?', p_one: 'חלק אחד: כמה זה {t} ÷ {d}?', p_gcd: 'איזה מספר מחלק גם את {n} וגם את {d}?', p_tenths: 'מיישרים את הנקודות. קודם העשיריות: כמה זה {ta} + {tb}?', p_fc_half: 'איזה שבר גדול מחצי?', p_fc_pieces: 'אותו מספר חלקים: למי החלקים הקטנים יותר?', p_fc_more: 'חלקים באותו גודל: למי יש יותר חלקים?', p_order: 'איזה חלק פותרים קודם?', p_word: 'איזו פעולה הסיפור צריך?' }
+  });
+  const BANDS = { 1: ['count', 'compare', 'addPic', 'nextNum'], 2: ['add20', 'sub20', 'missing', 'double', 'tens', 'addPic'], 3: ['add100', 'sub100', 'times', 'divide', 'fraction', 'fracadd', 'round'], 4: ['mult2', 'mult22', 'longdiv', 'fracadd', 'decimals', 'fraccmp', 'order', 'word'], 5: ['percent', 'negatives', 'fracmul', 'decmul', 'ratio', 'area', 'lineq'], 6: ['lineq2', 'expo', 'pythag', 'expand', 'pctchange', 'mean', 'percent'] };
+  const ICONS = { focus: '🎯', count: '🍎', compare: '⚖️', addPic: '🧮', nextNum: '➡️', add20: '➕', sub20: '➖', missing: '❓', double: '✌️', tens: '🔟', add100: '➕', sub100: '➖', times: '✖️', divide: '➗', fraction: '🍕', round: '🎯', mult2: '✖️', mult22: '🧠', longdiv: '➗', fraccmp: '⚖️', fracadd: '🍰', decimals: '🔟', order: '🧩', word: '📜', percent: '％', negatives: '🧊', fracmul: '🍰', decmul: '🔢', ratio: '⚖️', area: '📐', lineq: '🧮', lineq2: '⚖️', expo: '💥', pythag: '📐', expand: '🧩', pctchange: '📈', mean: '📊' };
+  // static concept tags per skill (used to route "tricky bits" back to the right skill)
+  const SKILL_TAGS = { percent: ['percent'], negatives: ['negatives'], fracmul: ['fracmul'], decmul: ['decimals'], ratio: ['ratio'], area: ['area', 'perimeter'], lineq: ['equation'], lineq2: ['equation'], expo: ['powers'], pythag: ['pythag'], expand: ['algebra'], pctchange: ['percent'], mean: ['mean'], count: ['count'], compare: ['compare'], addPic: ['add', 'within10', 'bridge10'], nextNum: ['pattern'], add20: ['add', 'within10', 'bridge10'], sub20: ['sub', 'countback', 'countup'], missing: ['missing', 'countup'], double: ['double', 'add'], tens: ['tens', 'add'], add100: ['add', 'carry', 'nocarry'], sub100: ['sub', 'borrow', 'noborrow'], times: ['times'], divide: ['div'], fraction: ['half', 'quarter'], round: ['round'], mult2: ['bigtimes', 'times'], mult22: ['area', 'times'], longdiv: ['remainder', 'div'], fraccmp: ['fraccmp'], fracadd: ['fracof', 'simplify'], decimals: ['decimals'], order: ['order'], word: ['word', 'wordadd', 'wordsub', 'wordmul', 'worddiv'] };
+  const EMOJI = ['🍎', '⭐', '🐟', '🎈', '🌸', '🚗', '🐸', '🍪'];
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const choicesAround = (ans, n, lo, hi) => { const s = new Set([ans]); let guard = 0; while (s.size < n && guard++ < 200) { const c = Math.max(lo, Math.min(hi, ans + ri(-4, 4))); if (c !== ans) s.add(c); } while (s.size < n) s.add(ri(lo, hi + 10)); return shuffle([...s]); };
+  const pics = (e, n) => Array.from({ length: n }, () => e).join(' ');
+  const up = (from, n, step) => Array.from({ length: n }, (_, i) => from + (i + 1) * (step || 1)).join(', ');
+  const down = (from, n) => Array.from({ length: n }, (_, i) => from - (i + 1)).join(', ');
+  const name = profile.name;
+  const tagName = k => KQ.tagLabel('math', k);
+
+  // Each generator returns {prompt, visual, answer, choices|null, speak, tags, x} where x carries the numbers the explanation needs.
+  const GEN = {
+    // ---- ages 10–15: percent, negatives, fractions, decimals, ratio, geometry, algebra ----
+    percent(tier) { const p = pick(tier ? [5, 10, 15, 20, 25, 30, 40, 50, 60, 75] : [10, 25, 50]), n = pick([20, 40, 50, 60, 80, 100, 120, 150, 200, 240, 300]), a = n * p / 100; return { prompt: t('m_percent', { p, n }), answer: a, choices: null, tags: ['percent'], x: { p, n, a } }; },
+    negatives(tier) { const a = ri(-12, 12), b = ri(1, tier ? 15 : 9), op = pick(['+', '−']), ans = op === '+' ? a + b : a - b; return { prompt: `${a < 0 ? '(' + a + ')' : a} ${op} ${b} = ?`, answer: ans, choices: choicesAround(ans, 4, -30, 30), tags: ['negatives'], x: { a, b, op, ans } }; },
+    fracmul(tier) { const gcd = (x, y) => y ? gcd(y, x % y) : x; const a = ri(1, 4), b = ri(2, 6), c = ri(1, 4), d = ri(2, 6), n = a * c, dd = b * d, g = gcd(n, dd), ans = `${n / g}/${dd / g}`; const w = [...new Set([`${a + c}/${b + d}`, `${n}/${b + d}`, `${a * d}/${b * c}`, `${n}/${dd + 1}`])].filter(x => x !== ans).slice(0, 3); return { prompt: `${a}/${b} × ${c}/${d} = ?`, answer: ans, choices: shuffle([ans, ...w]), tags: ['fracmul'], x: { a, b, c, d, n, dd, ans } }; },
+    decmul(tier) { const a = ri(11, 99) / 10, b = ri(2, tier ? 12 : 9), ans = Math.round(a * b * 10) / 10; return { prompt: `${a} × ${b} = ?`, answer: ans, choices: null, tags: ['decimals'], x: { a, b, ans } }; },
+    ratio(tier) { const g = ri(2, tier ? 9 : 5); let a = ri(1, 6), b = ri(1, 6); if (a === b) b = a + 1; const gcd = (x, y) => y ? gcd(y, x % y) : x; const h = gcd(a, b); a /= h; b /= h; const ans = `${a}:${b}`; const w = [...new Set([`${a * g}:${b}`, `${a}:${b * g}`, `${b}:${a}`, `${a + 1}:${b}`])].filter(x => x !== ans).slice(0, 3); return { prompt: t('m_ratio', { a: a * g, b: b * g }), answer: ans, choices: shuffle([ans, ...w]), tags: ['ratio'], x: { a: a * g, b: b * g, g, ans } }; },
+    area(tier) { const w = ri(3, tier ? 15 : 9), h = ri(2, tier ? 12 : 9), per = Math.random() < 0.5; return { prompt: t(per ? 'm_perim' : 'm_area', { w, h }), answer: per ? 2 * (w + h) : w * h, choices: null, tags: [per ? 'perimeter' : 'area'], x: { w, h, per } }; },
+    lineq(tier) { const a = ri(2, tier ? 9 : 5), x = ri(1, 12), b = ri(1, 20); return { prompt: t('m_solve') + ` ${a}x + ${b} = ${a * x + b}`, answer: x, choices: null, tags: ['equation'], x: { a, b, x, r: a * x + b } }; },
+    lineq2(tier) { const x = ri(1, 9), a = ri(3, 9), c = ri(1, a - 1), b = ri(1, 15), d = (a - c) * x + b; return { prompt: t('m_solve') + ` ${a}x + ${b} = ${c}x + ${d}`, answer: x, choices: null, tags: ['equation'], x: { a, b, c, d, x } }; },
+    expo(tier) { if (Math.random() < 0.55) { const b = ri(2, tier ? 12 : 9), e = pick([2, 3]); return { prompt: `${b}${e === 2 ? '²' : '³'} = ?`, answer: Math.pow(b, e), choices: null, tags: ['powers'], x: { b, e, ans: Math.pow(b, e) } }; } const r = ri(2, tier ? 15 : 10); return { prompt: `√${r * r} = ?`, answer: r, choices: null, tags: ['powers'], x: { root: r, sq: r * r } }; },
+    pythag(tier) { const [a, b, c] = pick(tier ? [[3, 4, 5], [6, 8, 10], [5, 12, 13], [9, 12, 15], [8, 15, 17], [12, 16, 20], [7, 24, 25]] : [[3, 4, 5], [6, 8, 10], [5, 12, 13]]); return { prompt: t('m_pythag', { a, b }), answer: c, choices: null, tags: ['pythag'], x: { a, b, c } }; },
+    expand(tier) { const a = ri(2, 7), b = ri(1, 9), s = pick(['+', '−']), ans = `${a}x ${s} ${a * b}`; const w = [`${a}x ${s} ${b}`, `${a}x ${s === '+' ? '−' : '+'} ${a * b}`, `${a + b}x`]; return { prompt: t('m_expand') + ` ${a}(x ${s} ${b})`, answer: ans, choices: shuffle([ans, ...w]), tags: ['algebra'], x: { a, b, s, ans } }; },
+    pctchange(tier) { const n = pick([20, 40, 50, 80, 100, 120, 150, 200, 250, 400]), p = pick(tier ? [10, 20, 25, 30, 50, 75] : [10, 25, 50]), up = Math.random() < 0.5, ans = up ? n + n * p / 100 : n - n * p / 100; return { prompt: t(up ? 'm_pctUp' : 'm_pctDown', { n, p }), answer: ans, choices: null, tags: ['percent'], x: { n, p, up, ans } }; },
+    mean(tier) { const k = tier ? 5 : 4; const arr = Array.from({ length: k }, () => ri(1, 20)); const s = arr.reduce((x, y) => x + y, 0), adj = (k - s % k) % k; arr[0] += adj; const mean = (s + adj) / k; return { prompt: t('m_mean', { list: arr.join(', ') }), answer: mean, choices: null, tags: ['mean'], x: { arr, sum: s + adj, k, mean } }; },
+
+    count(tier) { const n = ri(1, tier === 0 ? 5 : tier === 1 ? 8 : 10), e = pick(EMOJI); return { prompt: t('m_howMany'), visual: pics(e, n), answer: n, choices: choicesAround(n, 4, 1, 10), speak: t('m_howMany'), tags: ['count'], x: { n } }; },
+    compare() { let a = ri(1, 6), b = ri(1, 6); if (a === b) b = a + 1; const e = pick(EMOJI); const A = pics(e, a), B = pics(e, b); return { prompt: t('m_more'), visual: null, answer: a > b ? A : B, choices: [A, B], speak: t('m_more'), bigChoices: true, tags: ['compare'], x: { a, b } }; },
+    addPic(tier) { const a = ri(1, tier === 0 ? 3 : 5), b = ri(1, tier === 0 ? 3 : 5), e = pick(EMOJI); return { prompt: `${a} + ${b} = ?`, visual: `${pics(e, a)}  +  ${pics(e, b)}`, answer: a + b, choices: choicesAround(a + b, 4, 1, 12), speak: `${a} + ${b}`, tags: ['add', a + b > 10 ? 'bridge10' : 'within10'], x: { a, b } }; },
+    nextNum(tier) { const step = tier === 0 ? 1 : pick([1, 2, 5, 10]), start = ri(1, tier === 0 ? 8 : 20); const seq = [start, start + step, start + 2 * step]; return { prompt: `${seq.join(', ')}, ?`, visual: null, answer: start + 3 * step, choices: choicesAround(start + 3 * step, 4, 1, 60), speak: t('m_next'), tags: ['pattern'], x: { a: start, b: start + step, c: start + 2 * step, step } }; },
+    add20(tier) { const a = ri(1, tier === 0 ? 9 : 12), b = ri(1, tier === 0 ? 9 : 12); return { prompt: `${a} + ${b} = ?`, answer: a + b, choices: null, speak: `${a} + ${b}`, tags: ['add', a + b > 10 ? 'bridge10' : 'within10'], x: { a, b } }; },
+    sub20(tier) { const a = ri(tier === 0 ? 3 : 8, tier === 0 ? 10 : 20), b = ri(1, a - 1); return { prompt: `${a} − ${b} = ?`, answer: a - b, choices: null, speak: `${a} - ${b}`, tags: ['sub', b <= 3 ? 'countback' : 'countup'], x: { a, b } }; },
+    missing(tier) { const a = ri(1, tier === 0 ? 6 : 12), s = a + ri(1, tier === 0 ? 6 : 12); return { prompt: `${a} + ? = ${s}`, answer: s - a, choices: null, speak: t('m_missing'), tags: ['missing', 'countup'], x: { a, s } }; },
+    double(tier) { const a = ri(1, tier === 0 ? 6 : 12); return { prompt: `${a} + ${a} = ?`, answer: a * 2, choices: null, speak: `${a} + ${a}`, tags: ['double', 'add'], x: { a } }; },
+    tens(tier) { const a = ri(1, 5) * 10, b = ri(1, tier === 0 ? 4 : 9) * 10; return { prompt: `${a} + ${b} = ?`, answer: a + b, choices: null, speak: `${a} + ${b}`, tags: ['tens', 'add'], x: { a, b } }; },
+    add100(tier) { const a = ri(10, tier === 0 ? 40 : 70), b = ri(10, tier === 0 ? 30 : 60); return { prompt: `${a} + ${b} = ?`, answer: a + b, choices: null, speak: `${a} + ${b}`, tags: ['add', a % 10 + b % 10 >= 10 ? 'carry' : 'nocarry'], x: { a, b } }; },
+    sub100(tier) { const a = ri(tier === 0 ? 20 : 40, 99), b = ri(10, a - 5); return { prompt: `${a} − ${b} = ?`, answer: a - b, choices: null, speak: `${a} - ${b}`, tags: ['sub', a % 10 < b % 10 ? 'borrow' : 'noborrow'], x: { a, b } }; },
+    times(tier) { const a = ri(2, tier === 0 ? 5 : 10), b = ri(2, tier === 0 ? 6 : 10); return { prompt: `${a} × ${b} = ?`, answer: a * b, choices: null, speak: `${a} × ${b}`, tags: ['times', 'x' + b, 'x' + a], x: { a, b } }; },
+    divide(tier) { const b = ri(2, tier === 0 ? 5 : 10), q = ri(2, tier === 0 ? 6 : 10); return { prompt: `${b * q} ÷ ${b} = ?`, answer: q, choices: null, speak: `${b * q} ÷ ${b}`, tags: ['div', 'd' + b], x: { n: b * q, b, q } }; },
+    fraction(tier) { if (tier > 0 && Math.random() < 0.34) { const n = ri(2, 12) * 2 + 1; return { prompt: t('m_halfOdd', { n }), answer: n / 2, choices: null, speak: t('m_halfOdd', { n }), tags: ['half', 'decimals'], x: { n, kind: 'halfOdd' } }; }
+                     if (tier === 0 || Math.random() < 0.5) { const n = ri(1, 10) * 2; return { prompt: t('m_half', { n }), answer: n / 2, choices: null, speak: t('m_half', { n }), tags: ['half'], x: { n, kind: 'half' } }; } const n = ri(1, 8) * 4; return { prompt: t('m_quarter', { n }), answer: n / 4, choices: null, speak: t('m_quarter', { n }), tags: ['quarter'], x: { n, kind: 'quarter' } }; },
+    round(tier) { let n = ri(11, tier === 0 ? 89 : 189); while (n % 10 === 5 || n % 10 === 0) n = ri(11, tier === 0 ? 89 : 189); return { prompt: t('m_round', { n }), answer: Math.round(n / 10) * 10, choices: null, speak: t('m_round', { n }), tags: ['round'], x: { n } }; },
+    mult2(tier) { const a = ri(11, tier === 0 ? 30 : 99), b = ri(2, tier === 0 ? 5 : 9); return { prompt: `${a} × ${b} = ?`, answer: a * b, choices: null, speak: `${a} × ${b}`, tags: ['bigtimes', 'times', 'x' + b], x: { a, b } }; },
+    mult22(tier) { const a = ri(11, tier === 0 ? 15 : 25), b = ri(11, tier === 0 ? 12 : 20); return { prompt: `${a} × ${b} = ?`, answer: a * b, choices: null, speak: `${a} × ${b}`, tags: ['area', 'times'], x: { a, b } }; },
+    longdiv(tier) { const b = ri(3, tier === 0 ? 6 : 9), q = ri(4, tier === 0 ? 12 : 30), r = ri(1, b - 1); const a = b * q + r; return { prompt: t('m_rem', { a, b }), answer: q, choices: null, speak: t('m_rem', { a, b }), tags: ['remainder', 'div', 'd' + b], x: { a, b, q, r } }; },
+    fracadd(tier) {
+      if (Math.random() < 0.5) { const d = pick([2, 3, 4, 5, 6]), n = ri(1, d - 1), one = ri(2, tier === 0 ? 6 : 12), total = one * d; return { prompt: t('m_fracOf', { n, d, t: total }), answer: n * one, choices: null, speak: t('m_fracOf', { n, d, t: total }), tags: ['fracof'], x: { n, d, t: total, one, r: n * one, kind: 'fracof' } }; }
+      const g = pick([2, 3, 4]), d2 = pick([2, 3, 4, 5]), n2 = ri(1, d2 - 1);
+      return { prompt: t('m_simplify', { n: n2 * g, d: d2 * g }), answer: n2 + '/' + d2, choices: null, speak: t('m_simplify', { n: n2 * g, d: d2 * g }), tags: ['simplify'], fracAnswer: true, x: { n: n2 * g, d: d2 * g, g, n2, d2, kind: 'simplify' } };
+    },
+    decimals(tier) { const a = (ri(1, tier === 0 ? 9 : 40) + ri(1, 9) / 10), b = (ri(1, tier === 0 ? 9 : 40) + ri(1, 9) / 10); const r = Math.round((a + b) * 10) / 10; return { prompt: `${a.toFixed(1)} + ${b.toFixed(1)} = ?`, answer: r, choices: null, speak: t('m_decAdd'), tags: ['decimals'], x: { a: a.toFixed(1), b: b.toFixed(1), r, kind: 'dec' } }; },
+    fraccmp() { const fr = [[1, 2], [1, 3], [1, 4], [2, 3], [3, 4], [2, 5], [3, 5], [1, 5], [5, 6], [1, 6]]; let A = pick(fr), B = pick(fr); while (A[0] / A[1] === B[0] / B[1]) B = pick(fr); const a = `${A[0]}/${A[1]}`, b = `${B[0]}/${B[1]}`; return { prompt: t('m_bigger'), answer: A[0] / A[1] > B[0] / B[1] ? a : b, choices: [a, b], speak: t('m_bigger'), bigChoices: true, tags: ['fraccmp'], x: { A, B, a, b } }; },
+    order(tier) { const a = ri(1, 9), b = ri(2, tier === 0 ? 5 : 9), c = ri(2, 9); const k = pick(['+×', '−×', '+÷']); if (k === '+÷') { const d = b * c; return { prompt: `${a} + ${d} ÷ ${b} = ?`, answer: a + c, choices: null, speak: t('m_solve'), tags: ['order'], x: { part: `${d} ÷ ${b}`, v: c, rest: `${a} + ${c}` } }; } if (k === '−×') { const p = b * c, base = p + ri(1, 9); return { prompt: `${base} − ${b} × ${c} = ?`, answer: base - p, choices: null, speak: t('m_solve'), tags: ['order'], x: { part: `${b} × ${c}`, v: p, rest: `${base} − ${p}` } }; } return { prompt: `${a} + ${b} × ${c} = ?`, answer: a + b * c, choices: null, speak: t('m_solve'), tags: ['order'], x: { part: `${b} × ${c}`, v: b * c, rest: `${a} + ${b * c}` } }; },
+    word(tier) { const k = ri(1, 5); const a = ri(3, tier === 0 ? 12 : 40), b = ri(2, tier === 0 ? 8 : 20), c = ri(2, 9); let ans, text, x; if (k === 1) { ans = a + b; text = t('w1', { name, a, b }); x = { nums: `${a}, ${b}`, kw: t('kw1'), op: t('op_add'), expr: `${a} + ${b}`, tag: 'wordadd' }; } else if (k === 2) { const A = a + b; ans = A - b; text = t('w2', { a: A, b }); x = { nums: `${A}, ${b}`, kw: t('kw2'), op: t('op_sub'), expr: `${A} − ${b}`, tag: 'wordsub' }; } else if (k === 3) { const A = ri(2, 6), B = ri(2, tier === 0 ? 5 : 9); ans = A * B; text = t('w3', { a: A, b: B }); x = { nums: `${A}, ${B}`, kw: t('kw3'), op: t('op_mul'), expr: `${A} × ${B}`, tag: 'wordmul' }; } else if (k === 4) { const B = ri(2, 6), Q = ri(2, 8); ans = Q; text = t('w4', { a: B * Q, b: B }); x = { nums: `${B * Q}, ${B}`, kw: t('kw4'), op: t('op_div'), expr: `${B * Q} ÷ ${B}`, tag: 'worddiv' }; } else { ans = b + c; text = t('w5', { name, a: a + b + c, b, c }); x = { nums: `${b}, ${c}`, kw: t('kw5'), op: t('op_add'), expr: `${b} + ${c}`, tag: 'wordadd' }; } return { prompt: text, answer: ans, choices: null, speak: text, wordy: true, tags: ['word', x.tag], x }; }
+  };
+  // How each kind of question is actually solved — the same strategy a teacher would show, with a picture per step.
+  const EXPLAIN = {
+    percent: q => [{ text: t('x_pct', { p: q.x.p, n: q.x.n, a: q.x.a }), big: true }],
+    negatives: q => [{ text: t('x_neg', { a: q.x.a, op: q.x.op, b: q.x.b, ans: q.x.ans }), big: true }],
+    fracmul: q => [{ text: t('x_fracmul', { n: q.x.n, d: q.x.dd, ans: q.x.ans }), big: true }],
+    decmul: q => [{ text: t('x_decmul', { a: q.x.a, b: q.x.b, ans: q.x.ans }), big: true }],
+    ratio: q => [{ text: t('x_ratio', { g: q.x.g, ans: q.x.ans }), big: true }],
+    area: q => [{ text: t(q.x.per ? 'x_perim' : 'x_area', { w: q.x.w, h: q.x.h, ans: q.answer }), big: true }],
+    lineq: q => [{ text: t('x_lineq1', { b: q.x.b, r: q.x.r, v: q.x.r - q.x.b }) }, { text: t('x_lineq2', { a: q.x.a, v: q.x.r - q.x.b, x: q.x.x }), big: true }],
+    lineq2: q => [{ text: t('x_lineq3', { c: q.x.c, a: q.x.a - q.x.c, b: q.x.b, d: q.x.d }) }, { text: t('x_lineq2', { a: q.x.a - q.x.c, v: q.x.d - q.x.b, x: q.x.x }), big: true }],
+    expo: q => [{ text: q.x.root ? t('x_root', { r: q.x.root, sq: q.x.sq }) : t('x_pow', { b: q.x.b, e: q.x.e, ans: q.x.ans }), big: true }],
+    pythag: q => [{ text: t('x_pyth', { a: q.x.a, b: q.x.b, s: q.x.a * q.x.a + q.x.b * q.x.b, c: q.x.c }), big: true }],
+    expand: q => [{ text: t('x_expand', { a: q.x.a, b: q.x.b, ans: q.x.ans }), big: true }],
+    pctchange: q => [{ text: t('x_pctchange', { n: q.x.n, p: q.x.p, part: q.x.n * q.x.p / 100, ans: q.x.ans }), big: true }],
+    mean: q => [{ text: t('x_mean', { sum: q.x.sum, k: q.x.k, mean: q.x.mean }), big: true }],
+
+    count: q => [{ text: t('x_count1'), vis: { type: 'dots', groups: [{ n: q.x.n, hl: q.x.n }] } }, { text: t('x_count2', { n: q.x.n }), big: true }],
+    compare: q => { const { a, b } = q.x, big = Math.max(a, b), small = Math.min(a, b); return [{ text: t('x_cmp1', { a }), vis: { type: 'dots', groups: [{ n: a, color: 'a' }] } }, { text: t('x_cmp2', { b }), vis: { type: 'dots', groups: [{ n: b, color: 'b' }] } }, { text: t('x_cmp3', { big, small }), big: true }]; },
+    addPic: q => EXPLAIN.add20(q),
+    add20: q => { const { a, b } = q.x, s = a + b; if (s <= 10) return [{ text: t('x_add_start', { a }), vis: { type: 'dots', groups: [{ n: a, color: 'a' }] } }, { text: t('x_add_on', { b, seq: up(a, b) }), vis: { type: 'dots', groups: [{ n: a, color: 'a' }, { n: b, color: 'b' }] } }, { text: `${a} + ${b} = ${s}`, big: true }]; const k = 10 - a, r = b - k; return [{ text: t('x_ten1', { a, k }), vis: { type: 'tenframe', a, b: 0 } }, { text: t('x_ten2', { k, b, r }), vis: { type: 'tenframe', a, b } }, { text: t('x_ten3', { r, s }), big: true }]; },
+    sub20: q => { const { a, b } = q.x, d = a - b; if (b <= 3) return [{ text: t('x_sub_back', { a, b, seq: down(a, b) }), vis: { type: 'dots', groups: [{ n: a, color: 'a', cross: b }] } }, { text: `${a} − ${b} = ${d}`, big: true }]; return [{ text: t('x_sub_think', { a, b }) }, { text: t('x_sub_up', { b, a, seq: up(b, d) }), vis: { type: 'numline', from: 0, to: Math.max(a + 1, 10), marks: [b, a], jumps: [[b, a]] } }, { text: t('x_sub_res', { d, a, b }), big: true }]; },
+    missing: q => { const { a, s } = q.x, k = s - a; return [{ text: t('x_miss1', { a, s, seq: up(a, k) }), vis: { type: 'numline', from: 0, to: Math.max(s + 1, 10), marks: [a, s], jumps: [[a, s]] } }, { text: t('x_miss2', { k, a, s }), big: true }]; },
+    double: q => { const { a } = q.x; return [{ text: t('x_dbl1', { a }), vis: { type: 'dots', groups: [{ n: a, color: 'a' }, { n: a, color: 'b' }] } }, { text: t('x_dbl2', { a, seq: up(a, a) }) }, { text: `${a} + ${a} = ${a * 2}`, big: true }]; },
+    tens: q => { const { a, b } = q.x, at = a / 10, bt = b / 10; return [{ text: t('x_tens1', { a, at, b, bt }), vis: { type: 'groups', groups: at + bt, each: 10 } }, { text: t('x_tens2', { at, bt, st: at + bt, s: a + b }), big: true }]; },
+    add100: q => { const { a, b } = q.x, a1 = a % 10, b1 = b % 10, a2 = Math.floor(a / 10), b2 = Math.floor(b / 10), o = a1 + b1, carry = o >= 10; const tt = a2 + b2 + (carry ? 1 : 0); return [{ text: t('x_col_ones', { a1, b1, o }) + (carry ? ' ' + t('x_col_carry') : ''), vis: { type: 'column', a, b, op: '+', carry: carry ? '1' : '' } }, { text: t('x_col_tens', { a2, b2, c: carry ? ' + 1' : '', tt }), vis: { type: 'column', a, b, op: '+', carry: carry ? '1' : '', res: a + b } }, { text: `${a} + ${b} = ${a + b}`, big: true }]; },
+    sub100: q => { const { a, b } = q.x, a1 = a % 10, b1 = b % 10, a2 = Math.floor(a / 10), b2 = Math.floor(b / 10), borrow = a1 < b1; if (!borrow) return [{ text: t('x_col_sub_ones', { a1, b1, o: a1 - b1 }), vis: { type: 'column', a, b, op: '−' } }, { text: t('x_col_sub_tens', { a2, b2, tt: a2 - b2 }), vis: { type: 'column', a, b, op: '−', res: a - b } }, { text: `${a} − ${b} = ${a - b}`, big: true }]; return [{ text: t('x_bor1', { a1, b1 }), vis: { type: 'column', a, b, op: '−', carry: (a2 - 1) + ' ' + (a1 + 10) } }, { text: t('x_bor2', { a1p: a1 + 10, b1, o: a1 + 10 - b1 }) }, { text: t('x_bor3', { a2m: a2 - 1, b2, tt: a2 - 1 - b2 }), vis: { type: 'column', a, b, op: '−', carry: (a2 - 1) + ' ' + (a1 + 10), res: a - b } }, { text: `${a} − ${b} = ${a - b}`, big: true }]; },
+    times: q => { const { a, b } = q.x; return [{ text: t('x_mul1', { a, b }), vis: { type: 'array', rows: a, cols: b } }, { text: t('x_mul2', { b, seq: up(0, a, b) }), vis: { type: 'array', rows: a, cols: b, rowLabels: Array.from({ length: a }, (_, i) => (i + 1) * b) } }, { text: `${a} × ${b} = ${a * b}`, big: true }]; },
+    divide: q => { const { n, b, q: qq } = q.x; return [{ text: t('x_div1', { n, b }), vis: { type: 'groups', groups: b, each: qq } }, { text: t('x_div2', { q: qq, b, n }), big: true }]; },
+    fracadd: q => { const x = q.x;
+      if (x.kind === 'fracof') return [{ text: t('x_fo1', { n: x.n, d: x.d, t: x.t }), vis: { type: 'groups', groups: x.d, each: x.one } }, { text: t('x_fo2', { t: x.t, d: x.d, one: x.one }) }, { text: t('x_fo3', { n: x.n, one: x.one, r: x.r }), big: true }];
+      return [{ text: t('x_si1', { n: x.n, d: x.d }), vis: { type: 'bars', fracs: [[x.n, x.d, x.n + '/' + x.d]] } }, { text: t('x_si2', { n: x.n, d: x.d, g: x.g, n2: x.n2, d2: x.d2 }) }, { text: t('x_si3', { n: x.n, d: x.d, n2: x.n2, d2: x.d2 }), big: true, vis: { type: 'bars', fracs: [[x.n2, x.d2, x.n2 + '/' + x.d2]] } }];
+    },
+    decimals: q => [{ text: t('x_da1'), vis: { type: 'column', a: q.x.a, b: q.x.b, op: '+' } }, { text: t('x_da2') }, { text: t('x_da3', { a: q.x.a, b: q.x.b, r: q.x.r }), big: true }],
+    fraction: q => { const { n, kind } = q.x;
+      if (kind === 'halfOdd') { const a = (n - 1) / 2; return [{ text: t('x_halfO1'), vis: { type: 'pie', n: 1, d: 2 } }, { text: t('x_halfO2', { n, a }), vis: { type: 'dots', groups: [{ n: a, color: 'a' }, { n: a, color: 'b' }, { n: 1, color: 'x' }] } }, { text: t('x_halfO3', { n, r: n / 2 }), big: true }]; } if (kind === 'half') return [{ text: t('x_half1'), vis: { type: 'pie', n: 1, d: 2 } }, { text: t('x_half2', { n, h: n / 2 }), vis: { type: 'groups', groups: 2, each: n / 2 } }, { text: `${n} ÷ 2 = ${n / 2}`, big: true }]; return [{ text: t('x_q1'), vis: { type: 'pie', n: 1, d: 4 } }, { text: t('x_q2', { n, q: n / 4 }), vis: { type: 'groups', groups: 4, each: n / 4 } }, { text: `${n} ÷ 4 = ${n / 4}`, big: true }]; },
+    round: q => { const { n } = q.x, lo = Math.floor(n / 10) * 10, hi = lo + 10, d = n % 10, r = d >= 5 ? hi : lo; return [{ text: t('x_rnd1', { n, lo, hi }), vis: { type: 'numline', from: lo, to: hi, marks: [lo, hi], point: n } }, { text: t('x_rnd2', { d }) }, { text: t('x_rnd3', { n, r }), big: true }]; },
+    nextNum: q => { const { a, b, c, step } = q.x; return [{ text: t('x_pat1', { a, b, step }), vis: { type: 'numline', from: Math.max(0, a - step), to: c + 2 * step, marks: [a, b, c], jumps: [[a, b], [b, c]] } }, { text: t('x_pat2', { c, step, ans: c + step }), big: true }]; },
+    mult2: q => { const { a, b } = q.x, tt = Math.floor(a / 10) * 10, o = a % 10, p1 = tt * b, p2 = o * b; return [{ text: t('x_split', { a, tt, o }) }, { text: t('x_part', { tt, b, p1, o, p2 }), vis: { type: 'area', rows: [b], cols: [tt, o] } }, { text: t('x_sum', { p1, p2, p: a * b }), big: true }]; },
+    mult22: q => { const { a, b } = q.x, at = Math.floor(a / 10) * 10, ao = a % 10, bt = Math.floor(b / 10) * 10, bo = b % 10; const cells = [at * bt, at * bo, ao * bt, ao * bo]; return [{ text: t('x_split2', { a, at, ao, b, bt, bo }) }, { text: t('x_area'), vis: { type: 'area', rows: [at, ao], cols: [bt, bo] } }, { text: t('x_sum4', { cells: cells.join(' + '), p: a * b }), big: true }]; },
+    longdiv: q => { const { a, b, q: qq, r } = q.x; return [{ text: t('x_ld1', { b, a, seq: up(0, qq, b) }), vis: { type: 'groups', groups: qq, each: b, rem: r } }, { text: t('x_ld2', { b, q: qq, bq: b * qq, a, r }) }, { text: t('x_ld3', { q: qq, r }), big: true }]; },
+    fraccmp: q => { const { A, B, a, b } = q.x, pa = Math.round(100 * A[0] / A[1]), pb = Math.round(100 * B[0] / B[1]); return [{ text: t('x_fc1'), vis: { type: 'bars', fracs: [[A[0], A[1], a], [B[0], B[1], b]] } }, { text: t('x_fc2', { A: a, pa, B: b, pb }) }, { text: t('x_fc3', { big: pa > pb ? a : b }), big: true }]; },
+    order: q => [{ text: t('x_ord1') }, { text: t('x_ord2', { part: q.x.part, v: q.x.v }) }, { text: t('x_ord3', { rest: q.x.rest, ans: q.answer }), big: true }],
+    word: q => [{ text: t('x_w1', { nums: q.x.nums }) }, { text: t('x_w2', { kw: q.x.kw, op: q.x.op }) }, { text: t('x_w3', { expr: q.x.expr, ans: q.answer }), big: true }]
+  };
+
+  // "Show me the path": one real intermediate step of the method, asked when a right answer looks like a lucky click.
+  // Each entry returns {prompt, answer, choices?, ok?(typed), vis?}; null means this question cannot be checked.
+  const others = (arr, not, n) => shuffle(arr.filter(x => x !== not)).slice(0, n);
+  const PATH = {
+    count: q => { const n = q.x.n, k = n > 2 ? Math.ceil(n / 2) : 1; return { prompt: t('p_count'), answer: k, choices: choicesAround(k, 4, 1, 10), vis: { type: 'dots', groups: [{ n: k, color: 'a' }, { n: n - k, color: 'x' }] } }; },
+    compare: q => ({ prompt: t('p_cmp'), answer: q.x.a, choices: choicesAround(q.x.a, 4, 1, 10), vis: { type: 'dots', groups: [{ n: q.x.a, hl: q.x.a }] } }),
+    addPic: q => PATH.add20(q),
+    add20: q => { const { a, b } = q.x; return a + b <= 10 ? { prompt: t('p_add_on', { a }), answer: a + 1 } : { prompt: t('p_ten', { a }), answer: 10 - a }; },
+    nextNum: q => ({ prompt: t('p_pat'), answer: q.x.step, choices: shuffle([q.x.step, ...others([1, 2, 3, 5, 10], q.x.step, 3)]) }),
+    sub20: q => { const { a, b } = q.x; return b > 3 && b < 10 && a > 10 ? { prompt: t('p_sub_ten', { b }), answer: 10 - b } : { prompt: t('p_sub_back', { a }), answer: a - 1 }; },
+    missing: q => ({ prompt: t('p_miss', { a: q.x.a }), answer: q.x.a + 1 }),
+    double: q => ({ prompt: t('p_dbl', { a: q.x.a, b: q.x.a - 1 }), answer: 2 * q.x.a - 1 }),
+    tens: q => ({ prompt: t('p_tens', { a: q.x.a }), answer: q.x.a / 10 }),
+    add100: q => { const a1 = q.x.a % 10, b1 = q.x.b % 10; return { prompt: t('p_ones_add', { a1, b1 }), answer: a1 + b1 }; },
+    sub100: q => { const a1 = q.x.a % 10, b1 = q.x.b % 10; return a1 < b1 ? { prompt: t('p_borrow', { a1, b1, a1p: a1 + 10 }), answer: a1 + 10 - b1 } : { prompt: t('p_ones_sub', { a1, b1 }), answer: a1 - b1 }; },
+    times: q => { const { a, b } = q.x, k = Math.min(3, a); return { prompt: t('p_skip', { b, seq: up(0, k - 1, b) }), answer: k * b }; },
+    divide: q => ({ prompt: t('p_div_check', { q: q.x.q, b: q.x.b }), answer: q.x.n }),
+    fraction: q => { const { n, kind } = q.x; if (kind === 'halfOdd') return { prompt: t('p_halfO', { m: n - 1 }), answer: (n - 1) / 2 }; if (kind === 'quarter') return { prompt: t('p_half_first', { n }), answer: n / 2 }; return { prompt: t('p_parts', { name: t('half') }), answer: 2, choices: shuffle([2, 3, 4, 5]) }; },
+    round: q => ({ prompt: t('p_digit', { n: q.x.n }), answer: q.x.n % 10 }),
+    mult2: q => { const { a, b } = q.x, tt = Math.floor(a / 10) * 10, o = a % 10; return { prompt: t('p_split', { a, tt, o, b }), answer: tt * b }; },
+    mult22: q => { const at = Math.floor(q.x.a / 10) * 10, bt = Math.floor(q.x.b / 10) * 10; return { prompt: t('p_area', { at, bt }), answer: at * bt }; },
+    longdiv: q => ({ prompt: t('p_ld', { b: q.x.b, q: q.x.q }), answer: q.x.b * q.x.q }),
+    fracadd: q => { const x = q.x; if (x.kind === 'fracof') return { prompt: t('p_one', { t: x.t, d: x.d }), answer: x.one }; return { prompt: t('p_gcd', { n: x.n, d: x.d }), answer: x.g, ok: v => { const k = parseInt(v, 10); return k > 1 && x.n % k === 0 && x.d % k === 0; } }; },
+    decimals: q => { const ta = Math.round((parseFloat(q.x.a) % 1) * 10), tb = Math.round((parseFloat(q.x.b) % 1) * 10); return { prompt: t('p_tenths', { ta, tb }), answer: ta + tb }; },
+    fraccmp: q => { const { A, B, a, b } = q.x, va = A[0] / A[1], vb = B[0] / B[1]; if ((va > 0.5) !== (vb > 0.5)) return { prompt: t('p_fc_half'), answer: va > 0.5 ? a : b, choices: [a, b] }; if (A[0] === B[0]) return { prompt: t('p_fc_pieces'), answer: A[1] > B[1] ? a : b, choices: [a, b] }; if (A[1] === B[1]) return { prompt: t('p_fc_more'), answer: A[0] > B[0] ? a : b, choices: [a, b] }; return null; },
+    order: q => { const m = q.prompt.split(' '); return { prompt: t('p_order'), answer: q.x.part, choices: shuffle([q.x.part, m.slice(0, 3).join(' ')]) }; },
+    word: q => ({ prompt: t('p_word'), answer: q.x.op, choices: shuffle(['op_add', 'op_sub', 'op_mul', 'op_div'].map(k => t(k))) })
+  };
+
+  const EGG = new URLSearchParams(location.search).get('egg'); const eggId = EGG && KQ.eggs.world['egg:' + EGG] === 'math' ? 'egg:' + EGG : null;
+  const R = { band: KQ.ladder.band(profile.id, 'math', [1, 2, 3, 4, 5, 6]), level: 1, egg: null, skill: null, tier: 0, i: 0, n: 10, correct: 0, streak: 0, best: 0, points: 0, times: [], t0: 0, q: null, typed: '', locked: false, results: [], seen: new Set(), retryTags: null, hint: false, howtos: 0, potion: null, shield: false, fastRun: 0, path: null, checks: 0 };
+  function mastery(skill) { const st = KQ.skills.stats(profile.id, 'math')[skill]; return st && st.recent >= 3 ? st : null; }
+  function renderPick() {
+    KQ.ui.potionBar($('#potions'));
+    const bb = $('#bands'); bb.replaceChildren();
+    for (const b of [1, 2, 3, 4, 5, 6]) { const d = el('div', 'tile' + (R.band === b ? ' on' : '')); d.appendChild(el('div', 'e', ['🛡️', '⚔️', '🐴', '👑', '🏰', '🌟'][b - 1])); d.appendChild(el('div', 'n', t('band' + b))); if (KQ.ladder.get(profile.id, 'math', b).complete) d.appendChild(el('span', 'done', '✅')); d.onclick = () => { R.band = b; KQ.ladder.setBand(profile.id, 'math', b); sfx.play('tap'); renderPick(); }; bb.appendChild(d); }
+    { const lad = KQ.ladder.get(profile.id, 'math', R.band); ui.ladder(bb, Object.assign({ steps: KQ.ladder.steps, nextName: R.band < 6 ? t('band' + (R.band + 1)) : '' }, lad)); }
+    const sk = $('#skills'); sk.replaceChildren();
+    const weak = KQ.skills.weak(profile.id, 'math', 4).map(w => w.key);
+    const f = el('div', 'tile focus'); f.appendChild(el('div', 'e', ICONS.focus)); f.appendChild(el('div', 'n', t('s_focus'))); f.appendChild(el('div', 'd', weak.length ? weak.map(tagName).join(' · ') : t('focusEmpty'))); if (weak.length) f.onclick = () => startRound('focus'); else f.classList.add('locked'); sk.appendChild(f);
+    for (const s of BANDS[R.band]) { const d = el('div', 'tile'); d.appendChild(el('div', 'e', ICONS[s])); d.appendChild(el('div', 'n', t('s_' + s))); { const gs = KQ.growth.stats(profile.id, 'math', R.band, s); if (gs.n) d.appendChild(el('span', 'gchip g-' + gs.status, t('g_status_' + gs.status))); } const m = mastery(s); if (m) { const box = el('div', 'm'); const bar = el('div', 'mastery'); const fill = el('i', m.rate >= 0.8 ? '' : m.rate >= 0.5 ? 'mid' : 'low'); fill.style.width = Math.round(m.rate * 100) + '%'; bar.appendChild(fill); box.appendChild(bar); box.appendChild(el('small', null, Math.round(m.rate * 100) + '% · ' + t('m_answered', { n: m.n }))); d.appendChild(box); } d.onclick = () => startRound(s); sk.appendChild(d); }
+  }
+  function startRound(skill, o) {
+    if (!(o && o.egg) && window.KQHeart && KQHeart.gate('math', () => { renderPick(); startRound(skill, o); })) return;   /* the Heart Garden scene comes first after a level (shared/heart.js) */
+    if (!(o && o.egg) && KQ.tickets.waiting(profile.id, 'math') && KQ.bridge.available(profile.id)) { KQ.bridge.open('math', () => { renderPick(); startRound(skill, o); }); return; }   /* the second-language lesson after a level is mandatory (Yoni 2026-10-03) */
+    const egg = !!(o && o.egg); if (egg) R.band = 6;
+    const lad = KQ.ladder.get(profile.id, 'math', R.band), tune = KQ.ladder.tune(egg ? KQ.ladder.steps : lad.level);
+    Object.assign(R, { skill, egg: egg ? eggId : null, level: egg ? KQ.ladder.steps : lad.level, tier: tune.tierStart, i: 0, n: egg ? 12 : tune.n, correct: 0, streak: 0, best: 0, points: 0, times: [], typed: '', locked: false, results: [], seen: new Set(), retryTags: null, hint: false, howtos: 0, shield: false, fastRun: 0, path: null, checks: 0 });
+    R.potion = store.activePotion(profile.id); R.plan = KQ.skills.plan(profile.id, 'math'); R.weak = R.plan.focus; R.helped = false; R.freeHint = false;
+    R.G = KQ.growth.round(profile.id, 'math', R.band, skill === 'focus' ? null : skill, BANDS[R.band]); if (!egg && skill !== 'focus') { const gp = R.G.plan(skill); R.tier = Math.max(R.tier, gp.tier); R.n = Math.max(5, R.n + gp.dn); }   /* the growth detector watches this round */
+    if (R.egg) { R.plan = { focus: [], easy: {}, boost: 0 }; R.weak = []; }
+    $('#pick').hidden = true; $('#round').hidden = false; document.body.classList.add('focus');
+    $('#skillName').textContent = skill === 'focus' ? t('m_focusHint', { tags: R.weak.map(tagName).join(', ') }) : t('s_' + skill) + ' · ' + t('band' + R.band);
+    sfx.play('tap'); nextQ();
+  }
+  function renderDots() { KQ.ui.progress(R.i, R.n); const d = $('#dots'); d.replaceChildren(); for (let i = 0; i < R.n; i++) d.appendChild(el('i', i < R.i ? (R.results[i] ? 'ok' : 'bad') : i === R.i ? 'cur' : '')); $('#streak').textContent = (R.streak >= 2 ? `🔥 ${R.streak}` : '') + (R.potion ? ' ' + KQ.POTIONS.find(p => p.id === R.potion).e : ''); }
+  // pick the next question: after a mistake, one of the same kind; otherwise lean towards the kid's tricky concepts half of the time
+  function pickQuestion() {
+    const want = R.retryTags || (R.weak.length && Math.random() < R.plan.boost ? [pick(R.weak)] : null);
+    const tier = want && want.some(x => R.plan.easy[x]) ? 0 : R.tier; // struggling concepts come back with friendlier numbers
+    let skill = R.skill;
+    if (skill === 'focus') { const cands = BANDS[R.band].filter(s => !want || SKILL_TAGS[s].some(x => want.includes(x))); skill = want ? pick(cands.length ? cands : BANDS[R.band]) : (R.G ? R.G.pickSkill(BANDS[R.band]) : pick(BANDS[R.band])); }
+    let q = null;
+    const keyOf = c => c.prompt + '|' + (c.visual || ''), ft = R.skill === 'focus' && R.G && !want ? Math.max(tier, R.G.plan(skill).tier) : tier, gen = () => GEN[skill](ft), fresh = c => !R.seen.has(keyOf(c));   // rotation across rounds, see KQ.rotate
+    q = want ? KQ.rotate.pick(profile.id, 'math', R.band, skill, gen, keyOf, c => fresh(c) && c.tags.some(x => want.includes(x)), 12) : null;
+    q = q || KQ.rotate.pick(profile.id, 'math', R.band, skill, gen, keyOf, fresh, 24) || gen();
+    q.skill = skill; R.seen.add(keyOf(q)); if (KQ.ui.peek) KQ.ui.peek({ repeat: KQ.rotate.seen(profile.id, 'math', R.band, skill, keyOf(q)), band: R.band, level: R.level, rate: (KQ.skills.stats(profile.id, 'math')[skill] || {}).rate });   /* the parents' corner code */ return q;
+  }
+  function nextQ() { if (R.i >= R.n) return renderQ(); const qc = document.querySelector('.qcard'); if (!qc || qc.classList.contains('swap')) return renderQ(); qc.classList.add('swap'); setTimeout(() => { renderQ(); setTimeout(() => qc.classList.remove('swap'), 30); }, 190); }   // the card fades out, changes, fades back: no jump
+  function renderQ() {
+    if (R.i >= R.n) return finish();
+    const q = pickQuestion(); R.q = q; R.typed = ''; R.locked = false; R.hint = false; R.path = null; R.t0 = performance.now(); R.retryTags = null; if (R.G) R.G.begin();
+    renderDots(); $('#howto').replaceChildren(); $('#btnHow').hidden = !EXPLAIN[q.skill]; $('#btnHow').disabled = false;
+    const p = $('#prompt'); p.textContent = q.prompt; p.style.direction = /[֐-׿]/.test(q.prompt) ? 'rtl' : 'ltr'; p.style.fontSize = q.wordy ? 'clamp(20px,4.5vw,30px)' : '';
+    const v = $('#visual'); if (q.visual) { v.textContent = q.visual; v.hidden = false; } else v.hidden = true;
+    $('#feedback').textContent = ''; $('#feedback').className = 'feedback';
+    const ch = $('#choices'), np = $('#numpad'), ab = $('#answerBox');
+    if (q.choices) {
+      ch.hidden = false; np.hidden = true; ab.hidden = true; ch.replaceChildren();
+      for (const c of q.choices) { const b = el('button', 'choice', String(c)); if (q.bigChoices) b.style.fontSize = 'clamp(22px,4.5vw,34px)'; b.onclick = () => answer(c, b); ch.appendChild(b); }
+    } else {
+      ch.hidden = true; np.hidden = false; ab.hidden = false; $('#fracHint').hidden = !(q.fracAnswer || /[./]/.test(String(q.answer))); $('#answer').textContent = ' '; $('#answer').className = 'answer';
+      ensurePad();
+    }
+    if (store.settings.voice && R.band === 1) KQ.speak(q.speak);   // older kids read it themselves
+    // extra help: a concept this kid keeps missing gets the method shown up front, free, until three in a row are right
+    R.freeHint = false; const struggling = q.tags.filter(x => R.plan.easy[x]);
+    if (struggling.length && EXPLAIN[q.skill] && !R.retryTags) { R.hint = true; R.freeHint = true; R.howtos++; $('#btnHow').disabled = true; ui.howto($('#howto'), EXPLAIN[q.skill](q), { hideLast: true, doneLabel: t('gotIt'), speak: false }); if (!R.helped) { R.helped = true; ui.toast('🧙 ' + t('j_help', { tags: struggling.map(tagName).join(', ') })); } }
+  }
+  // accepts whole numbers, decimals (3.5) and fractions (1/2)
+  const parseAns = s => { s = String(s).trim(); if (!s) return NaN; if (s.indexOf('/') > 0) { const p = s.split('/'); const a = parseFloat(p[0]), b = parseFloat(p[1]); return b ? a / b : NaN; } return parseFloat(s); };
+  const sameAns = (typed, expected) => { const a = parseAns(typed), b = parseAns(expected); if (isNaN(a) || isNaN(b)) return String(typed) === String(expected); return Math.abs(a - b) < 1e-9; };
+  function ensurePad() { const np = $('#numpad'); if (np.children.length) return; for (const k of ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '/', '⌫', '✓']) { const b = el('button', k === '✓' ? 'go' : (k === '⌫' || k === '.' || k === '/') ? 'act' : '', k); if (k === '✓') b.style.gridColumn = 'span 2'; b.onclick = () => key(k); np.appendChild(b); } }
+  function key(k) {
+    if (R.locked) return; sfx.play('tap');
+    if (k === '⌫' || k === '⌫') R.typed = R.typed.slice(0, -1);
+    else if (k === '✓') { if (R.typed !== '' && !/[./]$/.test(R.typed)) answer(R.typed); return; }
+    else if (k === '.') { const tail = R.typed.split('/').pop(); if (R.typed && tail.indexOf('.') < 0 && !/[./]$/.test(R.typed)) R.typed += k; }
+    else if (k === '/') { if (R.typed && R.typed.indexOf('/') < 0 && R.typed.indexOf('.') < 0) R.typed += k; }
+    else if (R.typed.replace(/[^0-9]/g, '').length < 6) R.typed += k;
+    $('#answer').textContent = R.typed || ' ';
+  }
+  document.addEventListener('keydown', e => { if ($('#round').hidden || $('#numpad').hidden || R.locked) return; if (/^[0-9]$/.test(e.key)) key(e.key); else if (e.key === '.') key('.'); else if (e.key === '/') key('/'); else if (e.key === 'Backspace') key('⌫'); else if (e.key === 'Enter') key('✓'); });
+  // "How?" before answering: the strategy without the final answer (a hint costs half the points unless the hint lantern is active)
+  $('#btnHow').onclick = () => { if (R.locked || !R.q || R.hint) return; R.hint = true; R.howtos++; $('#btnHow').disabled = true; sfx.play('tap'); ui.howto($('#howto'), EXPLAIN[R.q.skill](R.q), { hideLast: true, doneLabel: t('gotIt') }); if (R.potion !== 'hint') ui.toast(t('hintCost')); };
+  function answer(val, btn) {
+    if (R.locked) return;
+    if (R.path) return pathAnswer(val, btn);
+    R.locked = true; $('#btnHow').disabled = true;
+    const ms = performance.now() - R.t0; R.times.push(ms);
+    const q = R.q, ok = sameAns(val, q.answer);
+    if (ok && wantsPath(q, ms)) return pathCheck(q, ms, btn);
+    settle(ok, val, btn, ms, null);
+  }
+  // Does a quick right answer look like a lucky click? Fast, and either a recent miss or a run of fast answers
+  // (stricter for two-choice questions, where a coin flip is right half the time). A hint already showed the method.
+  function wantsPath(q, ms) {
+    if (!PATH[q.skill] || R.hint) return false;
+    const fast = ms < (q.choices ? 1700 : 900 + 350 * R.band);
+    R.fastRun = fast ? R.fastRun + 1 : 0;
+    const recentMiss = R.results.slice(Math.max(0, R.i - 3), R.i).some(x => x === false);
+    return fast && (recentMiss || R.fastRun >= 3 || (q.choices && q.choices.length <= 2 && R.fastRun >= 2));
+  }
+  function pathCheck(q, ms, btn) {
+    const p = PATH[q.skill](q); if (!p) return settle(true, q.answer, btn, ms, null);
+    R.path = { p, btn, ms }; R.checks++; R.fastRun = 0;
+    if (btn) btn.classList.add('ok'); else $('#answer').classList.add('ok');
+    const fb = $('#feedback'); fb.textContent = t('yes') + ' · 🧭 ' + t('path_title'); fb.className = 'feedback ok';
+    const box = $('#howto'); box.replaceChildren();
+    const card = el('div', 'howto path'); card.appendChild(el('div', 'lbl', '🧭 ' + t('path_title'))); card.appendChild(el('div', 'sub', t('path_sub')));
+    const pr = el('div', 'pprompt', p.prompt); pr.style.direction = /[֐-׿]/.test(p.prompt) ? 'rtl' : 'ltr'; card.appendChild(pr);
+    const vv = ui.vis(p.vis); if (vv) card.appendChild(vv);
+    // picture choices (the two groups in 'which has more') stay on screen, greyed, so the path question can be answered by looking
+    $('#choices').hidden = !q.picChoices; if (q.picChoices) for (const b of $('#choices').children) { b.disabled = true; b.style.pointerEvents = 'none'; }
+    if (p.choices) { const ch = el('div', 'choices'); for (const c of p.choices) { const b = el('button', 'choice', String(c)); b.onclick = () => pathAnswer(c, b); ch.appendChild(b); } card.appendChild(ch); $('#numpad').hidden = true; $('#answerBox').hidden = true; }
+    else { ensurePad(); $('#numpad').hidden = false; $('#answerBox').hidden = false; R.typed = ''; $('#answer').textContent = ' '; $('#answer').className = 'answer'; $('#fracHint').hidden = true; }
+    box.appendChild(card); R.locked = false; sfx.play('step');
+  }
+  function pathAnswer(val, b) {
+    const { p, btn, ms } = R.path, good = p.ok ? p.ok(val) : sameAns(val, p.answer);
+    R.path = null; R.locked = true;
+    if (b) { b.classList.add(good ? 'ok' : 'bad'); if (!good) for (const x of b.parentNode.children) if (x.textContent === String(p.answer)) x.classList.add('ok'); } else $('#answer').classList.add(good ? 'ok' : 'bad');
+    setTimeout(() => { $('#howto').replaceChildren(); settle(good, R.q.answer, btn, ms, good ? 'proved' : 'guessed'); }, good ? 250 : 900);
+  }
+  // path: null = ordinary answer, 'proved' = a right answer plus a shown step (bonus), 'guessed' = the step failed, so the
+  // right answer counts as luck: no points, logged in the journal, the method shown, and one like it comes next
+  function settle(ok, val, btn, ms, path) {
+    const q = R.q, fb = $('#feedback');
+    R.results[R.i] = ok; if (window.KQStage) KQStage.reward(ok);
+    KQ.skills.note('math', { key: q.skill, tags: q.tags, ok }); KQ.rotate.note(profile.id, 'math', R.band, q.skill, q.prompt + '|' + (q.visual || ''));
+    { const gr = R.G && !R.egg ? R.G.answer(q.skill, ok, ms == null ? performance.now() - R.t0 : ms, { hint: R.hint && !R.freeHint, tier: R.tier }) : null; if (gr && gr.advice === 'up' && R.tier < 2) R.tier++; }
+    if (ok) {
+      R.correct++; R.streak++; R.best = Math.max(R.best, R.streak);
+      let pts = KQ.score.answer({ ok: true, ms, streak: R.streak, fastMs: KQ.score.FAST_MS.math, hint: R.hint && !R.freeHint, potion: R.potion }); if (path === 'proved') pts += KQ.score.PATH_BONUS; R.points += pts;
+      if (R.streak === 5) ui.toast(KQ.praise.steady(5));
+      if (R.streak >= 3 && R.tier < 2 && R.results.slice(-3).every(Boolean)) R.tier++;
+      fb.textContent = path === 'proved' ? KQ.praise.ok({ proved: true }) : KQ.praise.ok({ hint: R.hint && !R.freeHint, fast: ms < KQ.score.FAST_MS.math * 0.6 }); fb.className = 'feedback ok'; sfx.play('correct');
+      if (path === 'proved') ui.burst('✨', 10);
+      if (btn) btn.classList.add('ok'); else $('#answer').classList.add('ok');
+      R.i++; renderDots(); setTimeout(nextQ, path === 'proved' ? 1400 : 900);
+    } else {
+      if (R.potion === 'shield' && !R.shield) { R.shield = true; ui.toast('🛡️ ' + t('p_shield')); } else R.streak = 0;
+      if (R.tier > 0 && R.results.slice(-2).every(x => x === false)) R.tier--;
+      fb.textContent = path === 'guessed' ? '🎲 ' + t('path_bad') : KQ.praise.bad(q.answer); fb.className = 'feedback bad'; sfx.play('wrong'); if (path !== 'guessed') ui.toast(KQ.praise.grow());
+      KQ.journal.add('math', { skill: q.skill, tags: q.tags, prompt: q.prompt, given: path === 'guessed' ? t('guessed') : String(val), answer: String(q.answer), label: t('s_' + q.skill) });
+      if (path !== 'guessed') {
+        if (btn) { btn.classList.add('bad'); for (const b of $('#choices').children) if (b.textContent === String(q.answer)) b.classList.add('ok'); } else { $('#answer').classList.add('bad'); $('#answer').textContent = R.typed + ' → ' + q.answer; }
+        $('.qcard').classList.add('shake'); setTimeout(() => $('.qcard').classList.remove('shake'), 450);
+      }
+      R.i++; renderDots();
+      // teach it, then ask one of the same kind
+      if (EXPLAIN[q.skill]) { R.howtos++; $('#howto').replaceChildren(); ui.howto($('#howto'), EXPLAIN[q.skill](q), { doneLabel: R.i < R.n ? t('tryAlike') : t('gotIt'), onDone: () => { R.retryTags = q.tags; nextQ(); } }); }
+      else setTimeout(nextQ, 1900);
+    }
+  }
+  function finish() {
+    const bonus = KQ.score.perfectBonus(R.correct, R.n); R.points += bonus;
+    if (R.potion === 'double') R.points *= 2;
+    const stars = KQ.score.stars(R.correct, R.n), avgMs = Math.round(R.times.reduce((a, b) => a + b, 0) / Math.max(1, R.times.length));
+    const label = R.skill === 'focus' ? t('s_focus') : t('s_' + R.skill);
+    const rec = store.record('math', { stars, points: R.points, correct: R.correct, total: R.n, avgMs, mode: R.skill, level: R.band, label, bestStreak: R.best, howtos: R.howtos, checks: R.checks });
+    const skills = BANDS[R.band], idx = skills.indexOf(R.skill), nextSkill = skills[(idx + 1) % skills.length];
+    const extra = []; if (bonus) extra.push([t('perfectBonus'), '+' + bonus]); if (R.potion === 'double') extra.push([t('p_double'), '×2']); if (R.checks) extra.push(['🧭 ' + t('path_title'), String(R.checks)]);
+    const lad = R.egg ? { passed: true } : R.G ? R.G.finish(stars, R.level, [1, 2, 3, 4, 5, 6], BANDS) : KQ.ladder.complete(profile.id, 'math', R.band, R.level, stars, [1, 2, 3, 4, 5, 6]); if (lad.lines) extra.push(...lad.lines);
+    if (lad.unlocked && !lad.bandUp) extra.push(['🪜 ' + t('ladderUnlocked', { l: lad.level }), '']); else if (!lad.passed && !lad.held && !lad.rolledBack) extra.push(['🪜 ' + t('ladderNeed'), '']);
+    if (lad.bandUp) R.band = lad.nextBand;
+    let hatched = null; if (R.egg) { if (stars >= 2) { hatched = KQ.eggs.win(profile.id, R.egg); KQ.profiles.update(profile.id, { avatar: hatched }); extra.push(['🐰 ' + t('eggWin'), ui.avatarTitle(hatched)[0]]); } else extra.push(['🥚 ' + t('eggLose'), '']); R.egg = null; }
+    const openReport = () => ui.report({ title: t('reportTitle'), stars, points: R.points, correct: R.correct, total: R.n, avgMs, bestStreak: R.best, extra, rec, workingOn: KQ.skills.weak(profile.id, 'math', 3).map(w => tagName(w.key)), mastered: KQ.skills.mastered(profile.id, 'math', 4).filter(k => !/^x\d|^d\d/.test(k)).map(tagName), onAgain: () => startRound(R.skill), onNext: () => startRound(nextSkill), homeHref: '../index.html' });
+    const afterBand = lad.bandUp ? () => ui.celebrate({ emoji: '🎓', title: t('ladderBandUp', { n: KQ.ladder.steps, name: t('band' + lad.nextBand) }), sub: t('band' + lad.nextBand), onDone: openReport }) : openReport;
+    const afterCastle = hatched ? () => ui.celebrate({ emoji: '🐰', title: t('eggWin'), sub: ui.avatarTitle(hatched)[0], onDone: afterBand }) : afterBand;
+    if (rec && rec.castleUp) ui.celebrate({ emoji: '🏰', title: t('levelUp'), sub: t('welcomeTo', { name: t('castle' + rec.progress.castle) }), onDone: afterCastle }); else afterCastle();
+    $('#round').hidden = true; if (KQ.ui.peek) KQ.ui.peek(null); $('#pick').hidden = false; document.body.classList.remove('focus'); renderPick();
+  }
+  document.addEventListener('kq:ladder', () => { R.band = KQ.ladder.band(profile.id, 'math', [1, 2, 3, 4, 5, 6]) || R.band; if ($('#round').hidden) renderPick(); });
+  $('#btnQuit').onclick = () => { $('#round').hidden = true; if (KQ.ui.peek) KQ.ui.peek(null); $('#pick').hidden = false; document.body.classList.remove('focus'); renderPick(); };
+  $('#btnSpeak').onclick = () => { if (R.q) KQ.speak(R.q.speak, null, { force: true }); };
+  function boot() { ui.header({ title: t('m_title'), sub: t('m_sub'), homeHref: '../index.html' }); renderPick(); if (eggId && !R.egg && $('#round').hidden) startRound(BANDS[4][BANDS[4].length - 1], { egg: true }); }
+  document.addEventListener('kq:lang', () => { boot(); if (!$('#round').hidden) $('#skillName').textContent = R.skill === 'focus' ? t('s_focus') : t('s_' + R.skill) + ' · ' + t('band' + R.band); });
+  KQ.i18n.apply(); boot();
+  window.KQMath = { GEN, BANDS, EXPLAIN };   // for tests
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('night');</script>
+</body>
+</html>

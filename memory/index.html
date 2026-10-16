@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Memory Cave</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#6b4fbb; --accent-2:#3d2a78; }
+.bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:600px){ .bands{grid-template-columns:1fr} }
+.board{display:grid; gap:12px; justify-content:center; margin:8px auto 4px; max-width:620px; perspective:1400px}
+/* each tile is a carved stone tablet (memory/back.webp); it flips in 3D to a parchment face (memory/front.webp) */
+.cardb{position:relative; aspect-ratio:1; border-radius:14px; cursor:pointer; transform-style:preserve-3d; transition:transform .55s cubic-bezier(.2,.8,.2,1), box-shadow .3s ease, opacity .3s ease; box-shadow:0 6px 14px rgba(0,0,0,.28); font:900 clamp(18px,4.2vw,30px) var(--font-body); color:var(--ink); user-select:none}
+.cardb:hover{box-shadow:0 10px 22px rgba(0,0,0,.34)}
+.cardb .b,.cardb .f{position:absolute; inset:0; border-radius:14px; display:grid; place-items:center; backface-visibility:hidden; -webkit-backface-visibility:hidden; overflow:hidden; padding:8px; box-sizing:border-box; text-align:center; line-height:1.1}
+.cardb .b{background:#1d1a2e url("back.webp?v=1") center/cover no-repeat; font-size:0; border:2px solid #3a3352}
+/* the face is light parchment, so its words are dark ink: the royal-glass skin's --ink is cream (for text on night glass), and a
+   word card read cream on cream, 1.03:1 (Yoni 2026-09-29) */
+.cardb .f{background:#f6ecd6 url("front.webp?v=1") center/cover no-repeat; color:#2e2014; transform:rotateY(180deg); border:2px solid var(--gold-2); overflow-wrap:anywhere; hyphens:auto; text-shadow:0 1px 0 rgba(255,255,255,.8)}
+.cardb.up{transform:rotateY(180deg)}
+.cardb.done{transform:rotateY(180deg) scale(.94); cursor:default; box-shadow:0 0 0 3px var(--ok), 0 6px 14px rgba(0,0,0,.2)}
+.cardb.done .f{border-color:var(--ok)}
+.cardb.done .f::before{content:""; position:absolute; inset:0; z-index:-1; background:rgba(70,180,110,.34); mix-blend-mode:multiply; pointer-events:none}   /* the green tint lies on the parchment, under the word */
+.cardb.done .f::after{content:"✓"; position:absolute; top:6px; inset-inline-end:7px; width:26px; height:26px; border-radius:50%; background:var(--ok); color:#fff; font:900 16px/26px var(--font-body); text-align:center; box-shadow:0 2px 4px rgba(0,0,0,.3)}
+.cardb.pic .f{font-size:clamp(30px,7vw,46px)}
+.cardb.w6 .f{font-size:.82em} .cardb.w8 .f{font-size:.66em} .cardb.w11 .f{font-size:.52em}
+.moves{font-weight:800; color:var(--muted); margin-top:8px}
+.tile .m{width:100%; display:grid; gap:3px} .tile .m small{font-size:11px; color:var(--muted); font-weight:700}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header><main class="play" style="margin-top:18px"></main></div>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script src="../shared/quest.js?v=18"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { mc_title: 'Memory Cave', mc_sub: 'Flip, remember, match', s_pics: 'Picture pairs', s_words: 'Word & picture', s_facts: 'Times-table pairs', s_sums: 'Sum pairs', s_opposites: 'Opposites', mc_go: 'Find all the pairs. Fewer flips = more points!', mc_moves: '{n} flips · {p} pairs left', mc_perfect: 'Every pair found with a sharp memory!', mc_ok: 'All pairs found!', mc_slow: 'Found them all, but it took many flips. Look carefully at each card before flipping the next.', mc_pairs: 'The pairs were' },
+    he: { mc_title: 'מערת הזיכרון', mc_sub: 'הופכים, זוכרים, מתאימים', s_pics: 'זוגות תמונות', s_words: 'מילה ותמונה', s_facts: 'זוגות לוח הכפל', s_sums: 'זוגות חיבור', s_opposites: 'הפכים', mc_go: 'מוצאים את כל הזוגות. פחות היפוכים = יותר נקודות!', mc_moves: '{n} היפוכים · {p} זוגות נשארו', mc_perfect: 'כל הזוגות נמצאו עם זיכרון חד!', mc_ok: 'כל הזוגות נמצאו!', mc_slow: 'מצאתם הכול, אבל זה לקח הרבה היפוכים. מסתכלים טוב על כל קלף לפני שהופכים את הבא.', mc_pairs: 'הזוגות היו' }
+  });
+  const { t } = KQ;
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+  const W = () => KQ_WORDS[KQ.i18n.lang] || KQ_WORDS.en;
+  const PICS = ['🐱', '🐶', '🦊', '🐸', '🐻', '🦁', '🐼', '🐨', '🐵', '🦄', '🐙', '🦋', '🍎', '🍓', '🍌', '🍇', '🚗', '✈️', '⛵', '🚂', '⭐', '🌙', '🌈', '🏰'];
+  // a board: pairs of [faceA, faceB]; matching = same pair id. kind 'pic' shows big emoji faces.
+  function board(pairs, kind, tags, speakable) {
+    const cards = shuffle(pairs.flatMap((p, i) => [{ id: i, face: p[0], kind: p[2] || kind }, { id: i, face: p[1], kind: p[3] || kind }]));
+    const cols = cards.length <= 12 ? 4 : cards.length <= 16 ? 4 : 5;
+    return {
+      key: pairs.map(p => p[0]).join('|'), tags, journal: t('s_' + tags[0]), answerLabel: '', prompt: t('mc_go'),
+      render(stage, api) {
+        const grid = api.el('div', 'board'); grid.style.gridTemplateColumns = `repeat(${cols}, minmax(58px, 96px))`;
+        const info = api.el('div', 'moves'); let flips = 0, open = [], left = pairs.length, busy = false;
+        const upd = () => { info.textContent = t('mc_moves', { n: flips, p: left }); };
+        cards.forEach(c => {
+          const L = String(c.face).length, b = api.el('div', 'cardb' + (c.kind === 'pic' ? ' pic' : L >= 11 ? ' w11' : L >= 8 ? ' w8' : L >= 6 ? ' w6' : '')); b.appendChild(api.el('span', 'b', '🪨')); b.appendChild(api.el('span', 'f', c.face)); b.style.direction = /[֐-׿]/.test(c.face) ? 'rtl' : 'ltr';
+          b.onclick = () => {
+            if (busy || api.locked() || b.classList.contains('up') || b.classList.contains('done')) return;
+            b.classList.add('up'); open.push([c, b]); api.sfx.play('tap'); if (speakable && c.kind !== 'pic') KQ.speak(c.face);
+            if (open.length === 2) {
+              flips++; upd(); busy = true;
+              const [[c1, b1], [c2, b2]] = open; open = [];
+              if (c1.id === c2.id) { setTimeout(() => { b1.classList.add('done'); b2.classList.add('done'); busy = false; left--; upd(); api.sfx.play('step'); if (!left) { const eff = flips / pairs.length; api.toast(eff <= 1.2 ? '🧠 ' + t('mc_perfect') : eff <= 2 ? '🧠 ' + t('mc_ok') : '🪨 ' + t('mc_slow')); api.submit(true, flips + ' flips'); }   /* a finished board is a solved board; the toast grades efficiency */ }, 350); }
+              else setTimeout(() => { b1.classList.remove('up'); b2.classList.remove('up'); busy = false; api.sfx.play('wrong'); }, 900);
+            }
+          };
+          grid.appendChild(b);
+        });
+        stage.appendChild(grid); stage.appendChild(info); upd();
+      }
+    };
+  }
+  const GEN = {
+    pics(tier, band) { const n = band === 1 ? (tier ? 8 : 6) : 8; return board(shuffle(PICS).slice(0, n).map(e => [e, e]), 'pic', ['pics']); },
+    words(tier, band) { const n = band === 3 ? 8 : 6, ws = shuffle(W().words).slice(0, n); return board(ws.map(w => [w[0], w[1], 'word', 'pic']), 'word', ['words'], true); },
+    facts(tier) { const seen = new Set(), pairs = []; while (pairs.length < 8) { const a = ri(2, tier ? 9 : 6), b = ri(2, 9); const p = a * b; if (seen.has(p)) continue; seen.add(p); pairs.push([`${a} × ${b}`, String(p)]); } return board(pairs, 'word', ['facts']); },
+    sums(tier) { const seen = new Set(), pairs = []; while (pairs.length < 6) { const a = ri(1, tier ? 9 : 5), b = ri(1, tier ? 9 : 5); const s = a + b; if (seen.has(s)) continue; seen.add(s); pairs.push([`${a} + ${b}`, String(s)]); } return board(pairs, 'word', ['sums']); },
+    opposites() { const ps = shuffle(W().antonyms).slice(0, 6); return board(ps.map(p => [p[0], p[1]]), 'word', ['opposites'], true); }
+  };
+  KQ.quest.shell();
+  KQ.quest({ world: 'memory', title: 'mc_title', sub: 'mc_sub', bands: { 1: ['pics', 'sums'], 2: ['pics', 'words', 'sums'], 3: ['words', 'facts', 'opposites'] }, bandKey: 'band', bandIcons: ['🛡️', '⚔️', '🐴'], icons: { pics: '🖼️', words: '🔤', facts: '✖️', sums: '➕', opposites: '↔️' }, n: 3, fastMs: 90000, gen: GEN });
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('cave');</script>
+</body>
+</html>

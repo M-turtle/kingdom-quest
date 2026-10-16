@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Music Hall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Frank+Ruhl+Libre:wght@700;900&family=Assistant:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#c0396b; --accent-2:#6a1438; }
+.bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:600px){ .bands{grid-template-columns:1fr} }
+.mq{display:grid; gap:14px; justify-items:center; width:100%}
+.mq .listen{display:inline-flex; align-items:center; gap:10px; padding:12px 26px; border-radius:999px; border:0; cursor:pointer; font:800 18px/1 var(--font-body); color:#3a1020; background:linear-gradient(180deg,#ffe08a,#f2b84a); box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.mq .listen svg{width:22px; height:22px}
+.mq .listen.playing{animation:mqPulse .9s ease-in-out infinite}
+@keyframes mqPulse{50%{transform:scale(1.06); box-shadow:0 0 0 8px rgba(255,224,138,.25)}}
+.mq .hero{width:min(46vw,180px); height:auto}
+.mq .staffbox{width:min(92vw,420px)} .mq .staffbox svg{width:100%; height:auto; display:block}
+.mq .choices{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; width:100%}
+.mq .choice{display:flex; flex-direction:column; align-items:center; gap:6px; min-height:58px; justify-content:center; font-weight:800}
+.mq .choice .kqm-art{width:84px; height:84px}
+.mq .choice .kq-i{width:56px; height:56px}
+.mq .choice.ok{outline:4px solid #3ecf7a} .mq .choice.bad{outline:4px solid #ff5a6a; opacity:.8}
+.mq .bars{display:flex; gap:5px; justify-content:center} .mq .bars i{display:block; width:22px; border-radius:6px; box-shadow:inset 0 -3px 0 rgba(0,0,0,.2)}
+.mq .piece{display:grid; gap:2px; text-align:center; padding:10px 16px; border-radius:14px; background:rgba(255,224,138,.14); border:1px solid rgba(255,224,138,.6)}
+.mq .piece b{font-size:18px} .mq .piece span{font-size:14px; opacity:.85}
+.kqm-art{display:block}
+/* the Music Creator card on the pick screen */
+.mc-card{display:flex; align-items:center; gap:14px; width:100%; margin:0 0 14px; padding:14px 16px; border-radius:18px; cursor:pointer; text-align:start; border:1px solid rgba(255,224,138,.55); background:linear-gradient(135deg,rgba(192,57,107,.35),rgba(90,40,140,.35)); color:inherit; font:inherit}
+.mc-card .row{display:flex; gap:2px} .mc-card .row svg{width:44px; height:44px}
+.mc-card b{display:block; font:800 20px/1.1 var(--font-title, Cinzel), serif} .mc-card span{font-size:14px; opacity:.85}
+/* the Instrument Hall card (Yoni 2026-10-10): four of the paintings */
+.mc-card.ih-entry{background:linear-gradient(135deg,rgba(226,191,104,.28),rgba(120,30,60,.4))} .mc-card.ih-entry .row svg{width:48px; height:48px}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+<link rel="stylesheet" href="creator.css?v=3">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header><main class="play" style="margin-top:18px"></main></div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script src="../shared/quest.js?v=18"></script>
+<script src="../shared/music_map.js?v=4"></script>
+<script src="../shared/music.js?v=5"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { mh_title: 'Music Hall', mh_sub: 'Listen, play and make music with real instruments.',
+      s_who: 'Who is playing?', s_highlow: 'High or low?', s_count: 'Count the beats', s_loudfast: 'Loud or quiet, fast or slow', s_echo: 'Echo the tune', s_happy: 'Happy or sad?',
+      s_tune: 'Name that tune', s_staff: 'Read the notes', s_rhythm: 'How long is the note?', s_family: 'Instrument families', s_composer: 'Who composed it?', s_interval: 'Steps and leaps', s_chord: 'Major or minor?', s_keysig: 'Key signatures',
+      mh_listen: 'Listen', mh_again: 'Listen again',
+      q_who: 'Which instrument is playing?', q_high: 'Is the second sound higher or lower?', q_count: 'How many drum beats?', q_loud: 'Is the drum loud or quiet?', q_fast: 'Is the music fast or slow?',
+      q_echo: 'Which bars played the tune?', q_happy: 'Does this music sound happy or sad?', q_tune: 'Which piece is this?', q_staff: 'Which note is this?', q_beats: 'How many beats does this note last?', q_bar: 'How many beats are in this bar?',
+      q_family: 'Which family is this instrument from?', q_composer: 'Who composed this music?', q_interval: 'How far apart are the two notes?', q_chord: 'Is this chord major or minor?', q_key: 'How many sharps or flats does {k} major have?',
+      a_higher: 'Higher', a_lower: 'Lower', a_same: 'The same', a_loud: 'Loud', a_quiet: 'Quiet', a_fast: 'Fast', a_slow: 'Slow', a_happy: 'Happy', a_sad: 'Sad', a_major: 'Major', a_minor: 'Minor', a_dim: 'Diminished',
+      i_piano: 'Piano', i_violin: 'Violin', i_cello: 'Cello', i_flute: 'Flute', i_xylophone: 'Xylophone', i_guitar: 'Guitar', i_trumpet: 'Trumpet', i_harp: 'Harp', i_drums: 'Drums',
+      f_strings: 'Strings', f_woodwind: 'Woodwind', f_brass: 'Brass', f_percussion: 'Percussion', f_keys: 'Keyboard',
+      iv_2: 'A step (2nd)', iv_3: 'A third', iv_4: 'A fourth', iv_5: 'A fifth', iv_6: 'A sixth', iv_8: 'An octave', k_none: 'None', k_sharps: '{n} sharps', k_sharp1: '1 sharp', k_flats: '{n} flats', k_flat1: '1 flat',
+      x_who: 'That was the {i}. {how}', how_piano: 'Small hammers hit the strings inside when you press the keys.', how_violin: 'A bow made of horse hair rubs the strings.', how_cello: 'It is a big violin you play sitting down, so it sounds lower.', how_flute: 'You blow across a hole, like across a bottle.', how_xylophone: 'Wooden bars of different lengths are hit with mallets.', how_guitar: 'Fingers pluck six strings.', how_trumpet: 'You buzz your lips into it and press three valves.', how_harp: 'Many strings are plucked with the fingers.', how_drums: 'Sticks hit stretched skins and metal cymbals.',
+      x_high: 'Small things and short strings make high sounds; big things make low sounds. The second sound was {a}.', x_count: 'Count along with each beat: {seq}.', x_loud: 'Loud is strong like a lion, quiet is soft like a mouse.', x_fast: 'Fast music hurries like a rabbit, slow music walks like a turtle.',
+      x_echo: 'Watch the colours: {seq}.', x_happy: 'Major music sounds bright and happy; minor music sounds darker, a little sad.', x_piece: '{title}, by {who} ({year}), {about}.', x_staff: 'The bottom line of the treble staff is mi (E). From there count line, space, line, up or down: this note is {n}.', x_staffB: 'In the bass clef the bottom line is sol (G). From there count line, space, line, up or down: this note is {n}.',
+      x_beats: 'A whole note lasts 4 beats, a half note 2, a quarter note 1 and an eighth note half a beat. A dot adds half again.', x_bar: 'Add the notes up: {sum} = {n} beats.', x_family: 'The {i} belongs to the {f} family.', x_interval: 'Count the letter names from the first note to the second, counting both: {seq}. That makes {n}.', x_chord: 'A major chord has a big third at the bottom and sounds bright; a minor chord has a small third and sounds darker.', x_key: '{k} major has {n}: {list}.',
+      mh_piece: 'You heard', mc_card: 'Music Creator', mc_cardSub: 'Choose an instrument and make your own music.',
+      ih_card: 'Instrument Hall', ih_cardSub: 'Twenty instruments. Play their notes, record a sample, build a song.',
+      band_card: 'My band', band_cardSub: 'Play in a rock band or an orchestra. Switch instruments on and off, add your own part.',
+      ws_card: 'Song Workshop', ws_cardSub: 'Write your own song step by step: a beat, a riff, a chorus and more.' },
+    he: { mh_title: 'אולם המוזיקה', mh_sub: 'מקשיבים, מנגנים ויוצרים מוזיקה עם כלים אמיתיים.',
+      s_who: 'מי מנגן?', s_highlow: 'גבוה או נמוך?', s_count: 'סופרים תיפופים', s_loudfast: 'חזק או חלש, מהר או לאט', s_echo: 'הד של מנגינה', s_happy: 'שמח או עצוב?',
+      s_tune: 'איזו מנגינה?', s_staff: 'קוראים תווים', s_rhythm: 'כמה זמן התו?', s_family: 'משפחות כלים', s_composer: 'מי הלחין?', s_interval: 'צעדים וקפיצות', s_chord: 'מז׳ור או מינור?', s_keysig: 'סימני היתק',
+      mh_listen: 'מקשיבים', mh_again: 'עוד פעם',
+      q_who: 'איזה כלי מנגן?', q_high: 'הצליל השני גבוה יותר או נמוך יותר?', q_count: 'כמה תיפופים היו?', q_loud: 'התוף מנגן חזק או חלש?', q_fast: 'המוזיקה מהירה או איטית?',
+      q_echo: 'אילו קורות ניגנו את המנגינה?', q_happy: 'המוזיקה נשמעת שמחה או עצובה?', q_tune: 'איזו יצירה זאת?', q_staff: 'איזה תו זה?', q_beats: 'כמה פעמות נמשך התו הזה?', q_bar: 'כמה פעמות יש בתיבה?',
+      q_family: 'לאיזו משפחה הכלי שייך?', q_composer: 'מי הלחין את המוזיקה הזאת?', q_interval: 'כמה רחוקים שני התווים?', q_chord: 'האקורד מז׳ור או מינור?', q_key: 'כמה דיאזים או במולים יש ב{k} מז׳ור?',
+      a_higher: 'גבוה יותר', a_lower: 'נמוך יותר', a_same: 'אותו דבר', a_loud: 'חזק', a_quiet: 'חלש', a_fast: 'מהר', a_slow: 'לאט', a_happy: 'שמח', a_sad: 'עצוב', a_major: 'מז׳ור', a_minor: 'מינור', a_dim: 'מוקטן',
+      i_piano: 'פסנתר', i_violin: 'כינור', i_cello: 'צ׳לו', i_flute: 'חליל', i_xylophone: 'קסילופון', i_guitar: 'גיטרה', i_trumpet: 'חצוצרה', i_harp: 'נבל', i_drums: 'תופים',
+      f_strings: 'כלי קשת ומיתר', f_woodwind: 'כלי נשיפה מעץ', f_brass: 'כלי נשיפה ממתכת', f_percussion: 'כלי הקשה', f_keys: 'כלי מקלדת',
+      iv_2: 'צעד (סקונדה)', iv_3: 'טרצה', iv_4: 'קוורטה', iv_5: 'קווינטה', iv_6: 'סקסטה', iv_8: 'אוקטבה', k_none: 'אין', k_sharps: '{n} דיאזים', k_sharp1: 'דיאז אחד', k_flats: '{n} במולים', k_flat1: 'במול אחד',
+      x_who: 'זה היה {i}. {how}', how_piano: 'פטישים קטנים מכים במיתרים שבפנים כשלוחצים על הקלידים.', how_violin: 'קשת משיער סוס משפשפת את המיתרים.', how_cello: 'זה כמו כינור גדול שמנגנים בישיבה, ולכן הוא נשמע נמוך יותר.', how_flute: 'נושפים מעל חור, כמו מעל פי בקבוק.', how_xylophone: 'מכים במקושים על קורות עץ באורכים שונים.', how_guitar: 'האצבעות פורטות על שישה מיתרים.', how_trumpet: 'מזמזמים בשפתיים לתוכה ולוחצים על שלושה שסתומים.', how_harp: 'פורטים באצבעות על הרבה מיתרים.', how_drums: 'מקלות מכים בעור מתוח ובמצלתיים ממתכת.',
+      x_high: 'דברים קטנים ומיתרים קצרים משמיעים צלילים גבוהים; דברים גדולים משמיעים צלילים נמוכים. הצליל השני היה {a}.', x_count: 'סופרים יחד עם כל תיפוף: {seq}.', x_loud: 'חזק זה כמו אריה, חלש זה רך כמו עכבר.', x_fast: 'מוזיקה מהירה ממהרת כמו ארנב, מוזיקה איטית הולכת כמו צב.',
+      x_echo: 'מסתכלים על הצבעים: {seq}.', x_happy: 'מוזיקה במז׳ור נשמעת בהירה ושמחה; מוזיקה במינור נשמעת כהה יותר, קצת עצובה.', x_piece: '{title}, מאת {who} ({year}), {about}.', x_staff: 'הקו התחתון במפתח סול הוא מי. משם סופרים קו, רווח, קו, למעלה או למטה: התו הזה הוא {n}.', x_staffB: 'במפתח פה הקו התחתון הוא סול. משם סופרים קו, רווח, קו, למעלה או למטה: התו הזה הוא {n}.',
+      x_beats: 'תו שלם נמשך 4 פעמות, חצי 2, רבע פעמה אחת ושמינית חצי פעמה. נקודה מוסיפה עוד חצי מהאורך.', x_bar: 'מחברים את התווים: {sum} = {n} פעמות.', x_family: '{i} שייך למשפחת {f}.', x_interval: 'סופרים את שמות התווים מהראשון עד השני, כולל שניהם: {seq}. יוצא {n}.', x_chord: 'באקורד מז׳ור הטרצה למטה גדולה והוא נשמע בהיר; באקורד מינור הטרצה קטנה והוא נשמע כהה יותר.', x_key: 'ל{k} מז׳ור יש {n}: {list}.',
+      mh_piece: 'שמעתם', mc_card: 'יוצרים מוזיקה', mc_cardSub: 'בוחרים כלי ויוצרים מוזיקה משלכם.',
+      ih_card: 'היכל הכלים', ih_cardSub: 'עשרים כלים. מנגנים את הצלילים, מקליטים קטע ובונים שיר.',
+      band_card: 'הלהקה שלי', band_cardSub: 'מנגנים בלהקת רוק או בתזמורת. מכבים ומדליקים כלים, ומוסיפים חלק משלכם.',
+      ws_card: 'סדנת שירים', ws_cardSub: 'כותבים שיר משלכם צעד אחרי צעד: קצב, ריף, פזמון ועוד.' }
+  });
+  const { t } = KQ, M = window.KQMusic, el = KQ.ui.el;
+  const lang = () => KQ.i18n.lang === 'he' ? 'he' : 'en';
+  const lc = s => lang() === 'en' ? s.charAt(0).toLowerCase() + s.slice(1) : s;   /* a name inside an English sentence */
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), pick = a => a[Math.floor(Math.random() * a.length)];
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const NS = 'http://www.w3.org/2000/svg';
+  function playIcon() { const s = document.createElementNS(NS, 'svg'); s.setAttribute('viewBox', '0 0 24 24'); const p = document.createElementNS(NS, 'path'); p.setAttribute('d', 'M3 9v6h4l5 4V5L7 9zM15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12'); p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'currentColor'); p.setAttribute('stroke-width', '2.2'); p.setAttribute('stroke-linecap', 'round'); p.setAttribute('stroke-linejoin', 'round'); s.appendChild(p); return s; }
+
+  /* one interactive music question: a listen button, an optional picture, the choices; the sound plays by itself once */
+  function renderQ(q) {
+    return (st, api) => {
+      const box = el('div', 'mq'); st.appendChild(box);
+      const lb = el('button', 'listen'); lb.type = 'button'; lb.appendChild(playIcon()); lb.appendChild(el('span', null, t('mh_listen'))); box.appendChild(lb);
+      let busy = null; const go = () => { M.stop(); if (busy) clearTimeout(busy); lb.classList.add('playing'); const ms = q.sound(); busy = setTimeout(() => { lb.classList.remove('playing'); lb.lastChild.textContent = t('mh_again'); }, ms || 900); };
+      lb.onclick = go;
+      if (q.pic) box.appendChild(q.pic());
+      const ch = el('div', 'choices'); box.appendChild(ch);
+      q.opts.forEach(o => { const b = el('button', 'choice' + (o.pic ? ' pic' : '')); b.type = 'button'; if (o.pic) b.appendChild(o.pic()); b.appendChild(el('span', null, o.label)); b.dataset.value = o.value;
+        b.onclick = () => { if (api.locked()) return; const ok = o.value === q.answer; b.classList.add(ok ? 'ok' : 'bad'); if (!ok) [...ch.children].forEach(c => { if (c.dataset.value === q.answer) c.classList.add('ok'); }); M.stop(); if (q.after) box.appendChild(q.after()); api.submit(ok, o.label); };
+        ch.appendChild(b); });
+      M.ac(); setTimeout(go, 350);
+    };
+  }
+  /* the question object quest.js expects */
+  function Q(o) { const q = Object.assign({ tags: [o.skill] }, o); q.render = renderQ(q); q.answerLabel = (o.opts.find(x => x.value === o.answer) || {}).label; return q; }
+  const speak4 = (band, text) => band <= 2 ? text : null;   /* the speaker button is there for ages 4–7 */
+
+  const ALL = ['piano', 'drums', 'xylophone', 'flute', 'violin', 'trumpet', 'guitar', 'cello', 'harp'];
+  const POOL = { 1: ['piano', 'drums', 'xylophone', 'flute'], 2: ['piano', 'drums', 'xylophone', 'flute', 'violin', 'trumpet', 'guitar'] };
+  const instOpt = i => ({ value: i, label: t('i_' + i), pic: () => M.art(i) });
+  const PHRASE = { piano: 'C4 E4 G4 C5:2', violin: 'G4:1 A4:1 B4:2', cello: 'C3:1 E3:1 G3:2', flute: 'C5 D5 E5:2', xylophone: 'C6 E6 G6 E6 C6:2', guitar: 'E3 G3 B3 E4:2', trumpet: 'C4 E4 G4:2', harp: 'C4:.5 E4:.5 G4:.5 C5:.5 E5:2', drums: '' };
+  function playInst(i, bpm) { if (i === 'drums') { const ev = ['kick', 'hat', 'snare', 'hat', 'kick', 'kick', 'snare', 'crash'].map((k, n) => ({ kind: k, b: n * 0.5, d: 0.5 })); return M.seq(ev, { bpm: bpm || 110 }).ms; } return M.seq(M.parse(PHRASE[i], i), { bpm: bpm || 100 }).ms; }
+  const NOTE5 = ['C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5', 'C6'].map(M.midi);
+  const barsPic = (seq, big) => () => { const d = el('div', 'bars'); seq.forEach(k => { const i = document.createElement('i'); i.style.background = M.HUE[[0, 2, 4, 5, 7, 9, 11, 0][k]]; i.style.height = (big ? 58 : 44) - k * 4 + 'px'; d.appendChild(i); }); return d; };
+  const pieceBox = tu => () => { const T = M.tuneText(tu, lang()); const d = el('div', 'piece'); d.appendChild(el('span', null, t('mh_piece'))); d.appendChild(el('b', null, T.title)); d.appendChild(el('span', null, T.who + ' · ' + T.year)); return d; };
+  const hero = i => () => { const a = M.art(i); a.classList.add('hero'); return a; };
+  const FAMILY = { piano: 'keys', violin: 'strings', cello: 'strings', guitar: 'strings', harp: 'strings', flute: 'woodwind', trumpet: 'brass', drums: 'percussion', xylophone: 'percussion' };
+  const IV = { 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 8: 12 };
+  const KEYS = [['C', 0, 0], ['G', 1, 0], ['D', 2, 0], ['A', 3, 0], ['E', 4, 0], ['F', 0, 1], ['B♭', 0, 2], ['E♭', 0, 3]];
+  const SHARP_ORDER = ['F♯', 'C♯', 'G♯', 'D♯'], FLAT_ORDER = ['B♭', 'E♭', 'A♭'];
+  const keyHe = { C: 'דו', G: 'סול', D: 'רה', A: 'לה', E: 'מי', F: 'פה', 'B♭': 'סי במול', 'E♭': 'מי במול' };
+  const keyLabel = (s, f) => s ? (s === 1 ? t('k_sharp1') : t('k_sharps', { n: s })) : f ? (f === 1 ? t('k_flat1') : t('k_flats', { n: f })) : t('k_none');
+
+  const GEN = {
+    who(tier, band) {
+      const pool = POOL[band] || ALL, i = pick(pool), n = band === 1 ? 3 : 4;
+      const others = shuffle(pool.filter(x => x !== i && !(band >= 3 && x === 'piano' && Math.random() < 0.5))).slice(0, n - 1);
+      if (band >= 3 && (i === 'violin' || i === 'cello') && !others.includes(i === 'violin' ? 'cello' : 'violin')) others[0] = i === 'violin' ? 'cello' : 'violin';
+      return Q({ skill: 'who', key: 'who' + i, prompt: t('q_who'), speak: speak4(band, t('q_who')), answer: i, opts: shuffle([i, ...others]).map(instOpt), sound: () => playInst(i), x: { i } });
+    },
+    highlow(tier, band) {
+      const same = band >= 2 && Math.random() < 0.2, gap = same ? 0 : (band === 1 ? ri(7, 12) : ri(tier ? 2 : 3, 9)) * (Math.random() < 0.5 ? 1 : -1);
+      const a = ri(57, 72), b = a + gap, ans = gap > 0 ? 'higher' : gap < 0 ? 'lower' : 'same', inst = pick(['piano', 'xylophone', 'flute']);
+      const opts = [{ value: 'higher', label: t('a_higher'), pic: () => KQ.icon('🐦') }, { value: 'lower', label: t('a_lower'), pic: () => KQ.icon('🐘') }]; if (band >= 2) opts.push({ value: 'same', label: t('a_same'), pic: () => KQ.icon('🟰') });
+      return Q({ skill: 'highlow', key: 'hl' + a + '_' + b, prompt: t('q_high'), speak: speak4(band, t('q_high')), answer: ans, opts, sound: () => M.seq([{ m: a, b: 0, d: 1, inst }, { m: b, b: 1.4, d: 1.2, inst }], { bpm: 80 }).ms, x: { ans } });
+    },
+    count(tier, band) {
+      const n = ri(1, band === 1 ? (tier ? 5 : 4) : 6), lo = Math.max(1, n - ri(0, 2));
+      const vals = [lo, lo + 1, lo + 2];   /* three neighbours, the answer anywhere among them */
+      return Q({ skill: 'count', key: 'c' + n, prompt: t('q_count'), speak: speak4(band, t('q_count')), answer: String(n), opts: vals.map(v => ({ value: String(v), label: String(v) })), pic: hero('drums'), sound: () => M.seq(Array.from({ length: n }, (_, k) => ({ kind: k % 2 ? 'tom' : 'kick', b: k * 0.75, d: 0.75 })), { bpm: 90 }).ms, x: { n } });
+    },
+    loudfast(tier, band) {
+      if (Math.random() < 0.5) { const loud = Math.random() < 0.5; return Q({ skill: 'loudfast', tags: ['loud'], key: 'ld' + loud, prompt: t('q_loud'), speak: speak4(band, t('q_loud')), answer: loud ? 'loud' : 'quiet', opts: [{ value: 'loud', label: t('a_loud'), pic: () => KQ.icon('🦁') }, { value: 'quiet', label: t('a_quiet'), pic: () => KQ.icon('🐭') }], pic: hero('drums'), sound: () => M.seq([0, 1, 2, 3].map(k => ({ kind: k % 2 ? 'snare' : 'kick', b: k * 0.6, d: 0.6, vel: loud ? 1 : 0.12 })), { bpm: 90 }).ms, x: { kind: 'loud' } }); }
+      const fast = Math.random() < 0.5, bpm = fast ? 190 : 62; return Q({ skill: 'loudfast', tags: ['fast'], key: 'fs' + fast + ri(0, 3), prompt: t('q_fast'), speak: speak4(band, t('q_fast')), answer: fast ? 'fast' : 'slow', opts: [{ value: 'fast', label: t('a_fast'), pic: () => KQ.icon('🐰') }, { value: 'slow', label: t('a_slow'), pic: () => KQ.icon('🐢') }], sound: () => M.seq(M.parse('C5 D5 E5 C5 E5 D5 C5:2', 'xylophone'), { bpm }).ms, x: { kind: 'fast' } });
+    },
+    echo(tier, band) {
+      const len = band <= 2 ? 3 : 4, span = band <= 2 ? 5 : 8, seq = Array.from({ length: len }, () => ri(0, span - 1));
+      const variants = new Set([seq.join()]); const opts = [seq];
+      while (opts.length < 3) { const v = seq.slice(); const k = ri(0, len - 1); v[k] = (v[k] + ri(1, span - 1)) % span; if (Math.random() < 0.4 && len > 2) { const j = (k + 1) % len; [v[k], v[j]] = [v[j], v[k]]; } if (!variants.has(v.join())) { variants.add(v.join()); opts.push(v); } }
+      return Q({ skill: 'echo', key: 'e' + seq.join(''), prompt: t('q_echo'), speak: speak4(band, t('q_echo')), answer: seq.join(), opts: shuffle(opts).map(v => ({ value: v.join(), label: '', pic: barsPic(v) })), sound: () => M.seq(seq.map((k, n) => ({ m: NOTE5[k], b: n * 0.8, d: 0.8, inst: 'xylophone' })), { bpm: 90 }).ms, x: { seq } });
+    },
+    happy(tier, band) {
+      const major = Math.random() < 0.5, root = pick([60, 62, 65, 67]), th = major ? 4 : 3;
+      const ev = [0, th, 7, 12, 7, th, 0].map((s, n) => ({ m: root + s, b: n * 0.5, d: 0.5, inst: 'piano' })).concat([{ m: root, b: 3.6, d: 2, inst: 'piano' }, { m: root + th, b: 3.6, d: 2, inst: 'piano' }, { m: root + 7, b: 3.6, d: 2, inst: 'piano' }]);
+      return Q({ skill: 'happy', key: 'h' + major + root, prompt: t('q_happy'), speak: speak4(band, t('q_happy')), answer: major ? 'happy' : 'sad', opts: [{ value: 'happy', label: t('a_happy'), pic: () => KQ.icon('☀️') }, { value: 'sad', label: t('a_sad'), pic: () => KQ.icon('🌧️') }], sound: () => M.seq(ev, { bpm: 92 }).ms, x: { major } });
+    },
+    tune(tier, band) {
+      const pool = M.TUNES.filter(x => x.band <= Math.min(band, 4)), tu = pick(pool), others = shuffle(pool.filter(x => x !== tu)).slice(0, band >= 4 ? 3 : 2);
+      return Q({ skill: 'tune', key: 't' + tu.id, prompt: t('q_tune'), answer: tu.id, opts: shuffle([tu, ...others]).map(x => ({ value: x.id, label: M.tuneText(x, lang()).title })), pic: hero(tu.inst), after: pieceBox(tu), sound: () => M.seq(tu.ev.filter(e => e.b < 9), { bpm: tu.bpm }).ms, x: { tu } });
+    },
+    composer(tier, band) {
+      const named = M.TUNES.filter(x => !/Traditional|Hill/.test(x.en[1])), tu = pick(named), whos = [...new Set(named.map(x => x.en[1]))];
+      const others = shuffle(whos.filter(w => w !== tu.en[1])).slice(0, 3), label = w => { const x = named.find(y => y.en[1] === w); return M.tuneText(x, lang()).who; };
+      return Q({ skill: 'composer', key: 'cp' + tu.id, prompt: t('q_composer'), answer: tu.en[1], opts: shuffle([tu.en[1], ...others]).map(w => ({ value: w, label: label(w) })), after: pieceBox(tu), sound: () => M.seq(tu.ev.filter(e => e.b < 10), { bpm: tu.bpm }).ms, x: { tu } });
+    },
+    staff(tier, band) {
+      const bass = band >= 5 && Math.random() < 0.5, pool = band === 3 ? ['C4', 'D4', 'E4', 'F4', 'G4', 'A4'] : band === 4 ? ['D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5'] : bass ? ['G2', 'A2', 'B2', 'C3', 'D3', 'E3', 'F3', 'G3', 'A3'] : ['A3', 'B3', 'C4', 'Fs4', 'Cs5', 'G5', 'A5', 'B5', 'C6'];
+      const m = M.midi(pick(pool)), mode = band === 3 ? 'sol' : 'letter', nm = x => mode === 'sol' ? M.name(x, lang()) : M.name(x, lang(), 'letter') + ' · ' + M.name(x, lang());
+      const cand = shuffle([...new Set(pool.map(M.midi).filter(x => x !== m).map(x => ((x % 12) + 12) % 12))].filter(pc => pc !== ((m % 12) + 12) % 12)).slice(0, 3).map(pc => pc + 60);
+      const opts = shuffle([m, ...cand]).map(x => ({ value: String(((x % 12) + 12) % 12), label: nm(x) }));
+      return Q({ skill: 'staff', key: 'st' + m + bass, prompt: t('q_staff'), answer: String(((m % 12) + 12) % 12), opts, pic: () => { const d = el('div', 'staffbox'); d.appendChild(M.staff([{ m }], { bass, w: 200 })); return d; }, sound: () => M.seq([{ m, b: 0, d: 1.5, inst: 'piano' }], { bpm: 80 }).ms, x: { m, bass, n: nm(m) } });
+    },
+    rhythm(tier, band) {
+      if (band >= 4 && Math.random() < 0.5) { const vals = band >= 4 ? [2, 1, 1, 0.5, 0.5, 3, 4] : [2, 1]; const notes = []; let sum = 0; const len = ri(2, 4); while (notes.length < len) { const d = pick(vals.filter(v => v !== 4 || !notes.length)); notes.push(d); sum += d; }
+        const opts = shuffle([...new Set([sum, sum + 1, Math.max(1, sum - 1), sum + 0.5].map(v => String(v)))]).slice(0, 3); if (!opts.includes(String(sum))) opts[0] = String(sum);
+        return Q({ skill: 'rhythm', tags: ['bar'], key: 'rb' + notes.join(), prompt: t('q_bar'), answer: String(sum), opts: opts.sort((a, b) => a - b).map(v => ({ value: v, label: v })), pic: () => { const d = el('div', 'staffbox'); d.appendChild(M.staff(notes.map(n => ({ m: 71, d: n })))); return d; }, sound: () => { let b = 0; return M.seq(notes.map(n => { const e = { m: 71, b, d: n, inst: 'piano' }; b += n; return e; }), { bpm: 90 }).ms; }, x: { notes, sum } }); }
+      const d = pick(band === 3 ? [4, 2, 1] : [4, 2, 1, 0.5, 3]);
+      return Q({ skill: 'rhythm', tags: ['value'], key: 'rv' + d, prompt: t('q_beats'), answer: String(d), opts: (band === 3 ? [4, 2, 1] : [4, 3, 2, 1, 0.5]).map(v => ({ value: String(v), label: String(v).replace('0.5', '½') })), pic: () => { const b = el('div', 'staffbox'); b.appendChild(M.staff([{ m: 71, d }], { w: 160 })); return b; }, sound: () => M.seq([{ kind: 'hat', b: 0, d: 1 }, { kind: 'hat', b: 1, d: 1 }, { kind: 'hat', b: 2, d: 1 }, { kind: 'hat', b: 3, d: 1 }, { m: 71, b: 0, d, inst: 'piano' }], { bpm: 80 }).ms, x: { d } });
+    },
+    family(tier, band) {
+      const i = pick(ALL), f = FAMILY[i], fams = ['strings', 'woodwind', 'brass', 'percussion', 'keys'];
+      return Q({ skill: 'family', key: 'f' + i, prompt: t('q_family'), answer: f, opts: shuffle([f, ...shuffle(fams.filter(x => x !== f)).slice(0, 3)]).map(x => ({ value: x, label: t('f_' + x) })), pic: hero(i), sound: () => playInst(i), x: { i, f } });
+    },
+    interval(tier, band) {
+      const set = band === 5 ? [2, 3, 5, 8] : [2, 3, 4, 5, 6, 8], k = pick(set), a = M.midi(pick(['C4', 'D4', 'F4', 'G4'])), b = a + IV[k];
+      const opts = (set.length > 4 ? shuffle(set.filter(x => x !== k)).slice(0, 3).concat(k) : set).sort((x, y) => x - y).map(x => ({ value: String(x), label: t('iv_' + x) }));
+      return Q({ skill: 'interval', key: 'iv' + k + a, prompt: t('q_interval'), answer: String(k), opts, pic: () => { const d = el('div', 'staffbox'); d.appendChild(M.staff([{ m: a }, { m: b }], { w: 220 })); return d; }, sound: () => M.seq([{ m: a, b: 0, d: 1, inst: 'piano' }, { m: b, b: 1.1, d: 1, inst: 'piano' }, { m: a, b: 2.4, d: 1.6, inst: 'piano' }, { m: b, b: 2.4, d: 1.6, inst: 'piano' }], { bpm: 84 }).ms, x: { k, a, b } });
+    },
+    chord(tier, band) {
+      const kinds = band >= 6 ? ['major', 'minor', 'dim'] : ['major', 'minor'], k = pick(kinds), r = ri(55, 64), th = k === 'major' ? 4 : 3, fi = k === 'dim' ? 6 : 7;
+      return Q({ skill: 'chord', key: 'ch' + k + r, prompt: t('q_chord'), answer: k, opts: kinds.map(x => ({ value: x, label: t(x === 'dim' ? 'a_dim' : 'a_' + x) })), sound: () => M.seq([{ m: r, b: 0, d: 0.6, inst: 'piano' }, { m: r + th, b: 0.6, d: 0.6, inst: 'piano' }, { m: r + fi, b: 1.2, d: 0.6, inst: 'piano' }, { m: r, b: 2, d: 2, inst: 'piano' }, { m: r + th, b: 2, d: 2, inst: 'piano' }, { m: r + fi, b: 2, d: 2, inst: 'piano' }], { bpm: 88 }).ms, x: { k } });
+    },
+    keysig(tier, band) {
+      const [k, s, f] = pick(KEYS.slice(1)), kn = lang() === 'he' ? keyHe[k] : k, ans = keyLabel(s, f);
+      const pool = [...new Set(KEYS.map(([, a, b]) => keyLabel(a, b)))]; const opts = shuffle([ans, ...shuffle(pool.filter(x => x !== ans)).slice(0, 3)]);
+      return Q({ skill: 'keysig', key: 'k' + k, prompt: t('q_key', { k: kn }), answer: ans, opts: opts.map(x => ({ value: x, label: x })), sound: () => M.seq([0, 2, 4, 5, 7, 9, 11, 12].map((st, n) => ({ m: M.midi(k.replace('♭', 'b') + '4') + st, b: n * 0.5, d: 0.5, inst: 'piano' })), { bpm: 100 }).ms, x: { k: kn, s, f, ans } });
+    }
+  };
+
+  const EXPLAIN = {
+    who: q => [{ text: t('x_who', { i: lc(t('i_' + q.x.i)), how: t('how_' + q.x.i) }), vis: { el: M.art(q.x.i) }, big: true }],
+    highlow: q => [{ text: t('x_high', { a: lc(t('a_' + q.x.ans)) }), big: true }],
+    count: q => [{ text: t('x_count', { seq: Array.from({ length: q.x.n }, (_, k) => k + 1).join(', ') }), big: true }],
+    loudfast: q => [{ text: t(q.x.kind === 'loud' ? 'x_loud' : 'x_fast'), big: true }],
+    echo: q => [{ text: t('x_echo', { seq: q.x.seq.map(k => M.name([0, 2, 4, 5, 7, 9, 11, 0][k], lang())).join(' – ') }), vis: { el: barsPic(q.x.seq, true)() }, big: true }],
+    happy: () => [{ text: t('x_happy'), big: true }],
+    tune: q => { const T = M.tuneText(q.x.tu, lang()); return [{ text: t('x_piece', T), big: true }]; },
+    composer: q => { const T = M.tuneText(q.x.tu, lang()); return [{ text: t('x_piece', T), big: true }]; },
+    staff: q => [{ text: t(q.x.bass ? 'x_staffB' : 'x_staff', { n: q.x.n }), big: true }],
+    rhythm: q => q.x.notes ? [{ text: t('x_beats') }, { text: t('x_bar', { sum: q.x.notes.map(String).join(' + ').replace(/0\.5/g, '½'), n: q.x.sum }), big: true }] : [{ text: t('x_beats'), big: true }],
+    family: q => [{ text: t('x_family', { i: lc(t('i_' + q.x.i)), f: lc(t('f_' + q.x.f)) }), vis: { el: M.art(q.x.i) }, big: true }],
+    interval: q => { const L = []; for (let m = q.x.a, s = 0; s <= q.x.k - 1; s++) { L.push(M.name(m, lang(), 'letter')); m += [2, 2, 1, 2, 2, 2, 1][(([0, 2, 4, 5, 7, 9, 11].indexOf(((m % 12) + 12) % 12)) + 7) % 7]; } return [{ text: t('x_interval', { seq: L.join(' – '), n: lc(t('iv_' + q.x.k)) }), big: true }]; },
+    chord: () => [{ text: t('x_chord'), big: true }],
+    keysig: q => [{ text: t('x_key', { k: q.x.k, n: q.x.ans, list: q.x.s ? SHARP_ORDER.slice(0, q.x.s).join(' ') : q.x.f ? FLAT_ORDER.slice(0, q.x.f).join(' ') : '—' }), big: true }]
+  };
+
+  KQ.quest.shell();
+  const api = KQ.quest({ world: 'music', title: 'mh_title', sub: 'mh_sub', bands: { 1: ['who', 'highlow', 'count', 'loudfast'], 2: ['who', 'echo', 'highlow', 'happy'], 3: ['tune', 'staff', 'echo', 'rhythm'], 4: ['tune', 'staff', 'rhythm', 'family'], 5: ['composer', 'staff', 'interval', 'chord'], 6: ['composer', 'interval', 'chord', 'keysig'] },
+    bandKey: 'band', icons: { who: '🎸', highlow: '🪜', count: '🥁', loudfast: '🦁', echo: '🔔', happy: '☀️', tune: '📯', staff: '📝', rhythm: '⏱️', family: '👥', composer: '🎓', interval: '📏', chord: '🧩', keysig: '🔑' },
+    n: 8, fastMs: 9000, speakBands: [1, 2], gen: GEN, explain: EXPLAIN });
+  /* warm the instruments the first rounds need */
+  ['piano', 'xylophone', 'drums'].forEach(i => M.load(i));
+  /* the Music Creator card on top of the pick screen */
+  function creatorCard() {
+    const pick = document.getElementById('pick'); if (!pick || document.querySelector('.mc-card')) return;
+    const b = el('button', 'mc-card'); b.type = 'button'; const row = el('div', 'row'); ['piano', 'violin', 'cello', 'drums'].forEach(i => row.appendChild(M.art(i))); b.appendChild(row);
+    const tx = el('div'); tx.appendChild(el('b', null, t('mc_card'))); tx.appendChild(el('span', null, t('mc_cardSub'))); b.appendChild(tx);
+    b.onclick = () => window.KQCreator && KQCreator.open(api && api.R ? api.R.band : 1);
+    pick.prepend(b);
+    /* the Instrument Hall: every instrument's painted page, its notes, a sample recorder and the song builder */
+    const h = el('button', 'mc-card ih-entry'); h.type = 'button'; const hr = el('div', 'row'); ['violin', 'saxophone', 'french-horn', 'guitar-electric'].forEach(i => hr.appendChild(M.art(i))); h.appendChild(hr);
+    const ht = el('div'); ht.appendChild(el('b', null, t('ih_card'))); ht.appendChild(el('span', null, t('ih_cardSub'))); h.appendChild(ht);
+    h.onclick = () => window.KQHall && KQHall.open(api && api.R ? api.R.band : 1); b.after(h);
+    /* My band straight from the Music Hall (Yoni 2026-10-10: 'how do i get to my band?') */
+    const mb = el('button', 'mc-card ih-entry'); mb.type = 'button'; const mr = el('div', 'row'); ['drums', 'bass-electric', 'guitar-electric', 'voice'].forEach(i => mr.appendChild(M.art(i))); mb.appendChild(mr);
+    const mt = el('div'); mt.appendChild(el('b', null, t('band_card'))); mt.appendChild(el('span', null, t('band_cardSub'))); mb.appendChild(mt);
+    mb.onclick = () => { if (!window.KQHall) return; KQHall.open(api && api.R ? api.R.band : 1); KQHall.song(); }; h.after(mb);
+    /* the Song Workshop: write a song step by step (Yoni 2026-10-10: 'a guided tour on how to create it') — right under the Music Creator */
+    const ws = el('button', 'mc-card ih-entry ws-entry'); ws.type = 'button'; const wr = el('div', 'row'); ['voice-f', 'guitar-electric', 'piano', 'drums'].forEach(i => wr.appendChild(M.art(i))); ws.appendChild(wr);
+    const wt = el('div'); wt.appendChild(el('b', null, t('ws_card'))); wt.appendChild(el('span', null, t('ws_cardSub'))); ws.appendChild(wt);
+    ws.onclick = () => { if (!window.KQHall) return; KQHall.open(api && api.R ? api.R.band : 1); KQHall.workshop(); }; b.after(ws);
+  }
+  creatorCard();
+  document.addEventListener('kq:lang', () => { document.querySelectorAll('.mc-card').forEach(c => c.remove()); creatorCard(); });
+  window.__music = { GEN, api };
+})();
+</script>
+<script src="creator.js?v=6"></script>
+<script src="hall.js?v=4"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('concert');</script>
+</body>
+</html>

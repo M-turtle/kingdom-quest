@@ -1,0 +1,978 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Castle Chess</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Nunito:wght@500;700;800&display=swap">
+<style>
+:root{
+  --bg:#ecdfc3; --bg-deep:#d9c69b;
+  --paper:#f8efdc; --paper-2:#efe2c4; --paper-line:#cdb68a;
+  --ink:#2b1c10; --ink-2:#5a4531; --muted:#86745b;
+  --stone:#8d857b; --stone-2:#6e665d; --stone-3:#b5ac9f; --mortar:#4f4a44;
+  --sq-light:#f0dcb3; --sq-dark:#a9713f;
+  --gold:#c9a227; --gold-2:#8f6f12; --crimson:#8e1f2f; --crimson-2:#6b1522; --forest:#2f6b3a;
+  --sel:rgba(255,212,0,.55); --last:rgba(255,196,60,.45); --check:rgba(222,45,45,.75); --legal:rgba(25,70,35,.38);
+  --btn:#5a3a1f; --btn-ink:#f8efdc;
+  --shadow:0 10px 30px rgba(60,40,10,.22);
+  --pf-w:#f7edd9; --ps-w:#4a3222; --pf-b:#3a2e28; --ps-b:#efe1c4;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#191512; --bg-deep:#100d0b; --paper:#2a221a; --paper-2:#342a1f; --paper-line:#5a4a33;
+    --ink:#f1e5cb; --ink-2:#d9c8a6; --muted:#a8967a;
+    --stone:#4b453f; --stone-2:#332f2b; --stone-3:#655c53; --mortar:#1f1b18;
+    --sq-light:#d8c096; --sq-dark:#8a5a30;
+    --btn:#c9a227; --btn-ink:#2b1c10; --shadow:0 10px 30px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#191512; --bg-deep:#100d0b; --paper:#2a221a; --paper-2:#342a1f; --paper-line:#5a4a33;
+  --ink:#f1e5cb; --ink-2:#d9c8a6; --muted:#a8967a;
+  --stone:#4b453f; --stone-2:#332f2b; --stone-3:#655c53; --mortar:#1f1b18;
+  --sq-light:#d8c096; --sq-dark:#8a5a30;
+  --btn:#c9a227; --btn-ink:#2b1c10; --shadow:0 10px 30px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  margin:0; background:var(--bg) radial-gradient(ellipse at 50% -10%, var(--paper) 0, transparent 55%);
+  color:var(--ink); font:500 16px/1.4 Nunito, "Segoe UI", system-ui, sans-serif;
+  padding-block:0 40px; padding-inline:16px; min-height:100%;
+}
+:focus-visible{outline:3px solid var(--gold); outline-offset:2px}
+h1,h2,h3{text-wrap:balance; margin:0}
+.svgdefs{position:absolute; width:0; height:0; overflow:hidden}
+symbol .f{fill:var(--pf); stroke:var(--ps); stroke-width:3.4; stroke-linejoin:round; stroke-linecap:round}
+symbol .d{fill:var(--ps); stroke:none}
+symbol .s{fill:none; stroke:var(--ps); stroke-width:3; stroke-linecap:round}
+
+/* ---------- banner ---------- */
+.banner{display:flex; flex-direction:column; align-items:center; gap:2px; padding-block:18px 8px; text-align:center}
+.banner .crown{width:54px; height:auto; color:var(--gold); filter:drop-shadow(0 2px 0 var(--gold-2))}
+.banner h1{font:800 clamp(30px,6vw,48px)/1.1 Cinzel, Georgia, serif; letter-spacing:.08em; color:var(--crimson); text-shadow:0 2px 0 var(--gold)}
+.banner .tag{font-weight:700; font-size:13px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted)}
+
+/* ---------- layout ---------- */
+.layout{display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:30px; max-width:1120px; margin:0 auto; align-items:start}
+@media (max-width:920px){ .layout{grid-template-columns:1fr; gap:18px} }
+.stage{display:flex; flex-direction:column; align-items:center; gap:16px; min-width:0}
+
+/* ---------- castle frame + board ---------- */
+.castle{
+  position:relative; width:min(100%, 660px); margin-top:52px; padding:4.4%;
+  background:linear-gradient(160deg, var(--stone-3), var(--stone) 45%, var(--stone-2));
+  border-radius:8px; box-shadow:var(--shadow), inset 0 0 0 3px var(--mortar), inset 0 0 0 6px var(--stone-3);
+}
+.castle::before{
+  content:""; position:absolute; left:9%; right:9%; top:-16px; height:18px; border-radius:3px 3px 0 0;
+  background:repeating-linear-gradient(90deg, var(--stone) 0 22px, transparent 22px 36px);
+  filter:drop-shadow(0 -1px 0 var(--stone-3));
+}
+.tower{position:absolute; width:12%; max-width:64px; pointer-events:none}
+.tower svg{width:100%; height:auto; display:block; filter:drop-shadow(0 4px 6px rgba(0,0,0,.3))}
+.tower.tl{top:-8%; left:-3%} .tower.tr{top:-8%; right:-3%}
+.tower.bl{bottom:-2%; left:-3%} .tower.br{bottom:-2%; right:-3%}
+.board{
+  position:relative; width:100%; aspect-ratio:1; display:grid; grid-template-columns:repeat(8,1fr); grid-template-rows:repeat(8,1fr);
+  border:3px solid var(--mortar); box-shadow:inset 0 0 14px rgba(0,0,0,.35); user-select:none; -webkit-user-select:none; touch-action:none;
+}
+.sq{position:relative; font:800 clamp(8px,1.5vw,12px)/1 Nunito, sans-serif}
+.sq.light{background:var(--sq-light)} .sq.dark{background:var(--sq-dark)}
+.sq.light::before,.sq.light::after{color:var(--sq-dark)} .sq.dark::before,.sq.dark::after{color:var(--sq-light)}
+.sq[data-rank]::before{content:attr(data-rank); position:absolute; top:3px; left:4px}
+.sq[data-file]::after{content:attr(data-file); position:absolute; bottom:2px; right:4px}
+.sq.last{box-shadow:inset 0 0 0 100vmax var(--last)}
+.sq.sel{box-shadow:inset 0 0 0 100vmax var(--sel)}
+.sq.legal{background-image:radial-gradient(circle, var(--legal) 0 17%, transparent 18%)}
+.sq.legal.cap{background-image:radial-gradient(circle, transparent 0 60%, var(--legal) 61% 76%, transparent 77%)}
+.sq.check{background-image:radial-gradient(circle, var(--check) 0 38%, transparent 72%)}
+.sq.book{box-shadow:inset 0 0 0 4px var(--gold); animation:glow 1.1s ease-in-out infinite alternate}
+@keyframes glow{from{box-shadow:inset 0 0 0 3px var(--gold)} to{box-shadow:inset 0 0 0 6px var(--gold), inset 0 0 0 100vmax rgba(201,162,39,.25)}}
+.pieces{position:absolute; inset:0; pointer-events:none}
+.pc{position:absolute; left:0; top:0; width:12.5%; height:12.5%; pointer-events:auto; cursor:grab; transition:transform .22s ease, opacity .25s; touch-action:none}
+.pc svg{width:100%; height:100%; display:block; filter:drop-shadow(0 2px 1.5px rgba(0,0,0,.38)); transition:transform .15s}
+.pc.w{--pf:var(--pf-w); --ps:var(--ps-w)} .pc.b{--pf:var(--pf-b); --ps:var(--ps-b)}
+.pc.dragging{transition:none; z-index:6; cursor:grabbing} .pc.dragging svg{transform:scale(1.18)}
+.pc.gone{opacity:0; pointer-events:none} .pc.gone svg{transform:scale(.3) rotate(25deg)}
+.pc.pop{animation:pop .28s ease}
+@keyframes pop{from{opacity:0} 50%{opacity:1} }
+.pc.pop svg{animation:popsvg .28s ease}
+@keyframes popsvg{from{transform:scale(.2)} 70%{transform:scale(1.15)} to{transform:scale(1)}}
+.arrows{position:absolute; inset:0; width:100%; height:100%; pointer-events:none; overflow:visible}
+.arrows line{stroke-width:.2; stroke-linecap:round; opacity:.9}
+.arrows .book{stroke:var(--gold)} .arrows .hint{stroke:var(--forest)}
+
+/* ---------- herald ---------- */
+.herald{
+  display:flex; gap:12px; align-items:center; width:min(100%, 660px); min-height:64px;
+  background:var(--paper); border:1.5px solid var(--paper-line); border-radius:14px; padding:12px 16px;
+  font-weight:700; font-size:17px; line-height:1.3; box-shadow:var(--shadow); position:relative;
+}
+.herald::before{content:""; position:absolute; left:28px; top:-9px; width:16px; height:16px; background:var(--paper); border-left:1.5px solid var(--paper-line); border-top:1.5px solid var(--paper-line); transform:rotate(45deg)}
+.herald .icon{font-size:28px; line-height:1; flex:none}
+.herald .who{font:800 11px/1 Cinzel, serif; letter-spacing:.14em; text-transform:uppercase; color:var(--crimson); display:block; margin-bottom:3px}
+.herald.bump{animation:bump .35s ease}
+@keyframes bump{0%{transform:scale(.97)} 60%{transform:scale(1.02)} 100%{transform:scale(1)}}
+.music-hint{font-size:13px; font-weight:700; color:var(--muted); background:var(--paper-2); border-radius:999px; padding:6px 14px}
+
+/* ---------- panel ---------- */
+.panel{display:grid; gap:14px; min-width:0}
+.card{background:var(--paper); border:1.5px solid var(--paper-line); border-radius:12px; padding:14px 16px}
+.card h2{font:800 13px/1 Cinzel, serif; letter-spacing:.14em; text-transform:uppercase; color:var(--crimson); margin-bottom:10px}
+.turn{display:flex; align-items:center; gap:10px; font-weight:800; font-size:17px; min-height:30px}
+.turn .dot{width:20px; height:20px; border-radius:50%; border:2px solid var(--ps-w); background:var(--pf-w); flex:none; box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.turn .dot.b{background:var(--pf-b); border-color:var(--ps-b)}
+.turn .badge{margin-left:auto; font:800 12px/1 Nunito; letter-spacing:.08em; padding:6px 9px; border-radius:999px; background:var(--crimson); color:#fff}
+.turn .badge.think{background:var(--gold); color:var(--ink)}
+.cap{display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:8px; margin-top:8px; font-size:13px; font-weight:800; color:var(--muted)}
+.cap .row{display:flex; flex-wrap:wrap; gap:0; min-height:24px}
+.cap .row svg{width:24px; height:24px; margin-right:-6px; filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+.cap .row.w{--pf:var(--pf-w); --ps:var(--ps-w)} .cap .row.b{--pf:var(--pf-b); --ps:var(--ps-b)}
+.cap .plus{font-variant-numeric:tabular-nums; color:var(--forest)}
+.btns{display:grid; grid-template-columns:repeat(4,1fr); gap:8px}
+.btn{font:800 14px/1 Nunito, sans-serif; padding:11px 8px; border-radius:10px; background:var(--btn); color:var(--btn-ink); border:0; box-shadow:0 3px 0 rgba(0,0,0,.28); cursor:pointer; white-space:nowrap}
+.btn:active{transform:translateY(2px); box-shadow:none}
+.btn:disabled{opacity:.45; cursor:default; transform:none; box-shadow:0 3px 0 rgba(0,0,0,.18)}
+.btn.gold{background:var(--gold); color:#2b1c10}
+.btn.crimson{background:var(--crimson); color:#fff}
+.btn.wide{grid-column:1/-1}
+.fields{display:grid; gap:10px}
+.field{display:grid; gap:4px}
+.field label{font-weight:800; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)}
+select,input[type=range]{width:100%; font:700 15px Nunito, sans-serif; color:var(--ink)}
+select{padding:9px 10px; border-radius:9px; border:1.5px solid var(--paper-line); background:var(--paper-2)}
+.check{display:flex; align-items:center; gap:10px; font-weight:700; font-size:15px; cursor:pointer}
+.check input{width:20px; height:20px; accent-color:var(--crimson)}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.trainer{margin-top:10px; padding:10px 12px; background:var(--paper-2); border-radius:9px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:10px}
+.trainer .bar{flex:1; height:8px; border-radius:4px; background:var(--paper-line); overflow:hidden}
+.trainer .bar i{display:block; height:100%; background:var(--gold); width:0; transition:width .3s}
+.trainer button{font:800 12px Nunito; padding:6px 9px; border-radius:8px; border:1.5px solid var(--paper-line); background:var(--paper); color:var(--ink); cursor:pointer}
+.moves{max-height:220px; overflow:auto; font-variant-numeric:tabular-nums; display:grid; grid-template-columns:auto 1fr 1fr; gap:2px 10px; font-weight:700; font-size:15px; margin:0; padding:0; list-style:none}
+.moves .n{color:var(--muted)} .moves .san{padding:2px 6px; border-radius:6px} .moves .san.cur{background:var(--sel)}
+.moves .empty{grid-column:1/-1; color:var(--muted); font-weight:600}
+
+/* ---------- overlays ---------- */
+.overlay{position:fixed; inset:0; background:rgba(20,12,6,.55); display:flex; align-items:center; justify-content:center; z-index:50; padding:16px}
+.scroll{background:var(--paper); border:3px double var(--gold); border-radius:16px; padding:26px 28px; text-align:center; max-width:440px; width:100%; box-shadow:var(--shadow)}
+.scroll h2{font:800 30px/1.1 Cinzel, serif; color:var(--crimson); margin-bottom:8px}
+.scroll p{margin:0 0 18px; font-weight:700; font-size:17px}
+.scroll .btns{grid-template-columns:1fr 1fr}
+.promo{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:6px}
+.promo button{background:var(--paper-2); border:2px solid var(--paper-line); border-radius:12px; padding:8px; cursor:pointer}
+.promo button:hover{border-color:var(--gold)}
+.promo svg{width:100%; height:auto; aspect-ratio:1}
+.promo.w button{--pf:var(--pf-w); --ps:var(--ps-w)} .promo.b button{--pf:var(--pf-b); --ps:var(--ps-b)}
+@media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important} }
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+<link rel="stylesheet" href="../shared/skin-chess.css?v=4">
+
+<svg class="svgdefs" aria-hidden="true">
+  <defs>
+    <symbol id="p-P" viewBox="0 0 100 100">
+      <path class="f" d="M22 82q0-4 4-4h48q4 0 4 4v6q0 4-4 4H26q-4 0-4-4z"/>
+      <path class="f" d="M40 50C36 60 31 68 30 78h40c-1-10-6-18-10-28z"/>
+      <path class="f" d="M36 44h28v7H36z"/>
+      <circle class="f" cx="50" cy="30" r="13"/>
+    </symbol>
+    <symbol id="p-R" viewBox="0 0 100 100">
+      <path class="f" d="M22 82q0-4 4-4h48q4 0 4 4v6q0 4-4 4H26q-4 0-4-4z"/>
+      <path class="f" d="M33 36h34l3 42H30z"/>
+      <path class="f" d="M28 16h10v10h8V16h8v10h8V16h10v22H28z"/>
+      <rect class="d" x="46" y="44" width="8" height="9" rx="2"/>
+      <path class="d" d="M44 78V64a6 6 0 0 1 12 0v14z"/>
+    </symbol>
+    <symbol id="p-N" viewBox="0 0 100 100">
+      <path class="f" d="M22 82q0-4 4-4h48q4 0 4 4v6q0 4-4 4H26q-4 0-4-4z"/>
+      <path class="f" d="M36 78c4-8 8-13 11-17-7 1-17 1-21-4-4-4-4-10 1-12 4-2 10-1 14-5 5-8 10-15 15-19l2-10 7 9c10 6 14 20 12 32-2 10-6 18-6 26z"/>
+      <path class="s" d="M63 26c7 10 7 22 3 32"/>
+      <circle class="d" cx="51" cy="35" r="3"/>
+      <circle class="d" cx="30" cy="51" r="2"/>
+    </symbol>
+    <symbol id="p-B" viewBox="0 0 100 100">
+      <path class="f" d="M22 82q0-4 4-4h48q4 0 4 4v6q0 4-4 4H26q-4 0-4-4z"/>
+      <path class="f" d="M38 69l-3 9h30l-3-9z"/>
+      <path class="f" d="M34 63h32v6H34z"/>
+      <path class="f" d="M50 18C32 34 30 56 50 64c20-8 18-30 0-46z"/>
+      <path class="s" d="M56 32L45 46"/>
+      <circle class="f" cx="50" cy="13" r="5"/>
+    </symbol>
+    <symbol id="p-Q" viewBox="0 0 100 100">
+      <path class="f" d="M22 82q0-4 4-4h48q4 0 4 4v6q0 4-4 4H26q-4 0-4-4z"/>
+      <path class="f" d="M30 51c0 11 2 19 2 27h36c0-8 2-16 2-27z"/>
+      <path class="f" d="M24 44l5-26 11 20 10-26 10 26 11-20 5 26z"/>
+      <path class="f" d="M27 44h46v7H27z"/>
+      <circle class="f" cx="29" cy="15" r="4"/><circle class="f" cx="50" cy="9" r="4"/><circle class="f" cx="71" cy="15" r="4"/>
+    </symbol>
+    <symbol id="p-K" viewBox="0 0 100 100">
+      <path class="f" d="M22 82q0-4 4-4h48q4 0 4 4v6q0 4-4 4H26q-4 0-4-4z"/>
+      <path class="f" d="M31 44c-1 14-1 24 0 34h38c1-10 1-20 0-34z"/>
+      <path class="f" d="M28 44V30l8-6 8 8 6-10 6 10 8-8 8 6v14z"/>
+      <path class="d" d="M34 58h32v5H34z"/>
+      <path class="f" d="M46 6h8v7h7v8h-7v7h-8v-7h-7v-8h7z"/>
+    </symbol>
+    <symbol id="tower" viewBox="0 0 40 64">
+      <path d="M5 14h6v7h4v-7h10v7h4v-7h6v50H5z" fill="var(--stone-2)" stroke="var(--mortar)" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M8 30h24M8 44h24" stroke="var(--mortar)" stroke-width="1" opacity=".5"/>
+      <rect x="17" y="34" width="6" height="11" rx="3" fill="var(--mortar)"/>
+      <path d="M20 14V2l11 4-11 4" fill="var(--crimson)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="banner">
+  <svg class="crown" viewBox="0 0 64 40" aria-hidden="true"><path d="M4 34h56l-4-22-12 10-12-16-12 16L8 12z" fill="currentColor"/><circle cx="8" cy="10" r="3" fill="currentColor"/><circle cx="32" cy="5" r="3" fill="currentColor"/><circle cx="56" cy="10" r="3" fill="currentColor"/><rect x="4" y="34" width="56" height="4" fill="currentColor"/></svg>
+  <h1>Castle Chess</h1>
+  <div class="tag">Knights, towers and clever kids</div>
+</header>
+
+<main class="layout">
+  <section class="stage">
+    <div class="castle">
+      <div class="tower tl"><svg viewBox="0 0 40 64"><use href="#tower"/></svg></div>
+      <div class="tower tr"><svg viewBox="0 0 40 64"><use href="#tower"/></svg></div>
+      <div class="tower bl"><svg viewBox="0 0 40 64"><use href="#tower"/></svg></div>
+      <div class="tower br"><svg viewBox="0 0 40 64"><use href="#tower"/></svg></div>
+      <div class="board" id="board" aria-label="Chess board"></div>
+    </div>
+    <div class="herald bump" id="herald">
+      <span class="icon" aria-hidden="true">📯</span>
+      <div><span class="who">The Herald</span><span id="heraldText">Let the battle begin!</span></div>
+    </div>
+    <div class="music-hint" id="musicHint">Tap anywhere to wake the castle musicians</div>
+  </section>
+
+  <aside class="panel">
+    <section class="card">
+      <div class="turn" id="turn"></div>
+      <div class="cap"><span>White took</span><div class="row b" id="capByW"></div><span class="plus" id="plusW"></span></div>
+      <div class="cap"><span>Black took</span><div class="row w" id="capByB"></div><span class="plus" id="plusB"></span></div>
+    </section>
+
+    <section class="card">
+      <div class="btns">
+        <button class="btn crimson" id="btnNew">New</button>
+        <button class="btn" id="btnUndo">Undo</button>
+        <button class="btn" id="btnFlip">Flip</button>
+        <button class="btn gold" id="btnHint">Hint</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Battle setup</h2>
+      <div class="fields">
+        <div class="two">
+          <div class="field"><label for="mode">Opponent</label>
+            <select id="mode"><option value="cpu">Computer</option><option value="2p">Two players</option></select></div>
+          <div class="field"><label for="level">Computer level</label>
+            <select id="level"><option value="1">Page (easy)</option><option value="2">Squire</option><option value="3">Knight</option><option value="4">King (hard)</option></select></div>
+        </div>
+        <div class="field"><label for="color">I play</label>
+          <select id="color"><option value="w">White</option><option value="b">Black</option><option value="random">Coin toss</option></select></div>
+        <div class="field"><label for="opening">Opening trainer</label>
+          <select id="opening"><option value="">Free play (no trainer)</option></select></div>
+        <div class="trainer" id="trainer" hidden><span id="trainerText"></span><div class="bar"><i id="trainerBar"></i></div><button id="btnFree" type="button">Free play</button></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Music &amp; sounds</h2>
+      <div class="fields">
+        <div class="field"><label for="music">Background music</label>
+          <select id="music">
+            <option value="bach">Bach, Prelude in C</option>
+            <option value="canon">Pachelbel, Canon in D</option>
+            <option value="greensleeves">Greensleeves (lute)</option>
+            <option value="off">Silence</option>
+          </select></div>
+        <div class="field"><label for="volume">Music volume</label><input type="range" id="volume" min="0" max="1" step="0.05"></div>
+        <label class="check"><input type="checkbox" id="voice"> The Herald speaks out loud</label>
+        <label class="check"><input type="checkbox" id="sfx"> Battle sound effects</label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Chronicle</h2>
+      <ol class="moves" id="moves"></ol>
+    </section>
+  </aside>
+</main>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="scroll" role="dialog" aria-modal="true">
+    <h2 id="ovTitle">Checkmate!</h2>
+    <p id="ovText"></p>
+    <div class="btns"><button class="btn crimson" id="btnAgain">Play again</button><button class="btn" id="btnSwap">Switch sides</button></div>
+  </div>
+</div>
+<div class="overlay" id="promoOverlay" hidden>
+  <div class="scroll" role="dialog" aria-modal="true">
+    <h2>Promotion!</h2>
+    <p>Your pawn reached the far side. Pick its new form:</p>
+    <div class="promo" id="promo"></div>
+  </div>
+</div>
+
+<script src="../shared/icons.js?v=3"></script>
+<script src="engine.js?v=10"></script>
+<script src="openings.js"></script>
+<script>
+(function () {
+  'use strict';
+  const E = CastleEngine;
+  const $ = s => document.querySelector(s);
+  const FILES = 'abcdefgh';
+  const NAMES = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' };
+  const SYM = { p: '#p-P', n: '#p-N', b: '#p-B', r: '#p-R', q: '#p-Q', k: '#p-K' };
+  const PVAL = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  let lastSaid = '';
+  const pickFresh = a => { let s = pick(a), n = 0; while (s === lastSaid && n++ < 5 && a.length > 1) s = pick(a); lastSaid = s; return s; };
+
+  // ---------- settings ----------
+  const DEFAULTS = { mode: 'cpu', level: 2, color: 'w', music: 'bach', volume: 0.5, voice: true, sfx: true };
+  const S = Object.assign({}, DEFAULTS);
+  try { const raw = localStorage.getItem('castle-chess-settings'); if (raw) Object.assign(S, JSON.parse(raw)); } catch (e) {}
+  const save = () => { try { localStorage.setItem('castle-chess-settings', JSON.stringify(S)); } catch (e) {} };
+
+  // ---------- sayings ----------
+  const SAY = {
+    start: ['Let the battle begin!', 'Once upon a time, in a kingdom far, far away...', 'Knights, to your horses! Towers, stand tall!', 'Ready your armies. The kingdom awaits a champion!'],
+    capture: [
+      'Veni, vidi, vici! I came, I saw, I captured!', 'Off with their head!', "I'll be back!", 'Hasta la vista, baby!',
+      'To infinity... and beyond!', 'Houston, we have a problem.', 'Elementary, my dear Watson.', 'May the fork be with you.',
+      'One small step for a pawn, one giant leap for the kingdom!', 'Do, or do not. There is no try.',
+      'Float like a butterfly, sting like a bishop!', 'You shall not pass!', 'Winter is coming... for your king.',
+      'Cowabunga, dude!', 'Yabba dabba doo!', 'Great Scott!', 'Hakuna matata! No worries... for me.',
+      'We shall never surrender!', 'Et tu, Bishop?', 'Nobody puts Bishop in a corner!', 'Why so serious? It was just a pawn.',
+      'Nom nom nom. Delicious.', "That's gotta hurt!", 'Oops! Did I do that?', 'Bazinga!', "It's a trap!",
+      'Live long and prosper... except you.', 'Keep calm and carry on... without that piece.', 'Alea iacta est! The die is cast!',
+      'Ask not what your pawns can do for you...', 'The kingdom strikes back!', 'Run, Forrest, run!', 'Say hello to my little pawn!',
+      "There's no place like home... too bad you can't go back.", 'This is Sparta!', 'I am your father... and I just took your piece.'
+    ],
+    byPiece: {
+      p: ['A pawn has fallen! Somebody call the pawn shop.', "Just a pawn. Don't cry.", 'Pawn down! Pawn down!', 'That pawn had a family, you know.', 'Pawn today, gone tomorrow.'],
+      n: ['The horse has left the stable!', 'Neigh... no more.', 'Knight night!', 'Somebody call the vet!', 'That knight just got unhorsed!'],
+      b: ['The bishop has been excommunicated!', 'Bishop? More like bye-shop!', 'Hope the bishop said his prayers.', 'The bishop is off to a long, long retreat.'],
+      r: ['The tower has fallen!', 'Rook, line, and sinker!', 'Castle... crumbled.', 'One less tower to clean.', 'Timber! There goes the rook.'],
+      q: ['Her Majesty is down! Call the royal doctor!', 'The queen has left the building!', 'Long live the... oh, never mind.', 'Off with HER head!', 'The queen is captured! Somebody grab the crown jewels!']
+    },
+    check: ['Check! Your Majesty, run!', 'Check, please!', 'Uh oh! The king is in trouble!', 'Check! Somebody protect the king!', 'Knock knock. Who is there? CHECK.', 'Check! The castle walls are shaking!'],
+    mate: ['Checkmate! The king is dead, long live the king!', 'Checkmate! Game over, man, game over!', "Checkmate! That's all, folks!", 'Checkmate! Ring the bells and raise the banners!'],
+    draw: ["It's a draw! Nobody wins, nobody loses. Tea time!", 'A draw! Both kingdoms live to fight another day.', 'Draw! Shake hands, brave warriors.'],
+    castle: ['The king is hiding in the castle!', 'Castle! Safe and sound.', 'The king and the rook swap places. Sneaky!', 'Castling! The drawbridge is up.'],
+    promote: ['A pawn became a queen! Cinderella story!', 'Promotion! From zero to hero!', 'The little pawn grew up. Look at it now!'],
+    stalemate: ['Stalemate! The king cannot move, but he is not in check. A draw!'],
+    notBook: ['Not the book move! Follow the glowing squares.', 'Hmm, the book says otherwise. Try the golden arrow!', 'Close, but the book move is glowing. Give it a go!'],
+    undo: ['Time travel! The move is undone.', 'Take-back accepted, brave knight.', 'The chronicle has been rewritten.'],
+    hint: ['The wise old wizard whispers: try the green arrow.', 'Psst... the green arrow looks strong.', 'A little bird says: green arrow!']
+  };
+  const captureLine = type => (Math.random() < 0.5 && SAY.byPiece[type]) ? pickFresh(SAY.byPiece[type]) : pickFresh(SAY.capture);
+
+  // ---------- audio ----------
+  const Sound = (() => {
+    let ctx = null, master = null, sfxBus = null, musicBus = null, unlocked = false;
+    function ensure() {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!ctx) {
+        ctx = new AC();
+        master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
+        sfxBus = ctx.createGain(); sfxBus.gain.value = 0.8; sfxBus.connect(master);
+        musicBus = ctx.createGain(); musicBus.gain.value = S.volume; musicBus.connect(master);
+        try {
+          const rv = ctx.createConvolver(); rv.buffer = impulse(2.4, 2.6);
+          const wet = ctx.createGain(); wet.gain.value = 0.4;
+          musicBus.connect(rv); rv.connect(wet); wet.connect(master);
+        } catch (e) {}
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      unlocked = true;
+      return ctx;
+    }
+    function impulse(seconds, decay) {
+      const rate = ctx.sampleRate, len = Math.floor(rate * seconds), buf = ctx.createBuffer(2, len, rate);
+      for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
+      return buf;
+    }
+    function tone(type, f0, f1, t, dur, vel) {
+      const o = ctx.createOscillator(); o.type = type;
+      o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vel, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(sfxBus); o.start(t); o.stop(t + dur + 0.03);
+    }
+    function noise(t, dur, vel, ftype, f0, f1) {
+      const len = Math.ceil(ctx.sampleRate * dur), buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource(); src.buffer = buf;
+      const fl = ctx.createBiquadFilter(); fl.type = ftype; fl.frequency.setValueAtTime(f0, t); if (f1) fl.frequency.exponentialRampToValueAtTime(f1, t + dur); fl.Q.value = 1;
+      const g = ctx.createGain(); g.gain.setValueAtTime(vel, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      src.connect(fl); fl.connect(g); g.connect(sfxBus); src.start(t); src.stop(t + dur + 0.03);
+    }
+    function brass(f, t, d) {
+      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f;
+      const fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.setValueAtTime(500, t); fl.frequency.linearRampToValueAtTime(2400, t + 0.05); fl.frequency.exponentialRampToValueAtTime(900, t + d);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.26, t + 0.03); g.gain.setValueAtTime(0.26, t + d * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.05);
+      o.connect(fl); fl.connect(g); g.connect(sfxBus); o.start(t); o.stop(t + d + 0.1);
+    }
+    function fanfare(t, notes) { let at = t; for (const [f, d] of notes) { brass(f, at, d); at += d; } }
+    function sfx(name) {
+      if (!S.sfx || !unlocked || !ensure()) return;
+      const t = ctx.currentTime + 0.01;
+      switch (name) {
+        case 'move': noise(t, 0.07, 0.5, 'bandpass', 1400); tone('sine', 190, 140, t, 0.09, 0.35); break;
+        case 'capture': noise(t, 0.16, 0.8, 'lowpass', 1000, 180); tone('triangle', 130, 60, t, 0.2, 0.5); break;
+        case 'castle': noise(t, 0.4, 0.6, 'lowpass', 700, 140); tone('sine', 90, 70, t, 0.35, 0.35); break;
+        case 'check': fanfare(t, [[523, 0.12], [659, 0.3]]); break;
+        case 'mate': fanfare(t, [[523, 0.13], [659, 0.13], [784, 0.13], [1047, 0.6]]); break;
+        case 'fanfare': fanfare(t, [[392, 0.1], [523, 0.1], [659, 0.1], [784, 0.4]]); break;
+        case 'draw': fanfare(t, [[440, 0.22], [415, 0.45]]); break;
+        case 'bonk': tone('sine', 220, 100, t, 0.18, 0.4); break;
+        case 'select': tone('sine', 900, 900, t, 0.04, 0.1); break;
+        case 'promote': fanfare(t, [[659, 0.08], [784, 0.08], [988, 0.08], [1319, 0.35]]); break;
+        case 'start': fanfare(t, [[392, 0.1], [392, 0.1], [523, 0.32]]); break;
+      }
+    }
+    function pluck(midi, t, dur, vel, kind) {
+      const f = 440 * Math.pow(2, (midi - 69) / 12);
+      const dec = kind === 'lute' ? 0.7 : Math.max(0.5, dur);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vel, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(vel * 0.3, t + dec * 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + dec + 0.35);
+      const o1 = ctx.createOscillator(); o1.type = kind === 'lute' ? 'sawtooth' : 'triangle'; o1.frequency.value = f;
+      const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = f * 2;
+      const g2 = ctx.createGain(); g2.gain.value = kind === 'lute' ? 0.08 : 0.22;
+      const fl = ctx.createBiquadFilter(); fl.type = 'lowpass';
+      fl.frequency.setValueAtTime(kind === 'lute' ? 1600 : 3000, t); fl.frequency.exponentialRampToValueAtTime(kind === 'lute' ? 450 : 800, t + dec);
+      o1.connect(fl); o2.connect(g2); g2.connect(fl); fl.connect(g); g.connect(musicBus);
+      o1.start(t); o2.start(t); o1.stop(t + dec + 0.4); o2.stop(t + dec + 0.4);
+    }
+    let ducked = false;
+    function duck(on) { if (!ctx || ducked === on) return; ducked = on; const v = on ? S.volume * 0.3 : S.volume; musicBus.gain.cancelScheduledValues(ctx.currentTime); musicBus.gain.setTargetAtTime(v, ctx.currentTime, 0.15); }
+    function setVolume(v) { if (ctx && !ducked) musicBus.gain.setTargetAtTime(v, ctx.currentTime, 0.05); }
+    return { ensure, sfx, pluck, duck, setVolume, get ctx() { return ctx; }, get unlocked() { return unlocked; } };
+  })();
+
+  // ---------- music tracks (all public domain, synthesised on the fly) ----------
+  const NOTE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function midi(name) { const m = /^([A-G])([#b]?)(-?\d)$/.exec(name); return 12 * (+m[3] + 1) + NOTE[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0); }
+  const TRACKS = {
+    bach() { // J.S. Bach, Prelude in C major, BWV 846
+      const bars = [
+        ['C4','E4','G4','C5','E5'], ['C4','D4','A4','D5','F5'], ['B3','D4','G4','D5','F5'], ['C4','E4','G4','C5','E5'],
+        ['C4','E4','A4','E5','A5'], ['C4','D4','F#4','A4','D5'], ['B3','D4','G4','D5','G5'], ['B3','C4','E4','G4','C5'],
+        ['A3','C4','E4','G4','C5'], ['D3','A3','D4','F#4','C5'], ['G3','B3','D4','G4','B4'], ['G3','Bb3','E4','G4','C#5'],
+        ['F3','A3','D4','A4','D5'], ['F3','Ab3','D4','F4','B4'], ['E3','G3','C4','G4','C5'], ['E3','F3','A3','C4','F4'],
+        ['D3','F3','A3','C4','F4'], ['G2','D3','G3','B3','F4'], ['C3','E3','G3','C4','E4'], ['C3','G3','Bb3','C4','E4'],
+        ['F2','F3','A3','C4','E4'], ['F#2','C3','A3','C4','Eb4'], ['Ab2','F3','B3','C4','D4'], ['G2','F3','G3','B3','D4'],
+        ['G2','E3','G3','C4','E4'], ['G2','D3','G3','C4','F4'], ['G2','D3','G3','B3','F4'], ['G2','Eb3','A3','C4','F#4'],
+        ['G2','E3','G3','C4','G4'], ['G2','D3','G3','C4','F4'], ['G2','D3','G3','B3','F4'], ['C2','C3','G3','Bb3','E4']
+      ];
+      const ev = []; let beat = 0;
+      bars.forEach(b => {
+        for (let h = 0; h < 2; h++) {
+          [b[0], b[1], b[2], b[3], b[4], b[2], b[3], b[4]].forEach((n, k) => {
+            ev.push({ t: beat + h * 2 + k * 0.25, n: midi(n), d: k === 0 ? 2 : k === 1 ? 1.75 : 0.5, v: k === 0 ? 0.42 : k === 1 ? 0.34 : 0.27 });
+          });
+        }
+        beat += 4;
+      });
+      const tail = (bass, tenor, run) => {
+        ev.push({ t: beat, n: midi(bass), d: 4, v: 0.42 }); ev.push({ t: beat + 0.25, n: midi(tenor), d: 3.75, v: 0.34 });
+        run.forEach((n, k) => ev.push({ t: beat + 0.5 + k * 0.25, n: midi(n), d: 0.5, v: 0.27 }));
+        beat += 4;
+      };
+      tail('C2', 'C3', ['F3','A3','C4','F4','C4','A3','C4','A3','F3','A3','F3','D3','F3','D3']);
+      tail('C2', 'B2', ['G4','B4','D5','F5','D5','B4','D5','B4','G4','B4','D4','F4','E4','D4']);
+      ['C2','C3','E4','G4','C5'].forEach((n, i) => ev.push({ t: beat + i * 0.06, n: midi(n), d: 6, v: 0.38 }));
+      beat += 8;
+      return { tempo: 62, events: ev, length: beat };
+    },
+    canon() { // Pachelbel, Canon in D (ground bass with the first violin entries)
+      const bass = ['D3','A2','B2','F#2','G2','D3','G2','A2'];
+      const chords = [['D4','F#4','A4'],['C#4','E4','A4'],['D4','F#4','B4'],['C#4','F#4','A4'],['D4','G4','B4'],['D4','F#4','A4'],['D4','G4','B4'],['C#4','E4','A4']];
+      const v1 = ['F#5','E5','D5','C#5','B4','A4','B4','C#5'], v2 = ['D5','C#5','B4','A4','G4','F#4','G4','E4'];
+      const v3a = ['D5','F#5','A5','G5','F#5','D5','F#5','E5','D5','B4','D5','A4','G4','B4','A4','G4'];
+      const v3b = ['F#4','D4','E4','C#4','D4','F#4','A4','G4','F#4','D4','F#4','E4','D4','B3','C#4','A4'];
+      const ev = []; let beat = 0;
+      const cycle = (melody, perChord) => {
+        for (let c = 0; c < 8; c++) {
+          const t0 = beat + c * 2;
+          ev.push({ t: t0, n: midi(bass[c]), d: 2, v: 0.4 });
+          const ch = chords[c]; [0, 1, 2, 1].forEach((ci, k) => ev.push({ t: t0 + k * 0.5, n: midi(ch[ci]), d: 0.7, v: 0.16 }));
+          if (melody) for (let k = 0; k < perChord; k++) ev.push({ t: t0 + k * (2 / perChord), n: midi(melody[c * perChord + k]), d: 2 / perChord, v: 0.36 });
+        }
+        beat += 16;
+      };
+      cycle(null); cycle(v1, 1); cycle(v2, 1); cycle(v3a, 2); cycle(v3b, 2); cycle(v1, 1); cycle(null);
+      return { tempo: 50, events: ev, length: beat };
+    },
+    greensleeves() { // traditional, arranged for lute (beat = one eighth note)
+      const mel = [['A4',1],
+        ['C5',2],['D5',1],['E5',1.5],['F5',.5],['E5',1], ['D5',2],['B4',1],['G4',1.5],['A4',.5],['B4',1],
+        ['C5',2],['A4',1],['A4',1.5],['G#4',.5],['A4',1], ['B4',2],['G#4',1],['E4',2],['A4',1],
+        ['C5',2],['D5',1],['E5',1.5],['F5',.5],['E5',1], ['D5',2],['B4',1],['G4',1.5],['A4',.5],['B4',1],
+        ['C5',1.5],['B4',.5],['A4',1],['G#4',1.5],['F#4',.5],['G#4',1], ['A4',3],['A4',3],
+        ['G5',3],['G5',1.5],['F#5',.5],['E5',1], ['D5',2],['B4',1],['G4',1.5],['A4',.5],['B4',1],
+        ['C5',2],['A4',1],['A4',1.5],['G#4',.5],['A4',1], ['B4',2],['G#4',1],['E4',3],
+        ['G5',3],['G5',1.5],['F#5',.5],['E5',1], ['D5',2],['B4',1],['G4',1.5],['A4',.5],['B4',1],
+        ['C5',1.5],['B4',.5],['A4',1],['G#4',1.5],['F#4',.5],['G#4',1], ['A4',3],['A4',3]];
+      const CH = { Am: ['A2','E3','C4'], G: ['G2','D3','B3'], E: ['E2','B2','G#3'], C: ['C3','G3','E4'] };
+      const barChords = ['Am','G','Am','E','Am','G','Am|E','Am','C','G','Am','E','C','G','Am|E','Am'];
+      const ev = []; let t = 0;
+      mel.forEach(([n, d]) => { ev.push({ t, n: midi(n), d, v: 0.34, k: 'lute' }); t += d; });
+      barChords.forEach((name, b) => {
+        const t0 = 1 + b * 6;
+        const halves = name.split('|');
+        for (let h = 0; h < 2; h++) {
+          const ch = CH[halves[Math.min(h, halves.length - 1)]];
+          [0, 1, 2].forEach((ci, k) => ev.push({ t: t0 + h * 3 + k, n: midi(ch[ci]), d: k === 0 ? 3 : 1.5, v: k === 0 ? 0.3 : 0.14, k: 'lute' }));
+        }
+      });
+      ev.sort((a, b) => a.t - b.t);
+      return { tempo: 176, events: ev, length: t };
+    }
+  };
+  const Music = {
+    track: null, idx: 0, loopStart: 0, timer: null, playing: false,
+    start(id) {
+      this.stop();
+      const ctx = Sound.ensure(); if (!ctx || !TRACKS[id]) return;
+      this.track = TRACKS[id](); if (!this.track.events.length) return;
+      this.idx = 0; this.loopStart = ctx.currentTime + 0.25; this.playing = true;
+      this.timer = setInterval(() => this.pump(), 120); this.pump();
+    },
+    pump() {
+      const ctx = Sound.ctx, spb = 60 / this.track.tempo, horizon = ctx.currentTime + 0.7, ev = this.track.events;
+      let guard = 0;
+      while (guard++ < 500) {
+        if (this.idx >= ev.length) { this.loopStart += this.track.length * spb; this.idx = 0; }
+        const e = ev[this.idx], at = this.loopStart + e.t * spb;
+        if (at > horizon) break;
+        if (at >= ctx.currentTime - 0.05) Sound.pluck(e.n, Math.max(at, ctx.currentTime), e.d * spb, e.v, e.k);
+        this.idx++;
+      }
+    },
+    stop() { if (this.timer) clearInterval(this.timer); this.timer = null; this.playing = false; }
+  };
+
+  // ---------- the herald's voice ----------
+  /* ElevenLabs only (the kingdom's kq-relay), never the device voice (Yoni 2026-09-28); if the relay cannot answer, the herald stays silent */
+  const Voice = {
+    relay: 'https://elnmuuymfmlwnsynzgrh.supabase.co/functions/v1/kq-relay', cache: new Map(), cur: null, seq: 0,
+    init() {},
+    stop() { this.seq++; if (this.cur) { try { this.cur.pause(); } catch (e) {} this.cur = null; } Sound.duck(false); },
+    say(text) {
+      if (!S.voice || !text) return; this.stop(); const my = this.seq;
+      const play = url => { if (my !== this.seq) return; const a = new Audio(url); this.cur = a; a.onplay = () => Sound.duck(true); a.onended = a.onerror = () => Sound.duck(false); a.play().catch(() => Sound.duck(false)); };
+      if (this.cache.has(text)) return play(this.cache.get(text));
+      const ask = () => fetch(this.relay, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, lang: 'en' }) }).then(r => { if (!r.ok) throw Object.assign(new Error(r.status), { status: r.status }); return r.blob(); });
+      /* the relay now and then drops a connection: one more try after a moment (a 4xx such as the daily cap is final) */
+      ask().catch(e => e.status && e.status < 500 ? Promise.reject(e) : new Promise(res => setTimeout(res, 350)).then(ask))
+        .then(b => { const url = URL.createObjectURL(b); this.cache.set(text, url); play(url); }).catch(() => {});
+    }
+  };
+
+  // ---------- AI (worker with main-thread fallback) ----------
+  const Engine = (() => {
+    let worker = null, failed = false, seq = 0; const pending = {};
+    function fromRes(r) { return r && r.move ? { from: E.toAlg(r.move.from), to: E.toAlg(r.move.to), promo: r.move.promo ? E.PIECE_CHARS[r.move.promo] : '' } : null; }
+    function mainThread(req) {
+      const cfg = E.levelCfg(req.level);
+      const r = E.search(new E.Position(req.fen), { depth: cfg.depth, timeMs: Math.min(cfg.timeMs, 800), qDepth: cfg.qDepth, jitter: cfg.jitter, repKeys: req.repKeys });
+      return { id: req.id, move: fromRes(r) };
+    }
+    function create() {
+      if (worker || failed) return;
+      try {
+        worker = new Worker('worker.js?v=11');
+        worker.onmessage = e => { const p = pending[e.data.id]; if (p) { delete pending[e.data.id]; p.resolve(e.data.move ? e.data : mainThread(p.req)); } };
+        worker.onerror = () => {
+          failed = true; try { worker.terminate(); } catch (e) {} worker = null;
+          for (const id in pending) { const p = pending[id]; delete pending[id]; p.resolve(mainThread(p.req)); }
+        };
+      } catch (e) { failed = true; worker = null; }
+    }
+    function think(fen, level, repKeys) {
+      create();
+      const id = ++seq, req = { id, fen, level, repKeys };
+      if (!worker) return new Promise(res => setTimeout(() => res(mainThread(req)), 30));
+      return new Promise(resolve => { pending[id] = { resolve, req }; worker.postMessage(req); });
+    }
+    return { think };
+  })();
+
+  // ---------- game state ----------
+  let pos = new E.Position();
+  const G = { records: [], keys: [], over: null, status: null, legalAll: [], lastMove: null, selected: null, hint: null, thinking: false, flipped: false, human: 'w', trainer: null, id: 0 };
+  const pieceEls = {};
+  const boardEl = $('#board');
+  const piecesEl = document.createElement('div'); piecesEl.className = 'pieces';
+  const arrowsEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); arrowsEl.setAttribute('class', 'arrows'); arrowsEl.setAttribute('viewBox', '0 0 8 8');
+  const sqEls = {};
+
+  function buildSquares() {
+    boardEl.innerHTML = '';
+    for (let row = 0; row < 8; row++) for (let col = 0; col < 8; col++) {
+      const f = G.flipped ? 7 - col : col, r = G.flipped ? row : 7 - row, alg = FILES[f] + (r + 1);
+      const el = document.createElement('div');
+      el.className = 'sq ' + (((f + r) & 1) ? 'light' : 'dark'); el.dataset.sq = alg;
+      if (col === 0) el.dataset.rank = r + 1;
+      if (row === 7) el.dataset.file = FILES[f];
+      boardEl.appendChild(el); sqEls[alg] = el;
+    }
+    boardEl.appendChild(arrowsEl); boardEl.appendChild(piecesEl);
+  }
+  function coords(alg) { const f = FILES.indexOf(alg[0]), r = +alg[1] - 1; return { col: G.flipped ? 7 - f : f, row: G.flipped ? r : 7 - r }; }
+  function place(el, alg) { const c = coords(alg); el.style.transform = `translate(${c.col * 100}%, ${c.row * 100}%)`; el.dataset.sq = alg; }
+  function pieceSvg(type) { return `<svg viewBox="0 0 100 100" aria-hidden="true"><use href="${SYM[type]}"/></svg>`; }
+  function makePiece(color, type) {
+    const el = document.createElement('div'); el.className = 'pc ' + color; el.dataset.color = color; el.dataset.type = type;
+    el.innerHTML = pieceSvg(type); el.setAttribute('aria-label', (color === 'w' ? 'white ' : 'black ') + NAMES[type]);
+    return el;
+  }
+  function syncBoard() {
+    const wanted = {};
+    for (const f of FILES) for (let r = 1; r <= 8; r++) { const p = pos.get(f + r); if (p) wanted[f + r] = p; }
+    const stale = [];
+    for (const alg in pieceEls) { const el = pieceEls[alg], w = wanted[alg]; if (!w || el.dataset.color !== w.color || el.dataset.type !== w.type) { stale.push(el); delete pieceEls[alg]; } }
+    for (const alg in wanted) {
+      if (pieceEls[alg]) { place(pieceEls[alg], alg); continue; }
+      const w = wanted[alg]; let el;
+      const i = stale.findIndex(x => x.dataset.color === w.color && x.dataset.type === w.type);
+      if (i >= 0) el = stale.splice(i, 1)[0];
+      else { el = makePiece(w.color, w.type); piecesEl.appendChild(el); place(el, alg); el.classList.add('pop'); setTimeout(() => el.classList.remove('pop'), 300); }
+      place(el, alg); pieceEls[alg] = el;
+    }
+    for (const el of stale) { el.classList.add('gone'); setTimeout(() => el.remove(), 280); }
+  }
+
+  // ---------- rendering ----------
+  const turnEl = $('#turn'), heraldEl = $('#herald'), heraldText = $('#heraldText'), movesEl = $('#moves');
+  const trainerEl = $('#trainer'), trainerText = $('#trainerText'), trainerBar = $('#trainerBar');
+  const btnUndo = $('#btnUndo'), btnHint = $('#btnHint');
+  const colorName = c => c === 'w' ? 'White' : 'Black';
+
+  function renderHighlights() {
+    for (const alg in sqEls) sqEls[alg].className = sqEls[alg].className.replace(/\b(sel|legal|cap|last|check|book)\b/g, '').replace(/\s+/g, ' ').trim();
+    if (G.lastMove) { sqEls[G.lastMove.from].classList.add('last'); sqEls[G.lastMove.to].classList.add('last'); }
+    if (G.status && G.status.check) { const k = E.toAlg(pos.kingSq[pos.side >> 3]); sqEls[k].classList.add('check'); }
+    if (G.selected) {
+      sqEls[G.selected].classList.add('sel');
+      for (const m of G.legalAll) if (E.toAlg(m.from) === G.selected) { const t = sqEls[E.toAlg(m.to)]; t.classList.add('legal'); if (m.captured) t.classList.add('cap'); }
+    }
+    arrowsEl.innerHTML = '';
+    const exp = trainerExpected();
+    const showBook = exp && !G.over && !G.thinking && (S.mode === '2p' || pos.turn() === G.human);
+    if (showBook) { sqEls[E.toAlg(exp.from)].classList.add('book'); sqEls[E.toAlg(exp.to)].classList.add('book'); drawArrow(E.toAlg(exp.from), E.toAlg(exp.to), 'book'); }
+    if (G.hint) drawArrow(G.hint.from, G.hint.to, 'hint');
+  }
+  function drawArrow(from, to, cls) {
+    const a = coords(from), b = coords(to);
+    const x1 = a.col + 0.5, y1 = a.row + 0.5, x2 = b.col + 0.5, y2 = b.row + 0.5;
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy), ux = dx / len, uy = dy / len;
+    const ex = x2 - ux * 0.32, ey = y2 - uy * 0.32;
+    const ns = 'http://www.w3.org/2000/svg';
+    const line = document.createElementNS(ns, 'line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', ex - ux * 0.18); line.setAttribute('y2', ey - uy * 0.18); line.setAttribute('class', cls);
+    const head = document.createElementNS(ns, 'polygon');
+    const px = -uy, py = ux, w = 0.24;
+    head.setAttribute('points', `${x2 - ux * 0.06},${y2 - uy * 0.06} ${ex + px * w},${ey + py * w} ${ex - px * w},${ey - py * w}`);
+    head.setAttribute('fill', cls === 'book' ? 'var(--gold)' : 'var(--forest)'); head.setAttribute('opacity', '0.9');
+    arrowsEl.appendChild(line); arrowsEl.appendChild(head);
+  }
+  function renderStatus() {
+    const turn = pos.turn();
+    let text = '', badge = '';
+    if (G.over) text = resultTitle(G.status);
+    else if (G.thinking) { text = colorName(turn) + ' is thinking'; badge = '<span class="badge think">⏳ hmm…</span>'; }
+    else {
+      const you = S.mode === 'cpu' ? (turn === G.human ? ' — your move!' : '') : '';
+      text = colorName(turn) + ' to move' + you;
+      if (G.status && G.status.check) badge = '<span class="badge">CHECK!</span>';
+    }
+    turnEl.innerHTML = `<span class="dot ${turn}"></span><span>${text}</span>${badge}`;
+    btnUndo.disabled = G.thinking || !G.records.length;
+    btnHint.disabled = !!G.over || G.thinking || (S.mode === 'cpu' && turn !== G.human);
+  }
+  function renderCaptured() {
+    const by = { w: [], b: [] };
+    for (const r of G.records) if (r.captured) by[r.color].push(r.captured);
+    const order = { q: 0, r: 1, b: 2, n: 3, p: 4 };
+    let mw = 0, mb = 0;
+    for (const c of ['w', 'b']) {
+      by[c].sort((a, b) => order[a] - order[b]);
+      const el = c === 'w' ? $('#capByW') : $('#capByB');
+      el.innerHTML = by[c].map(pieceSvg).join('');
+      const v = by[c].reduce((s, t) => s + PVAL[t], 0); if (c === 'w') mw = v; else mb = v;
+    }
+    $('#plusW').textContent = mw > mb ? '+' + (mw - mb) : ''; $('#plusB').textContent = mb > mw ? '+' + (mb - mw) : '';
+  }
+  function renderMoves() {
+    if (!G.records.length) { movesEl.innerHTML = '<li class="empty">No moves yet. The chronicle awaits.</li>'; return; }
+    let html = '';
+    for (let i = 0; i < G.records.length; i += 2) {
+      const w = G.records[i], b = G.records[i + 1];
+      html += `<li class="n">${i / 2 + 1}.</li><li class="san${i === G.records.length - 1 ? ' cur' : ''}">${w.san}</li><li class="san${b && i + 1 === G.records.length - 1 ? ' cur' : ''}">${b ? b.san : ''}</li>`;
+    }
+    movesEl.innerHTML = html; movesEl.scrollTop = movesEl.scrollHeight;
+  }
+  function renderTrainer() {
+    const t = G.trainer;
+    if (!t) { trainerEl.hidden = true; return; }
+    trainerEl.hidden = false;
+    const n = t.op.moves.length, i = Math.min(t.idx, n);
+    trainerText.textContent = t.done ? t.op.name + ' ✓' : `${t.op.name}: move ${i + 1} of ${n}`;
+    trainerBar.style.width = (i / n * 100) + '%';
+  }
+  function refresh() {
+    G.status = pos.status(G.keys); G.legalAll = G.status.legal;
+    syncBoard(); renderHighlights(); renderStatus(); renderCaptured(); renderMoves(); renderTrainer();
+  }
+  function herald(text, speak) {
+    heraldText.textContent = text;
+    heraldEl.classList.remove('bump'); void heraldEl.offsetWidth; heraldEl.classList.add('bump');
+    if (speak) Voice.say(text);
+  }
+  function resultTitle(st) {
+    if (st.result === 'checkmate') return 'Checkmate! ' + colorName(st.winner) + ' wins!';
+    if (st.result === 'stalemate') return 'Stalemate! A draw.';
+    return 'Draw!';
+  }
+  function resultText(st) {
+    if (st.result === 'checkmate') {
+      if (S.mode === 'cpu') return st.winner === G.human ? 'You conquered the kingdom! 🏆' : 'The computer wins this battle. Try again, brave knight!';
+      return colorName(st.winner) + ' conquers the kingdom! 🏆';
+    }
+    if (st.result === 'stalemate') return 'The king cannot move, but he is not in check. Nobody wins, nobody loses.';
+    if (st.result === 'repetition') return 'The same position three times. The armies agree to a truce.';
+    if (st.result === 'fifty') return 'Fifty moves without a capture or a pawn move. A truce!';
+    return 'Not enough soldiers left to checkmate. A truce!';
+  }
+  function showGameOver(st) { $('#ovTitle').textContent = resultTitle(st); $('#ovText').textContent = resultText(st); $('#overlay').hidden = false; }
+  function hideOverlay() { $('#overlay').hidden = true; $('#promoOverlay').hidden = true; }
+
+  // ---------- trainer ----------
+  function trainerExpected() {
+    const t = G.trainer; if (!t || t.done || G.over) return null;
+    const san = t.op.moves[t.idx]; if (!san) return null;
+    const m = pos.parseSan(san, G.legalAll);
+    if (!m) { t.done = true; return null; }
+    return m;
+  }
+
+  // ---------- moves ----------
+  function playMove(m) {
+    const san = pos.san(m, G.legalAll), mover = pos.turn();
+    const capturedType = m.captured ? E.PIECE_CHARS[E.TYPE(m.captured)] : '';
+    pos.make(m); G.keys.push(pos.key());
+    G.records.push({ san, color: mover, captured: capturedType, from: E.toAlg(m.from), to: E.toAlg(m.to) });
+    G.lastMove = { from: E.toAlg(m.from), to: E.toAlg(m.to) }; G.selected = null; G.hint = null;
+    let tip = null, justFinished = false;
+    if (G.trainer && !G.trainer.done) { const t = G.trainer; tip = t.op.tips && t.op.tips[t.idx] || null; t.idx++; if (t.idx >= t.op.moves.length) { t.done = true; justFinished = true; } }
+    refresh();
+    const st = G.status, isCastle = m.flags & (E.F_CASTLE_K | E.F_CASTLE_Q);
+    let spoke = true;
+    if (st.over) { if (st.result === 'checkmate') { Sound.sfx('mate'); herald(pickFresh(SAY.mate), true); } else { Sound.sfx('draw'); herald(st.result === 'stalemate' ? SAY.stalemate[0] : pickFresh(SAY.draw), true); } }
+    else if (capturedType) { Sound.sfx('capture'); if (st.check) Sound.sfx('check'); herald(captureLine(capturedType), true); }
+    else if (st.check) { Sound.sfx('check'); herald(pickFresh(SAY.check), true); }
+    else if (m.promo) { Sound.sfx('promote'); herald(pickFresh(SAY.promote), true); }
+    else if (isCastle) { Sound.sfx('castle'); herald(pickFresh(SAY.castle), true); }
+    else { Sound.sfx('move'); spoke = false; }
+    if (tip && !st.over) { if (spoke) setTimeout(() => herald(tip, false), 2200); else herald(tip, true); }
+    if (justFinished && !st.over) setTimeout(() => { if (!G.over && G.trainer) { herald(G.trainer.op.name + ' complete! The book is closed. Now it is all up to you, champion.', true); Sound.sfx('fanfare'); } }, tip ? 3800 : 900);
+    if (st.over) { G.over = st; renderStatus(); setTimeout(() => showGameOver(st), 1100); return; }
+    maybeCpu();
+  }
+  function tryMove(from, to, promo) {
+    const cands = G.legalAll.filter(m => E.toAlg(m.from) === from && E.toAlg(m.to) === to);
+    if (!cands.length) return false;
+    let m = cands[0];
+    if (cands.length > 1) { if (!promo) { openPromo(from, to); return true; } m = cands.find(c => E.PIECE_CHARS[c.promo] === promo) || cands[0]; }
+    const exp = trainerExpected();
+    if (exp && exp !== m) { Sound.sfx('bonk'); herald(pickFresh(SAY.notBook), true); G.selected = null; renderHighlights(); return false; }
+    playMove(m); return true;
+  }
+  function humanCanMove() { return !G.over && !G.thinking && (S.mode === '2p' || pos.turn() === G.human); }
+  function maybeCpu() {
+    if (G.over || S.mode !== 'cpu' || pos.turn() === G.human) return;
+    G.thinking = true; renderStatus(); renderHighlights();
+    const myId = G.id;
+    setTimeout(() => {
+      if (myId !== G.id || G.over) return;
+      const book = trainerExpected();
+      if (book) { G.thinking = false; playMove(book); return; }
+      Engine.think(pos.fen(), [0, 1, 10, 14, 16][S.level] || 10, G.keys).then(res => {
+        if (myId !== G.id || G.over) return;
+        let m = null;
+        if (res && res.move) m = G.legalAll.find(x => E.toAlg(x.from) === res.move.from && E.toAlg(x.to) === res.move.to && (x.promo ? E.PIECE_CHARS[x.promo] : '') === (res.move.promo || ''));
+        if (!m) m = pick(G.legalAll);
+        G.thinking = false; playMove(m);
+      });
+    }, 500);
+  }
+  function undo() {
+    if (G.thinking || !G.records.length) return;
+    const n = (S.mode === 'cpu' && G.records.length >= 2 && pos.turn() === G.human) ? 2 : 1;
+    for (let i = 0; i < n; i++) {
+      pos.undo(); G.keys.pop(); G.records.pop();
+      if (G.trainer) { G.trainer.idx = Math.max(0, G.trainer.idx - 1); G.trainer.done = false; }
+    }
+    G.over = null; hideOverlay();
+    const last = G.records[G.records.length - 1]; G.lastMove = last ? { from: last.from, to: last.to } : null;
+    G.selected = null; G.hint = null;
+    refresh(); Sound.sfx('move'); herald(pickFresh(SAY.undo), false);
+    maybeCpu();
+  }
+  function hint() {
+    if (!humanCanMove()) return;
+    const exp = trainerExpected();
+    if (exp) { G.hint = null; renderHighlights(); herald('Follow the golden arrow. That is the book move!', true); return; }
+    btnHint.disabled = true; const myId = G.id;
+    Engine.think(pos.fen(), 3, G.keys).then(res => {
+      if (myId !== G.id || G.over) return;
+      btnHint.disabled = false;
+      if (res && res.move) { G.hint = res.move; renderHighlights(); herald(pickFresh(SAY.hint), true); }
+    });
+  }
+  function newGame(opening) {
+    G.id++;
+    pos = new E.Position();
+    G.records = []; G.keys = [pos.key()]; G.over = null; G.lastMove = null; G.selected = null; G.hint = null; G.thinking = false;
+    G.trainer = opening ? { op: opening, idx: 0, done: false } : null;
+    let color = opening ? opening.side : S.color;
+    if (color === 'random') color = Math.random() < 0.5 ? 'w' : 'b';
+    G.human = color;
+    G.flipped = S.mode === 'cpu' && color === 'b';
+    hideOverlay();
+    for (const k in pieceEls) { pieceEls[k].remove(); delete pieceEls[k]; }
+    buildSquares(); refresh();
+    Sound.sfx('start');
+    herald(opening ? `${opening.name}. ${opening.desc}` : pickFresh(SAY.start), true);
+    maybeCpu();
+  }
+  function selectSquare(alg) { G.selected = alg; Sound.sfx('select'); renderHighlights(); }
+  function squareTap(alg) {
+    if (!humanCanMove()) return;
+    const p = pos.get(alg), mine = p && p.color === pos.turn();
+    if (G.selected) {
+      if (alg === G.selected) { G.selected = null; renderHighlights(); return; }
+      if (tryMove(G.selected, alg)) return;
+      if (mine) { selectSquare(alg); return; }
+      G.selected = null; renderHighlights(); return;
+    }
+    if (mine) selectSquare(alg);
+  }
+  function openPromo(from, to) {
+    const color = pos.turn(), box = $('#promo');
+    box.className = 'promo ' + color; box.innerHTML = '';
+    for (const t of ['q', 'r', 'b', 'n']) {
+      const b = document.createElement('button'); b.type = 'button'; b.innerHTML = pieceSvg(t); b.setAttribute('aria-label', NAMES[t]);
+      b.onclick = () => { $('#promoOverlay').hidden = true; tryMove(from, to, t); };
+      box.appendChild(b);
+    }
+    $('#promoOverlay').hidden = false;
+  }
+
+  // ---------- pointer input (tap or drag) ----------
+  let drag = null;
+  function squareAt(x, y) {
+    const r = boardEl.getBoundingClientRect();
+    const col = Math.floor((x - r.left) / r.width * 8), row = Math.floor((y - r.top) / r.height * 8);
+    if (col < 0 || col > 7 || row < 0 || row > 7) return null;
+    const f = G.flipped ? 7 - col : col, rk = G.flipped ? row : 7 - row;
+    return FILES[f] + (rk + 1);
+  }
+  boardEl.addEventListener('pointerdown', e => {
+    const pc = e.target.closest('.pc');
+    if (!pc) { const sq = e.target.closest('.sq'); if (sq) squareTap(sq.dataset.sq); return; }
+    const alg = pc.dataset.sq, p = pos.get(alg);
+    if (!humanCanMove()) return;
+    if (!p || p.color !== pos.turn()) { squareTap(alg); return; }
+    e.preventDefault();
+    if (G.selected !== alg) selectSquare(alg); else if (e.pointerType === 'mouse') { /* keep selection; a second click deselects on pointerup */ }
+    drag = { el: pc, from: alg, x0: e.clientX, y0: e.clientY, moved: false, id: e.pointerId, wasSelected: G.selected === alg };
+    try { pc.setPointerCapture(e.pointerId); } catch (err) {}
+  });
+  boardEl.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x0, dy = e.clientY - drag.y0;
+    if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+    if (!drag.moved) { drag.moved = true; drag.el.classList.add('dragging'); }
+    const r = boardEl.getBoundingClientRect(), s = r.width / 8;
+    drag.el.style.transform = `translate(${e.clientX - r.left - s / 2}px, ${e.clientY - r.top - s / 2}px)`;
+  });
+  function endDrag(e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag; drag = null;
+    d.el.classList.remove('dragging');
+    if (d.moved) {
+      const target = squareAt(e.clientX, e.clientY);
+      place(d.el, d.from);
+      if (!target || target === d.from || !tryMove(d.from, target)) { if (target && target !== d.from) Sound.sfx('bonk'); G.selected = null; renderHighlights(); }
+    }
+  }
+  boardEl.addEventListener('pointerup', endDrag);
+  boardEl.addEventListener('pointercancel', endDrag);
+
+  // ---------- controls ----------
+  const OPS = window.CASTLE_OPENINGS || [];
+  const opSel = $('#opening');
+  ['Novice', 'Classic', 'Advanced'].forEach(lv => {
+    const grp = document.createElement('optgroup'); grp.label = lv;
+    OPS.filter(o => o.level === lv).forEach(o => { const opt = document.createElement('option'); opt.value = o.id; opt.textContent = `${o.name} (${o.side === 'w' ? 'White' : 'Black'})`; grp.appendChild(opt); });
+    opSel.appendChild(grp);
+  });
+  $('#mode').value = S.mode; $('#level').value = S.level; $('#color').value = S.color; $('#music').value = S.music;
+  $('#volume').value = S.volume; $('#voice').checked = S.voice; $('#sfx').checked = S.sfx;
+  const currentOpening = () => OPS.find(o => o.id === opSel.value) || null;
+  $('#mode').onchange = e => { S.mode = e.target.value; save(); newGame(currentOpening()); };
+  $('#level').onchange = e => { S.level = +e.target.value; save(); };
+  $('#color').onchange = e => { S.color = e.target.value; save(); if (!currentOpening()) newGame(null); };
+  opSel.onchange = () => newGame(currentOpening());
+  $('#music').onchange = e => { S.music = e.target.value; save(); if (S.music === 'off') Music.stop(); else if (Sound.unlocked) Music.start(S.music); };
+  $('#volume').oninput = e => { S.volume = +e.target.value; save(); Sound.setVolume(S.volume); };
+  $('#voice').onchange = e => { S.voice = e.target.checked; save(); if (!S.voice) Voice.stop(); else Voice.say('The Herald is at your service!'); };
+  $('#sfx').onchange = e => { S.sfx = e.target.checked; save(); Sound.sfx('select'); };
+  $('#btnNew').onclick = () => newGame(currentOpening());
+  $('#btnUndo').onclick = undo;
+  $('#btnFlip').onclick = () => { G.flipped = !G.flipped; buildSquares(); for (const k in pieceEls) place(pieceEls[k], k); renderHighlights(); };
+  $('#btnHint').onclick = hint;
+  $('#btnFree').onclick = () => { G.trainer = null; opSel.value = ''; renderTrainer(); renderHighlights(); herald('Free play! The book is closed. Use your own clever brain.', true); };
+  $('#btnAgain').onclick = () => newGame(currentOpening());
+  $('#btnSwap').onclick = () => { if (currentOpening()) { opSel.value = ''; } S.color = G.human === 'w' ? 'b' : 'w'; $('#color').value = S.color; save(); newGame(null); };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { G.selected = null; renderHighlights(); } });
+
+  // Wake the audio on the first touch anywhere (browsers require a gesture).
+  const wake = () => {
+    if (Sound.unlocked) return;
+    if (!Sound.ensure()) return;
+    $('#musicHint').hidden = true;
+    if (S.music !== 'off') Music.start(S.music);
+  };
+  document.addEventListener('pointerdown', wake, { passive: true });
+  document.addEventListener('keydown', wake);
+
+  // ---------- boot (with hot-reload state for viewers who already have the page open) ----------
+  function snapshot() { return { sans: G.records.map(r => r.san), human: G.human, opening: G.trainer ? G.trainer.op.id : '', flipped: G.flipped }; }
+  function start(data) {
+    Voice.init();
+    const op = data && data.opening ? OPS.find(o => o.id === data.opening) : null;
+    if (op) opSel.value = op.id;
+    newGame(op || null);
+    if (data && Array.isArray(data.sans) && data.sans.length) {
+      G.id++; G.thinking = false; G.human = data.human || G.human;
+      for (const san of data.sans) { const m = pos.parseSan(san, pos.legalMoves()); if (!m) break; pos.make(m); G.keys.push(pos.key()); const rec = { san, color: pos.turn() === 'w' ? 'b' : 'w', captured: m.captured ? E.PIECE_CHARS[E.TYPE(m.captured)] : '', from: E.toAlg(m.from), to: E.toAlg(m.to) }; G.records.push(rec); G.lastMove = { from: rec.from, to: rec.to }; if (G.trainer) { G.trainer.idx++; if (G.trainer.idx >= G.trainer.op.moves.length) G.trainer.done = true; } }
+      G.flipped = !!data.flipped; buildSquares(); refresh();
+      if (G.status.over) { G.over = G.status; showGameOver(G.status); } else maybeCpu();
+    }
+  }
+  try { if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(snapshot); } catch (e) {}
+  try {
+    if (window.claude && window.claude.hot && window.claude.hot.ready) window.claude.hot.ready(start);
+    else start((window.claude && window.claude.hot && window.claude.hot.data) || {});
+  } catch (e) { start({}); }
+})();
+</script>

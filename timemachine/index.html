@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Time Machine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Frank+Ruhl+Libre:wght@700;900&family=Assistant:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#7a5ad8; --accent-2:#3a2a7a; }
+.bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:600px){ .bands{grid-template-columns:1fr} }
+.tq{display:grid; gap:12px; justify-items:center; width:100%}
+.tq .scene{width:min(78vw,300px); border-radius:14px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,.4); background:#fff}
+.tq .scene svg{display:block; width:100%; height:auto} .tq .scene .kq-i{width:96px; height:96px; margin:22px auto; display:block}
+.tq .choices{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; width:100%}
+.tq .choice{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:56px; font-weight:800}
+.tq .choice .kq-i{width:58px; height:58px} .tq .choice .mini{width:130px; border-radius:10px; overflow:hidden} .tq .choice .mini svg{display:block; width:100%; height:auto} .tq .choice .mini .kq-i{width:56px; height:56px; margin:12px auto; display:block}
+.tq .choice.ok{outline:4px solid #3ecf7a} .tq .choice.bad{outline:4px solid #ff5a6a; opacity:.8}
+.tq .order{display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
+.tq .order button{width:140px; padding:6px; border-radius:14px; border:2px solid rgba(255,255,255,.25); background:rgba(255,255,255,.08); cursor:pointer; display:grid; gap:4px; color:inherit; font:700 13px var(--font-body)}
+.tq .order button .mini{border-radius:8px; overflow:hidden} .tq .order button .mini svg{display:block; width:100%; height:auto} .tq .order button .mini .kq-i{width:56px; height:56px; margin:10px auto; display:block}
+.tq .order button.done{opacity:.3}
+.tq .rail{display:flex; gap:6px; justify-content:center; flex-wrap:wrap; padding:8px; border-radius:14px; background:rgba(255,255,255,.06)}
+.tq .rail .slot{width:120px; min-height:84px; border-radius:12px; border:3px dashed rgba(255,224,138,.5); display:grid; place-items:center; font:800 12px var(--font-body); padding:4px; text-align:center}
+.tq .rail .slot .mini{width:100%; border-radius:8px; overflow:hidden} .tq .rail .slot svg{display:block; width:100%; height:auto} .tq .rail .slot .kq-i{width:44px; height:44px}
+.tq .yr{font:900 15px var(--font-body); color:#ffe08a}
+.tm-card{display:flex; align-items:center; gap:14px; width:100%; margin:0 0 12px; padding:12px 14px; border-radius:18px; cursor:pointer; text-align:start; border:1px solid rgba(200,180,255,.55); background:linear-gradient(135deg,rgba(122,90,216,.4),rgba(40,120,200,.3)); color:inherit; font:inherit}
+.tm-card .thumbs{display:flex; gap:4px} .tm-card .thumbs .mini{width:58px; border-radius:6px; overflow:hidden} .tm-card .thumbs svg{display:block; width:100%; height:auto}
+.tm-card b{display:block; font:800 20px/1.1 Cinzel, 'Frank Ruhl Libre', serif} .tm-card span{font-size:14px; opacity:.85}
+.tl{position:fixed; inset:0; z-index:40; overflow:auto; padding:calc(14px + env(safe-area-inset-top,0px)) 16px 24px; background:radial-gradient(120% 90% at 50% 0%, #2a1a5a, #0a0818 70%); color:#f2ecff; display:flex; flex-direction:column; gap:12px}
+.tl > *{flex-shrink:0} .tl-head{display:flex; align-items:center; gap:12px} .tl-head h2{margin:0; flex:1; font:900 clamp(22px,4vw,32px) Cinzel, 'Frank Ruhl Libre', serif; color:#e0d0ff}
+.tl-x{width:44px; height:44px; border-radius:50%; border:0; background:rgba(255,255,255,.14); color:#fff; font:400 28px/1 sans-serif; cursor:pointer}
+.tl-era{display:grid; gap:8px; padding:12px; border-radius:16px; background:rgba(255,255,255,.05); border-inline-start:4px solid #b48cff} .tl-era h3{margin:0; color:#ffe08a; font:800 18px var(--font-body)}
+.tl-row{display:grid; grid-template-columns:120px 1fr; gap:12px; align-items:center} .tl-row .mini{border-radius:10px; overflow:hidden} .tl-row svg{display:block; width:100%; height:auto} .tl-row .kq-i{width:60px; height:60px; margin:8px auto; display:block}
+.tl-row b{display:block; color:#ffe08a} .tl-row span{opacity:.92}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header><main class="play" style="margin-top:18px"></main></div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script src="../shared/quest.js?v=18"></script>
+<script src="scenes.js?v=1"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { tm_title: 'Time Machine', tm_sub: 'Travel back to dinosaurs, pyramids, knights and the Moon landing.',
+      s_oldnew: 'Which is older?', s_thennow: 'Then and now', s_order: 'Put them in order', s_who: 'Famous discoverers', s_century: 'Which century?', s_era: 'Which age of history?', s_howlong: 'How long between?', s_bce: 'Before and after year 1',
+      q_oldnew: 'Which one comes from longer ago?', q_thennow: 'Long ago people used this. What do we use today?', q_order: 'Tap the pictures from the oldest to the newest.', q_who: 'Who did this? {did}', q_century: '{ev} ({y}). Which century was that?', q_era: 'In which age of history did this happen? {ev}', q_howlong: '{a} was in {ya}. {b} was in {yb}. How many years between them?', q_bce: 'Tap the years from the oldest to the newest.',
+      cen: 'the {n}th century', cen1: 'the 1st century', cen21: 'the 21st century', bc: '{n} BCE', ce: '{n} CE', mya: '{n} million years ago',
+      x_oldnew: '{a}: {ya}. {b}: {yb}.', x_thennow: 'Long ago: {a}. Today: {b}.', x_order: 'From the oldest: {list}.', x_who: '{who} {did}', x_century: 'The years {from} to {to} are {cen}, so {y} is in {cen}.', x_era: '“{ev}”: that was {era} ({span}).', x_howlong: '{yb} − {ya} = {n} years.', x_bce: 'BCE years count down towards year 1: a bigger BCE number is longer ago. Order: {list}.',
+      tm_card: 'Timeline tour', tm_cardSub: 'Walk through time, from the dinosaurs to today, age by age.' },
+    he: { tm_title: 'מכונת הזמן', tm_sub: 'נוסעים אחורה בזמן: דינוזאורים, פירמידות, אבירים והנחיתה על הירח.',
+      s_oldnew: 'מה יותר ישן?', s_thennow: 'אז והיום', s_order: 'מסדרים לפי הזמן', s_who: 'ממציאים ומגלים', s_century: 'באיזו מאה?', s_era: 'באיזו תקופה?', s_howlong: 'כמה זמן עבר?', s_bce: 'לפני הספירה ואחריה',
+      q_oldnew: 'מה מהם היה לפני יותר זמן?', q_thennow: 'פעם השתמשו בזה. במה משתמשים היום?', q_order: 'לוחצים על התמונות מהכי ישנה עד הכי חדשה.', q_who: 'מי עשה את זה? {did}', q_century: '{ev} ({y}). באיזו מאה זה היה?', q_era: 'באיזו תקופה זה קרה? {ev}', q_howlong: '{a} היה ב־{ya}. {b} היה ב־{yb}. כמה שנים עברו ביניהם?', q_bce: 'לוחצים על השנים מהכי מוקדמת עד הכי מאוחרת.',
+      cen: 'המאה ה־{n}', cen1: 'המאה הראשונה', cen21: 'המאה ה־21', bc: '{n} לפנה״ס', ce: '{n} לספירה', mya: 'לפני {n} מיליון שנה',
+      x_oldnew: '{a}: {ya}. {b}: {yb}.', x_thennow: 'פעם: {a}. היום: {b}.', x_order: 'מהכי ישן: {list}.', x_who: '{who} {did}', x_century: 'השנים {from} עד {to} הן {cen}, ולכן {y} נמצאת ב{cen}.', x_era: '„{ev}”: זה היה ב{era} ({span}).', x_howlong: '{yb} − {ya} = {n} שנים.', x_bce: 'שנים לפני הספירה סופרים לאחור עד שנה 1: מספר גדול יותר לפני הספירה היה מוקדם יותר. הסדר: {list}.',
+      tm_card: 'סיור בציר הזמן', tm_cardSub: 'מטיילים בזמן, מהדינוזאורים ועד היום, תקופה אחרי תקופה.' }
+  });
+  const { t } = KQ, el = KQ.ui.el, I = e => KQ.icon(e) || el('span', null, e);
+  const he = () => KQ.i18n.lang === 'he', L = p => p[he() ? 1 : 0];
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), pick = a => a[Math.floor(Math.random() * a.length)];
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const speak4 = (band, text) => band <= 2 ? text : null;
+  /* moments of history children love — no wars, no famine (Yoni 2026-10-03) */
+  const EV = [
+    { id: 'trex', y: -68000000, sc: 'trex', era: 'pre', n: ['The T. rex roams the Earth', 'הטירנוזאורוס מסתובב על פני כדור הארץ'], b: 1 },
+    { id: 'horse', y: -3500, ic: '🐴', era: 'pre', n: ['People learn to ride horses', 'בני אדם לומדים לרכוב על סוסים'], b: 3 },
+    { id: 'writing', y: -3200, ic: '📜', era: 'egypt', n: ['People invent writing', 'בני אדם ממציאים את הכתב'], b: 3 },
+    { id: 'pyramid', y: -2560, sc: 'pyr', era: 'egypt', n: ['The Great Pyramid is built in Egypt', 'הפירמידה הגדולה נבנית במצרים'], b: 1 },
+    { id: 'olympics', y: -776, ic: '🏅', era: 'greece', n: ['The first Olympic Games, in Greece', 'המשחקים האולימפיים הראשונים, ביוון'], b: 3 },
+    { id: 'knights', y: 1200, sc: 'knight', era: 'middle', n: ['Knights hold tournaments at castles', 'אבירים עורכים טורנירים בטירות'], b: 1 },
+    { id: 'printing', y: 1440, ic: '📖', era: 'ren', n: ['Gutenberg prints books on a printing press', 'גוטנברג מדפיס ספרים במכבש דפוס'], b: 3 },
+    { id: 'telescope', y: 1609, ic: '🔭', era: 'ren', n: ['Galileo studies the sky with a telescope', 'גלילאו חוקר את השמיים בטלסקופ'], b: 3 },
+    { id: 'pirates', y: 1715, sc: 'pirate', era: 'sail', n: ['Pirate ships sail the seas', 'ספינות פיראטים שטות בימים'], b: 1 },
+    { id: 'train', y: 1825, ic: '🚂', era: 'ind', n: ['The first passenger train runs', 'הרכבת הראשונה לנוסעים יוצאת לדרך'], b: 2 },
+    { id: 'bulb', y: 1879, ic: '💡', era: 'ind', n: ['Edison makes a light bulb that lasts', 'אדיסון יוצר נורה שמחזיקה מעמד'], b: 2 },
+    { id: 'car', y: 1886, ic: '🚗', era: 'ind', n: ['The first car drives on the road', 'המכונית הראשונה נוסעת בכביש'], b: 2 },
+    { id: 'flight', y: 1903, sc: 'flight', era: 'modern', n: ['The Wright brothers fly the first airplane', 'האחים רייט מטיסים את המטוס הראשון'], b: 1 },
+    { id: 'moon', y: 1969, sc: 'moon', era: 'modern', n: ['People walk on the Moon', 'בני אדם הולכים על הירח'], b: 1 },
+    { id: 'computer', y: 1977, ic: '💻', era: 'modern', n: ['Computers come into people’s homes', 'מחשבים נכנסים לבתים'], b: 2 }
+  ];
+  const ERAS = { pre: [['Prehistory', 'פרהיסטוריה'], ['before writing', 'לפני הכתב']], egypt: [['Ancient Egypt', 'מצרים העתיקה'], ['about 3100–30 BCE', 'בערך 3100–30 לפנה״ס']], greece: [['Ancient Greece', 'יוון העתיקה'], ['about 800–150 BCE', 'בערך 800–150 לפנה״ס']], middle: [['the Middle Ages', 'ימי הביניים'], ['about 500–1500', 'בערך 500–1500']], ren: [['the Renaissance', 'הרנסנס'], ['about 1400–1650', 'בערך 1400–1650']], sail: [['the Age of Sail', 'עידן המפרשים'], ['about 1570–1860', 'בערך 1570–1860']], ind: [['the Industrial Revolution', 'המהפכה התעשייתית'], ['about 1760–1900', 'בערך 1760–1900']], modern: [['the Modern Age', 'העידן המודרני'], ['from about 1900', 'מבערך 1900']] };
+  const PAIRS = [['🕯️', '💡', ['a candle', 'נר'], ['a light bulb', 'נורה']], ['🐴', '🚗', ['a horse', 'סוס'], ['a car', 'מכונית']], ['⛵', '✈️', ['a sailing ship', 'ספינת מפרש'], ['an airplane', 'מטוס']], ['📜', '📖', ['a scroll', 'מגילה'], ['a book', 'ספר']], ['🧮', '💻', ['an abacus', 'חשבונייה'], ['a computer', 'מחשב']], ['⏳', '🕰️', ['an hourglass', 'שעון חול'], ['a clock', 'שעון']]];
+  const WHO = [['✈️', ['The Wright brothers', 'האחים רייט'], ['flew the first airplane in 1903.', 'הטיסו את המטוס הראשון ב־1903.']], ['🚀', ['Neil Armstrong', 'ניל ארמסטרונג'], ['was the first person to walk on the Moon, in 1969.', 'היה האדם הראשון שהלך על הירח, ב־1969.']], ['💡', ['Thomas Edison', 'תומאס אדיסון'], ['made a light bulb that lasts, in 1879.', 'יצר נורה שמחזיקה מעמד, ב־1879.']], ['🔭', ['Galileo Galilei', 'גלילאו גליליי'], ['studied the Moon and planets with a telescope, in 1609.', 'חקר את הירח וכוכבי הלכת בטלסקופ, ב־1609.']], ['📖', ['Johannes Gutenberg', 'יוהאנס גוטנברג'], ['printed books on a printing press, around 1440.', 'הדפיס ספרים במכבש דפוס, בערך ב־1440.']], ['🧪', ['Marie Curie', 'מארי קירי'], ['discovered radium and won two Nobel Prizes.', 'גילתה את הרדיום וזכתה בשני פרסי נובל.']], ['💻', ['Ada Lovelace', 'עדה לאבלייס'], ['wrote the first computer program, in 1843.', 'כתבה את תוכנית המחשב הראשונה, ב־1843.']], ['🍎', ['Isaac Newton', 'אייזק ניוטון'], ['explained gravity: why things fall.', 'הסביר את כוח המשיכה: למה דברים נופלים.']], ['🖼️', ['Leonardo da Vinci', 'לאונרדו דה וינצ׳י'], ['painted the Mona Lisa and drew flying machines.', 'צייר את המונה ליזה ושרטט מכונות מעופפות.']]];
+  const NS = 'http://www.w3.org/2000/svg';
+  function scene(ev) { const box = el('div', 'mini'); if (ev.sc && KQ_SCENES[ev.sc]) { const [bg, mk] = KQ_SCENES[ev.sc]; const doc = new DOMParser().parseFromString(`<svg xmlns="${NS}" viewBox="0 0 210 140"><rect width="210" height="140" fill="${bg}"/>${mk}</svg>`, 'image/svg+xml'); box.appendChild(document.importNode(doc.documentElement, true)); } else { box.style.background = 'linear-gradient(135deg,#f2e8ff,#d8e8ff)'; box.appendChild(I(ev.ic)); } return box; }
+  const yearTxt = y => y <= -1000000 ? t('mya', { n: Math.round(-y / 1e6) }) : y < 0 ? t('bc', { n: -y }) : String(y);
+  const cen = y => Math.floor((y - 1) / 100) + 1, cenName = n => n === 1 ? t('cen1') : n === 21 ? t('cen21') : t('cen', { n });
+  const pool = band => EV.filter(e => e.b <= band);
+
+  function renderQ(q) {
+    return (st, api) => {
+      const box = el('div', 'tq'); st.appendChild(box); if (q.pic) box.appendChild(q.pic());
+      if (q.order) return q.order(box, api);
+      const ch = el('div', 'choices'); box.appendChild(ch);
+      q.opts.forEach(o => { const b = el('button', 'choice'); b.type = 'button'; if (o.pic) b.appendChild(o.pic()); if (o.label) b.appendChild(el('span', null, o.label)); b.dataset.value = o.value;
+        b.onclick = () => { if (api.locked()) return; const ok = o.value === q.answer; b.classList.add(ok ? 'ok' : 'bad'); if (!ok) [...ch.children].forEach(c => { if (c.dataset.value === q.answer) c.classList.add('ok'); }); api.submit(ok, o.label || ''); }; ch.appendChild(b); });
+    };
+  }
+  function Q(o) { const q = Object.assign({ tags: [o.skill] }, o); q.render = renderQ(q); const a = (o.opts || []).find(x => x.value === o.answer); q.answerLabel = a ? a.label || '' : ''; return q; }
+  /* the ordering game: tap from the oldest; each right tap drops the picture onto the timeline rail */
+  function orderQ(skill, evs, band, showYears) {
+    const right = evs.slice().sort((a, b) => a.y - b.y);
+    return { skill, tags: [skill], key: skill + right.map(e => e.id).join(''), prompt: t(skill === 'bce' ? 'q_bce' : 'q_order'), speak: speak4(band, t('q_order')), answerLabel: right.map(e => L(e.n)).join(' → '), x: { right },
+      render(st, api) { const box = el('div', 'tq'); st.appendChild(box); const rail = el('div', 'rail'); right.forEach(() => rail.appendChild(el('div', 'slot'))); box.appendChild(rail); const row = el('div', 'order'); box.appendChild(row); let k = 0;
+        shuffle(evs).forEach(ev => { const b = el('button'); b.type = 'button'; if (!showYears || skill !== 'bce') b.appendChild(scene(ev)); b.appendChild(el('span', null, skill === 'bce' ? '' : L(ev.n))); if (showYears) b.appendChild(el('span', 'yr', yearTxt(ev.y)));
+          b.onclick = () => { if (api.locked() || b.classList.contains('done')) return; if (ev !== right[k]) { b.animate([{ transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'none' }], 300); api.submit(false, L(ev.n)); return; }
+            b.classList.add('done'); const s = rail.children[k]; s.appendChild(scene(ev)); if (showYears) s.appendChild(el('span', 'yr', yearTxt(ev.y))); k++; if (k === right.length) api.submit(true, ''); };
+          row.appendChild(b); }); } };
+  }
+  const GEN = {
+    oldnew(tier, band) { if (Math.random() < 0.5) { const p = pick(PAIRS), flip = Math.random() < 0.5, a = { ic: p[0], n: p[2] }, b = { ic: p[1], n: p[3] };
+        return Q({ skill: 'oldnew', key: 'on' + p[0], prompt: t('q_oldnew'), speak: speak4(band, t('q_oldnew')), answer: 'a', opts: (flip ? [b, a] : [a, b]).map(x => ({ value: x === a ? 'a' : 'b', label: L(x.n), pic: () => I(x.ic) })), x: { pair: p } }); }
+      let a, b, g = 0; do { [a, b] = shuffle(pool(Math.max(2, band))).slice(0, 2); } while (Math.abs(a.y - b.y) < 300 && ++g < 50); const old = a.y < b.y ? a : b;
+      return Q({ skill: 'oldnew', key: 'on' + a.id + b.id, prompt: t('q_oldnew'), speak: speak4(band, t('q_oldnew')), answer: old.id, opts: [a, b].map(e => ({ value: e.id, label: L(e.n), pic: () => scene(e) })), x: { a, b } }); },
+    thennow(tier, band) { const p = pick(PAIRS), others = shuffle(PAIRS.filter(x => x !== p).map(x => x[1])).slice(0, 2);
+      return Q({ skill: 'thennow', key: 'tn' + p[0], prompt: t('q_thennow'), speak: speak4(band, t('q_thennow')), answer: p[1], opts: shuffle([p[1], ...others]).map(ic => ({ value: ic, label: L(PAIRS.find(x => x[1] === ic)[3]), pic: () => I(ic) })), pic: () => { const d = el('div', 'scene'); d.appendChild(I(p[0])); return d; }, x: { p } }); },
+    order(tier, band) { const n = band <= 2 ? 3 : 4; let evs, g = 0; do { evs = shuffle(pool(Math.max(2, band))).slice(0, n); } while (++g < 50 && evs.some((e, i) => evs.some((f, j) => i !== j && Math.abs(e.y - f.y) < 40))); return orderQ('order', evs, band, band >= 4); },
+    who(tier, band) { const w = pick(WHO), others = shuffle(WHO.filter(x => x !== w)).slice(0, band >= 4 ? 3 : 2);
+      return Q({ skill: 'who', key: 'w' + L(w[1]), prompt: t('q_who', { did: L(w[2]) }), wordy: true, answer: L(w[1]), opts: shuffle([w, ...others]).map(x => ({ value: L(x[1]), label: L(x[1]) })), pic: () => { const d = el('div', 'scene'); d.appendChild(I(w[0])); return d; }, x: { w } }); },
+    century(tier, band) { const ev = pick(EV.filter(e => e.y > 0)), c = cen(ev.y), set = shuffle([c - 1, c + 1, c - 2, c + 2].filter(x => x >= 1 && x <= 21)).slice(0, 3);
+      return Q({ skill: 'century', key: 'c' + ev.id, prompt: t('q_century', { ev: L(ev.n), y: ev.y }), wordy: true, answer: String(c), opts: shuffle([c, ...set]).map(x => ({ value: String(x), label: cenName(x) })), pic: () => { const d = el('div', 'scene'); d.appendChild(scene(ev)); return d; }, x: { ev, c } }); },
+    era(tier, band) { const ev = pick(EV), others = shuffle(Object.keys(ERAS).filter(k => k !== ev.era)).slice(0, 3);
+      return Q({ skill: 'era', key: 'er' + ev.id, prompt: t('q_era', { ev: L(ev.n) }), wordy: true, answer: ev.era, opts: shuffle([ev.era, ...others]).map(k => ({ value: k, label: L(ERAS[k][0]).replace(/^the /, 'The ') })), pic: () => { const d = el('div', 'scene'); d.appendChild(scene(ev)); return d; }, x: { ev } }); },
+    howlong(tier, band) { let a, b, g = 0; do { [a, b] = shuffle(EV.filter(e => e.y > 0)).slice(0, 2); } while (a.y === b.y && ++g < 20); if (a.y > b.y) [a, b] = [b, a]; const n = b.y - a.y, set = [...new Set([n + 10, n - 10, n + 100, n - 1, n + 1].filter(x => x > 0 && x !== n))]; const opts = shuffle([n, ...shuffle(set).slice(0, 3)]);
+      return Q({ skill: 'howlong', key: 'hl' + a.id + b.id, prompt: t('q_howlong', { a: L(a.n), ya: a.y, b: L(b.n), yb: b.y }), wordy: true, answer: String(n), opts: opts.map(x => ({ value: String(x), label: String(x) })), x: { a, b, n } }); },
+    bce(tier, band) { const evs = shuffle(EV.filter(e => e.y < 0 && e.y > -10000).concat(shuffle(EV.filter(e => e.y > 0)).slice(0, 1))).slice(0, 4); return orderQ('bce', evs, band, true); }
+  };
+  const big = text => [{ text, big: true }];
+  const EXPLAIN = {
+    oldnew: q => q.x.pair ? big(t('x_thennow', { a: L(q.x.pair[2]), b: L(q.x.pair[3]) })) : big(t('x_oldnew', { a: L(q.x.a.n), ya: yearTxt(q.x.a.y), b: L(q.x.b.n), yb: yearTxt(q.x.b.y) })),
+    thennow: q => big(t('x_thennow', { a: L(q.x.p[2]), b: L(q.x.p[3]) })),
+    order: q => big(t('x_order', { list: q.x.right.map(e => L(e.n) + ' (' + yearTxt(e.y) + ')').join(he() ? ' ← ' : ' → ') })),
+    who: q => big(t('x_who', { who: L(q.x.w[1]), did: L(q.x.w[2]) })),
+    century: q => big(t('x_century', { from: (q.x.c - 1) * 100 + 1, to: q.x.c * 100, cen: cenName(q.x.c), y: q.x.ev.y })),
+    era: q => big(t('x_era', { ev: L(q.x.ev.n), era: L(ERAS[q.x.ev.era][0]), span: L(ERAS[q.x.ev.era][1]) })),
+    howlong: q => big(t('x_howlong', { ya: q.x.a.y, yb: q.x.b.y, n: q.x.n })),
+    bce: q => big(t('x_bce', { list: q.x.right.map(e => yearTxt(e.y)).join(he() ? ' ← ' : ' → ') }))
+  };
+  KQ.quest.shell();
+  const api = KQ.quest({ world: 'timemachine', title: 'tm_title', sub: 'tm_sub', bands: { 1: ['oldnew', 'thennow'], 2: ['order', 'thennow', 'oldnew'], 3: ['order', 'who', 'thennow'], 4: ['century', 'who', 'order'], 5: ['era', 'howlong', 'century'], 6: ['era', 'howlong', 'bce'] },
+    bandKey: 'band', icons: { oldnew: '⏳', thennow: '🕯️', order: '📅', who: '🔭', century: '🕰️', era: '🏛️', howlong: '🧮', bce: '📜' }, n: 8, fastMs: 12000, speakBands: [1, 2], gen: GEN, explain: EXPLAIN });
+  /* the Timeline tour: every moment, age by age, oldest first */
+  function tour() {
+    const root = el('div', 'tl'); root.setAttribute('role', 'dialog'); document.body.appendChild(root);
+    const hd = el('div', 'tl-head'); hd.appendChild(el('h2', null, t('tm_card'))); const x = el('button', 'tl-x', '×'); x.type = 'button'; x.onclick = () => root.remove(); hd.appendChild(x); root.appendChild(hd);
+    for (const k of Object.keys(ERAS)) { const evs = EV.filter(e => e.era === k).sort((a, b) => a.y - b.y); if (!evs.length) continue; const sec = el('div', 'tl-era'); sec.appendChild(el('h3', null, L(ERAS[k][0]).replace(/^the /, 'The ') + ' · ' + L(ERAS[k][1])));
+      evs.forEach(ev => { const r = el('div', 'tl-row'); r.appendChild(scene(ev)); const tx = el('div'); tx.appendChild(el('b', null, yearTxt(ev.y))); tx.appendChild(el('span', null, L(ev.n))); r.appendChild(tx); sec.appendChild(r); }); root.appendChild(sec); }
+  }
+  function card() { const pk = document.getElementById('pick'); if (!pk || document.querySelector('.tm-card')) return; const b = el('button', 'tm-card'); b.type = 'button'; const th = el('div', 'thumbs'); ['trex', 'pyramid', 'moon'].forEach(id => th.appendChild(scene(EV.find(e => e.id === id)))); b.appendChild(th); const tx = el('div'); tx.appendChild(el('b', null, t('tm_card'))); tx.appendChild(el('span', null, t('tm_cardSub'))); b.appendChild(tx); b.onclick = tour; pk.prepend(b); }
+  card(); document.addEventListener('kq:lang', () => { const c = document.querySelector('.tm-card'); if (c) c.remove(); card(); });
+  window.__time = { GEN, api, EV };
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('violet');</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spelling Bee</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#d4a017; --accent-2:#7a5a08; }
+.bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:600px){ .bands{grid-template-columns:1fr} }
+.bigpic{font-size:clamp(64px,14vw,110px); line-height:1.1}
+.gap{font:900 clamp(34px,8vw,56px)/1 var(--font-body); letter-spacing:6px; margin:6px 0 10px}
+.gap b{color:var(--accent); border-bottom:4px solid var(--accent); padding:0 4px}
+.clue{font:700 clamp(16px,3.2vw,20px) var(--font-body); color:var(--ink-2); margin:-2px 0 8px}
+.hear{font-size:56px; cursor:pointer; user-select:none} .hear:active{transform:scale(.95)}
+.choice.word{font-size:clamp(22px,4.6vw,32px)}
+.tile .m{width:100%; display:grid; gap:3px} .tile .m small{font-size:11px; color:var(--muted); font-weight:700}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header><main class="play" style="margin-top:18px"></main></div>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script src="../shared/quest.js?v=18"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { sb_title: 'Spelling Bee', sb_sub: 'Hear it, see it, spell it', s_first: 'First letter', s_missing: 'The missing letter', s_listen: 'Listen & spell', s_fix: 'Which spelling?', s_missing2: 'Two missing letters', s_listen3: 'Long words', sb_first: 'Which letter starts the word?', sb_missing: 'Which letter is missing?', sb_listen: 'Tap the speaker, then tap the letters in order', sb_fix: 'Which one is spelled right?', sb_clue: 'Clue: {c}', clear: 'Clear',
+      x_word: 'The word', x_sounds: 'Sound it out', x_letters: 'The letters in order', x_spot: 'The tricky spot is', tg_first: 'first letters', tg_vowels: 'vowels', tg_spell: 'spelling' },
+    he: { sb_title: 'כוורת האיות', sb_sub: 'שומעים, רואים, מאייתים', s_first: 'האות הראשונה', s_missing: 'האות החסרה', s_listen: 'מקשיבים ומאייתים', s_fix: 'איזה כתיב?', s_missing2: 'שתי אותיות חסרות', s_listen3: 'מילים ארוכות', sb_first: 'באיזו אות מתחילה המילה?', sb_missing: 'איזו אות חסרה?', sb_listen: 'לוחצים על הרמקול, ואז על האותיות לפי הסדר', sb_fix: 'איזו מילה כתובה נכון?', sb_clue: 'רמז: {c}', clear: 'ניקוי',
+      x_word: 'המילה', x_sounds: 'מפרקים לצלילים', x_letters: 'האותיות לפי הסדר', x_spot: 'המקום המבלבל הוא', tg_first: 'אותיות ראשונות', tg_vowels: 'אותיות ניקוד', tg_spell: 'איות' }
+  });
+  const { t } = KQ;
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), pick = a => a[Math.floor(Math.random() * a.length)];
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const D = () => KQ_WORDS[KQ.i18n.lang] || KQ_WORDS.en, he = () => KQ.i18n.lang === 'he';
+  const letters = () => D().letters.map(l => D().lower ? D().lower(l) : l);
+  const FINALS = { כ: 'ך', מ: 'ם', נ: 'ן', פ: 'ף', צ: 'ץ' };
+  const decoys = (word, n) => shuffle(letters().filter(l => !word.includes(l))).slice(0, n);
+  const hearEl = (word, api) => { const h = api.el('div', 'hear', '🔊'); h.onclick = () => KQ.speak(word, null, { force: true }); return h; };
+  const gapText = (word, idxs) => { const d = document.createElement('div'); d.className = 'gap'; d.style.direction = he() ? 'rtl' : 'ltr'; word.split('').forEach((ch, i) => { if (idxs.includes(i)) { const b = document.createElement('b'); b.textContent = '_'; d.appendChild(b); } else d.appendChild(document.createTextNode(ch)); }); return d; };
+  const chunks = w => w[2].split('-');
+  // the letter builder used by the listening drills: word letters plus decoys, tap in order, undo and clear
+  function builder(stage, api, word, extra, opts) {
+    const pool = shuffle(word.split('').concat(decoys(word, extra)));
+    const built = api.el('div', 'built', ' '); built.style.direction = he() ? 'rtl' : 'ltr'; const ls = api.el('div', 'letters'); const used = []; let cur = '';
+    pool.forEach(ch => { const b = api.el('button', null, ch); b.onclick = () => { if (api.locked() || b.classList.contains('used')) return; b.classList.add('used'); used.push(b); cur += ch; built.textContent = cur; api.sfx.play('tap'); if (cur.length === word.length) api.submit(cur === word, cur); }; ls.appendChild(b); });
+    const bar = api.el('div', 'qtools'); const undo = api.el('button', 'btn ghost sm', '⌫'); undo.onclick = () => { if (api.locked() || !used.length) return; used.pop().classList.remove('used'); cur = cur.slice(0, -1); built.textContent = cur || ' '; };
+    const clr = api.el('button', 'btn ghost sm', t('clear')); clr.onclick = () => { if (api.locked()) return; cur = ''; used.length = 0; built.textContent = ' '; for (const x of ls.children) x.classList.remove('used'); };
+    bar.appendChild(undo); bar.appendChild(clr);
+    if (opts && opts.top) stage.appendChild(opts.top);
+    stage.appendChild(built); stage.appendChild(ls); stage.appendChild(bar);
+  }
+  const wordQ = (w, extra) => ({ word: w, answer: w[0], answerLabel: w[0], speak: w[0], journal: w[1] + ' ' + w[0], tags: ['w:' + w[0], 'spell'] });
+  const GEN = {
+    first() { const d = D(), w = pick(d.words), first = w[0][0]; const opts = shuffle([first, ...decoys(first, 3)]); return Object.assign(wordQ(w), { key: 'f' + w[0], prompt: t('sb_first'), visualEl: (() => { const box = document.createElement('div'); box.appendChild(Object.assign(document.createElement('div'), { className: 'bigpic', textContent: w[1] })); box.appendChild(gapText(w[0], [0])); return box; })(), answer: first, answerLabel: w[0], choices: opts, tags: ['first', 'w:' + w[0]] }); },
+    missing(tier, band) { const d = D(), pool = band === 3 ? d.words3 : d.words.filter(x => x[0].length >= 3), w = pick(pool), i = ri(1, w[0].length - 1), ch = w[0][i]; const opts = shuffle([ch, ...decoys(ch, 3)]); return Object.assign(wordQ(w), { key: 'm' + w[0] + i, prompt: t('sb_missing'), visualEl: (() => { const box = document.createElement('div'); box.appendChild(Object.assign(document.createElement('div'), { className: 'bigpic', textContent: w[1] })); box.appendChild(gapText(w[0], [i])); return box; })(), answer: ch, answerLabel: w[0], choices: opts, tags: [/[aeiouאהוי]/.test(ch) ? 'vowels' : 'spell', 'w:' + w[0]] }); },
+    missing2() { const d = D(), w = pick(d.words3), n = w[0].length, i = ri(0, n - 2), j = ri(i + 1, n - 1); return Object.assign(wordQ(w), { key: 'mm' + w[0] + i + j, prompt: t('sb_missing'), wordy: true, render(stage, api) { const top = api.el('div'); top.appendChild(api.el('div', 'bigpic', w[1])); top.appendChild(api.el('div', 'clue', t('sb_clue', { c: w[5] }))); top.appendChild(gapText(w[0], [i, j])); stage.appendChild(top); const need = w[0][i] + w[0][j]; const pool = shuffle([need[0], need[1], ...decoys(need, 4)]); const ls = api.el('div', 'letters'); let cur = ''; pool.forEach(ch => { const b = api.el('button', null, ch); b.onclick = () => { if (api.locked() || b.classList.contains('used')) return; b.classList.add('used'); cur += ch; api.sfx.play('tap'); if (cur.length === 2) api.submit(cur === need, cur); }; ls.appendChild(b); }); stage.appendChild(ls); }, tags: ['spell', 'w:' + w[0]] }); },
+    listen(tier, band) { const d = D(), w = pick(d.words.filter(x => x[0].length >= 3 && x[0].length <= (tier ? 6 : 4))); return Object.assign(wordQ(w), { key: 'l' + w[0], prompt: t('sb_listen'), render(stage, api) { builder(stage, api, w[0], 2, { top: hearEl(w[0], api) }); setTimeout(() => KQ.speak(w[0], null, { force: true }), 300); }, tags: ['spell', 'w:' + w[0]] }); },
+    listen3() { const d = D(), w = pick(d.words3); return Object.assign(wordQ(w), { key: 'l3' + w[0], prompt: t('sb_listen'), render(stage, api) { const top = api.el('div'); top.appendChild(hearEl(w[0], api)); top.appendChild(api.el('div', 'clue', t('sb_clue', { c: w[5] }))); builder(stage, api, w[0], 3, { top }); setTimeout(() => KQ.speak(w[0], null, { force: true }), 300); }, tags: ['spell', 'w:' + w[0]] }); },
+    fix(tier, band) {
+      const d = D(), pool = band === 3 ? d.words3 : d.words.filter(x => x[0].length >= 4), w = pick(pool), s = w[0], L = letters();
+      const wrongs = new Set(); let g = 0;
+      while (wrongs.size < 2 && g++ < 40) { const i = ri(0, s.length - 1), kind = ri(0, 2); let v; if (kind === 0) v = s.slice(0, i) + s.slice(i + 1); else if (kind === 1 && i < s.length - 1) v = s.slice(0, i) + s[i + 1] + s[i] + s.slice(i + 2); else v = s.slice(0, i) + pick(L.filter(l => l !== s[i])) + s.slice(i + 1); if (v !== s && v.length >= 2) wrongs.add(v); }
+      return Object.assign(wordQ(w), { key: 'x' + s, prompt: t('sb_fix'), visualEl: Object.assign(document.createElement('div'), { className: 'bigpic', textContent: w[1] }), choices: shuffle([s, ...wrongs]), answer: s, tags: ['spell', 'w:' + s] });
+    }
+  };
+  const teach = q => { const w = q.word; return [{ text: t('x_word') + ': ' + w[0] + ' ' + w[1], big: true }, { text: t('x_sounds') + ': ' + chunks(w).join(' · '), vis: { type: 'word', word: w[0], chunks: chunks(w), root: w[4], rtl: he() } }, { text: t('x_letters') + ': ' + w[0].split('').join(' - ') }]; };
+  const EXPLAIN = { first: teach, missing: teach, missing2: teach, listen: teach, listen3: teach, fix: teach };
+  KQ.quest.shell();
+  KQ.quest({ world: 'spelling', title: 'sb_title', sub: 'sb_sub', bands: { 1: ['first', 'listen'], 2: ['missing', 'listen', 'fix'], 3: ['listen3', 'missing2', 'fix'] }, bandKey: 'band', bandIcons: ['🛡️', '⚔️', '🐴'], icons: { first: '🅰️', missing: '❓', listen: '🔊', fix: '✅', missing2: '❔', listen3: '📚' }, n: 8, fastMs: 9000, speakBands: [], gen: GEN, explain: EXPLAIN });
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('honey');</script>
+</body>
+</html>

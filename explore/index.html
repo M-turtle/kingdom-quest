@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>World Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Frank+Ruhl+Libre:wght@700;900&family=Assistant:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#2a7ad8; --accent-2:#123a6a; }
+.bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:600px){ .bands{grid-template-columns:1fr} }
+.eq{display:grid; gap:12px; justify-items:center; width:100%}
+.eq .mapbox{width:min(94vw,560px)} .kqg-map{width:100%; height:auto; display:block; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.eq .hero .kq-i{width:min(30vw,130px); height:min(30vw,130px)}
+.eq .bigflag .kqg-flag{width:min(46vw,200px); height:auto; display:block; border-radius:6px; box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.eq .choices{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; width:100%}
+.eq .choice{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:56px; font-weight:800}
+.eq .choice .kq-i{width:54px; height:54px} .eq .choice .kqg-flag{width:90px; height:auto; border-radius:4px}
+.eq .choice.ok{outline:4px solid #3ecf7a} .eq .choice.bad{outline:4px solid #ff5a6a; opacity:.8}
+.tp-card{display:flex; align-items:center; gap:14px; width:100%; margin:0 0 12px; padding:12px 14px; border-radius:18px; cursor:pointer; text-align:start; border:1px solid rgba(160,210,255,.55); background:linear-gradient(135deg,rgba(42,122,216,.4),rgba(30,140,120,.3)); color:inherit; font:inherit}
+.tp-card .thumbs{display:flex; gap:2px} .tp-card .kq-i{width:44px; height:44px} .tp-card b{display:block; font:800 20px/1.1 Cinzel, 'Frank Ruhl Libre', serif} .tp-card span{font-size:14px; opacity:.85}
+.tp{position:fixed; inset:0; z-index:40; overflow:auto; padding:calc(14px + env(safe-area-inset-top,0px)) 16px 24px; background:radial-gradient(120% 90% at 50% 0%, #123a6a, #06101e 70%); color:#eaf4ff; display:flex; flex-direction:column; gap:12px}
+.tp > *{flex-shrink:0} .tp-head{display:flex; align-items:center; gap:12px} .tp-head h2{margin:0; flex:1; font:900 clamp(22px,4vw,32px) Cinzel, 'Frank Ruhl Libre', serif; color:#bfe0ff}
+.tp-x{width:44px; height:44px; border-radius:50%; border:0; background:rgba(255,255,255,.14); color:#fff; font:400 28px/1 sans-serif; cursor:pointer}
+.tp-say{padding:10px 14px; border-radius:14px; background:rgba(255,224,138,.14); border:1px solid rgba(255,224,138,.5); font:700 17px/1.4 var(--font-body)}
+.tp-row{display:flex; gap:8px; flex-wrap:wrap; justify-content:center} .tp-city{padding:8px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.3); background:rgba(255,255,255,.08); color:#fff; font:700 14px var(--font-body); cursor:pointer} .tp-city.on{background:#ffd23a; color:#1a2a3a}
+.tp-veh{display:flex; gap:12px; justify-content:center} .tp-veh button{display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 18px; border-radius:16px; border:2px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08); color:#fff; font:800 15px var(--font-body); cursor:pointer} .tp-veh .kq-i{width:56px; height:56px}
+.tp-pass{display:flex; gap:10px; flex-wrap:wrap; padding:12px; border-radius:16px; background:#3a2a1a; border:2px solid #8a6a3a} .tp-pass h3{width:100%; margin:0; color:#ffe7a8; font:800 18px Cinzel, serif}
+.tp-stamp{display:grid; justify-items:center; gap:2px; padding:6px; border-radius:10px; border:2px dashed #c8a060; transform:rotate(-4deg); font:800 12px var(--font-body); color:#ffe7a8} .tp-stamp .kqg-flag{width:52px; height:auto}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header><main class="play" style="margin-top:18px"></main></div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script src="../shared/quest.js?v=18"></script>
+<script src="geo.js?v=1"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { we_title: 'World Explorer', we_sub: 'Continents, countries, flags and journeys you could really make.',
+      s_landsea: 'Land, water or air?', s_vehicle: 'Pick the ride', s_continent: 'Continents', s_flag: 'Flags', s_rail: 'Can a train go there?', s_trip: 'Plan the trip', s_where: 'Where in the world?', s_compass: 'North, south, east, west', s_capital: 'Capital cities', s_ocean: 'Oceans', s_equator: 'The equator', s_latlong: 'Map coordinates',
+      q_landsea: 'Where does this travel?', q_veh_sea: 'We must cross the sea. Which can take us?', q_veh_air: 'We want to fly over the mountains. Which can take us?', q_veh_land: 'We go on the tracks to the next town. Which can take us?', q_continent: 'Which continent is glowing?', q_flag: 'Whose flag is this?', q_rail: 'Can a train take you from {a} to {b}?', q_railg: 'Look at the two cities on the map. Can a train take you from one to the other?', q_trip: 'How can you travel from {a} to {b}?', q_where: 'On which continent would you find this?', q_compass: 'You travel from {a} to {b}. Which way do you go?', q_capital: 'What is the capital city of {c}?', q_ocean: 'Which ocean is marked?', q_equator: 'Is {a} north or south of the equator?', q_latlong: 'Which city is at about {lat} and {lon}?',
+      a_land: 'On land', a_water: 'On water', a_air: 'In the air', a_yes: 'Yes', a_no: 'No', v_train: 'By train', v_ship: 'By ship', v_plane: 'Only by plane', a_north: 'North', a_south: 'South', a_east: 'East', a_west: 'West', n_: '{n}°N', s_: '{n}°S', e_: '{n}°E', w_: '{n}°W',
+      x_landsea: 'A {v} travels {w}.', x_vehicle: 'A {v} can do it.', x_continent: 'That is {c}.', x_flag: 'This is the flag of {c}.', x_railYes: 'Yes: {a} and {b} are joined by railway lines over land{tunnel}.', x_railNo: 'No: there is no railway between {a} and {b}{why}.', x_tunnel: ' (Britain joins Europe through the Channel Tunnel)', x_why_sea: ', because there is sea in between', x_why_net: ', because no line was ever built all the way across the land',
+      x_trip_train: 'A train can do it: there is a railway all the way over land. A ship cannot, because {inl} is not on the coast.', x_trip_ship: 'A ship can do it: both cities are on the coast. A train cannot: {tw}.', x_trip_plane: 'Only a plane: {tw}, and a ship cannot reach {inl}, which is not on the coast.', tw_sea: 'a train cannot cross the sea', tw_none: 'no railway joins them',
+      x_where: 'You find it in {c}.', x_compass: '{b} is to the {d} of {a}.', x_capital: 'The capital of {c} is {cap}.', x_ocean: 'That is {o}.', x_equator: '{a} is {d} of the equator, the imaginary line around the middle of the Earth.', x_latlong: '{city} is at about {lat}, {lon}.',
+      tp_card: 'Trip planner', tp_cardSub: 'Pick where to go, choose how to travel, collect passport stamps.', tp_from: 'From', tp_to: 'To', tp_how: 'How will you travel?', tp_pick: 'Pick a city to start from, then a city to visit.', tp_go_train: 'All aboard! The train runs over land from {a} to {b}.', tp_go_ship: 'Anchors up! The ship sails from {a} to {b}.', tp_go_plane: 'Take off! The plane flies from {a} to {b}.', tp_no_train: 'A train cannot get there: no railway joins {a} and {b}{why}.', tp_no_ship: 'A ship cannot get there: {inl} is not on the coast.', tp_passport: 'My passport', tp_stamp: 'New stamp: {c}!' },
+    he: { we_title: 'מגלי העולם', we_sub: 'יבשות, מדינות, דגלים ומסעות שאפשר באמת לעשות.',
+      s_landsea: 'יבשה, מים או אוויר?', s_vehicle: 'בוחרים כלי תחבורה', s_continent: 'יבשות', s_flag: 'דגלים', s_rail: 'רכבת יכולה להגיע לשם?', s_trip: 'מתכננים את הטיול', s_where: 'איפה בעולם?', s_compass: 'צפון, דרום, מזרח, מערב', s_capital: 'ערי בירה', s_ocean: 'אוקיינוסים', s_equator: 'קו המשווה', s_latlong: 'קואורדינטות במפה',
+      q_landsea: 'איפה זה נוסע?', q_veh_sea: 'צריך לחצות את הים. מה ייקח אותנו?', q_veh_air: 'רוצים לעוף מעל ההרים. מה ייקח אותנו?', q_veh_land: 'נוסעים על המסילה לעיר הבאה. מה ייקח אותנו?', q_continent: 'איזו יבשת זוהרת?', q_flag: 'של מי הדגל הזה?', q_rail: 'האם רכבת יכולה לקחת אתכם מ{a} ל{b}?', q_railg: 'מסתכלים על שתי הערים במפה. האם רכבת יכולה לקחת אתכם מאחת לשנייה?', q_trip: 'איך אפשר לנסוע מ{a} ל{b}?', q_where: 'באיזו יבשת אפשר למצוא את זה?', q_compass: 'נוסעים מ{a} ל{b}. לאיזה כיוון?', q_capital: 'מה עיר הבירה של {c}?', q_ocean: 'איזה אוקיינוס מסומן?', q_equator: 'האם {a} נמצאת צפונית או דרומית לקו המשווה?', q_latlong: 'איזו עיר נמצאת בערך ב־{lat} ו־{lon}?',
+      a_land: 'ביבשה', a_water: 'במים', a_air: 'באוויר', a_yes: 'כן', a_no: 'לא', v_train: 'ברכבת', v_ship: 'באונייה', v_plane: 'רק במטוס', a_north: 'צפון', a_south: 'דרום', a_east: 'מזרח', a_west: 'מערב', n_: '{n}° צפון', s_: '{n}° דרום', e_: '{n}° מזרח', w_: '{n}° מערב',
+      x_landsea: '{v} נוסע {w}.', x_vehicle: '{v} יכול לעשות את זה.', x_continent: 'זו {c}.', x_flag: 'זה הדגל של {c}.', x_railYes: 'כן: {a} ו{b} מחוברות במסילות ברזל ביבשה{tunnel}.', x_railNo: 'לא: אין מסילת רכבת בין {a} ל{b}{why}.', x_tunnel: ' (בריטניה מחוברת לאירופה דרך מנהרת התעלה)', x_why_sea: ', כי יש ים באמצע', x_why_net: ', כי אף פעם לא נבנתה מסילה כל הדרך ביבשה',
+      x_trip_train: 'רכבת יכולה: יש מסילה כל הדרך ביבשה. אונייה לא יכולה, כי {inl} לא נמצאת על החוף.', x_trip_ship: 'אונייה יכולה: שתי הערים נמצאות על החוף. רכבת לא יכולה: {tw}.', x_trip_plane: 'רק מטוס: {tw}, ואונייה לא יכולה להגיע ל{inl}, שלא נמצאת על החוף.', tw_sea: 'רכבת לא יכולה לחצות את הים', tw_none: 'אין מסילה שמחברת ביניהן',
+      x_where: 'מוצאים את זה ב{c}.', x_compass: '{b} נמצאת {d} ל{a}.', x_capital: 'עיר הבירה של {c} היא {cap}.', x_ocean: 'זה {o}.', x_equator: '{a} נמצאת {d} לקו המשווה, הקו הדמיוני שמקיף את אמצע כדור הארץ.', x_latlong: '{city} נמצאת בערך ב־{lat}, {lon}.',
+      tp_card: 'מתכנן הטיולים', tp_cardSub: 'בוחרים לאן לנסוע, איך לנסוע, ואוספים חותמות בדרכון.', tp_from: 'מ', tp_to: 'אל', tp_how: 'איך נוסעים?', tp_pick: 'בוחרים עיר להתחיל ממנה, ואז עיר לבקר בה.', tp_go_train: 'כולם לעלות! הרכבת נוסעת ביבשה מ{a} ל{b}.', tp_go_ship: 'מרימים עוגן! האונייה מפליגה מ{a} ל{b}.', tp_go_plane: 'ממריאים! המטוס טס מ{a} ל{b}.', tp_no_train: 'רכבת לא יכולה להגיע לשם: אין מסילה בין {a} ל{b}{why}.', tp_no_ship: 'אונייה לא יכולה להגיע לשם: {inl} לא נמצאת על החוף.', tp_passport: 'הדרכון שלי', tp_stamp: 'חותמת חדשה: {c}!' }
+  });
+  const { t } = KQ, el = KQ.ui.el, G = KQGeo, I = e => KQ.icon(e) || el('span', null, e);
+  const he = () => KQ.i18n.lang === 'he', L = p => p[he() ? 1 : 0];
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), pick = a => a[Math.floor(Math.random() * a.length)];
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const speak4 = (band, text) => band <= 2 ? text : null;
+  const lc = s => he() ? s : s.charAt(0).toLowerCase() + s.slice(1);
+  const cn = c => L(c.n), country = cc => L(G.COUNTRY[cc]), contName = k => L(G.CONT_NAME[k]);
+  const VEH = { ship: ['⛵', 'water', ['ship', 'אונייה']], train: ['🚂', 'land', ['train', 'רכבת']], car: ['🚗', 'land', ['car', 'מכונית']], bike: ['🚲', 'land', ['bike', 'אופניים']], bus: ['🚌', 'land', ['bus', 'אוטובוס']], plane: ['✈️', 'air', ['plane', 'מטוס']], rocket: ['🚀', 'air', ['rocket', 'טיל']], balloon: ['🎈', 'air', ['hot-air balloon', 'כדור פורח']] };
+  const WHERE = [['🦘', 'oceania'], ['🐨', 'oceania'], ['🐼', 'asia'], ['🏯', 'asia'], ['🗿', 'sa'], ['🏛️', 'europe'], ['🐧', 'antarctica'], ['🦁', 'africa'], ['🦒', 'africa'], ['🐘', 'africa']];
+  function mapBox(o) { const d = el('div', 'mapbox'); d.appendChild(G.map(o)); return d; }
+  function renderQ(q) {
+    return (st, api) => {
+      const box = el('div', 'eq'); st.appendChild(box); if (q.pic) box.appendChild(q.pic());
+      const ch = el('div', 'choices'); box.appendChild(ch);
+      q.opts.forEach(o => { const b = el('button', 'choice'); b.type = 'button'; if (o.pic) b.appendChild(o.pic()); if (o.label) b.appendChild(el('span', null, o.label)); b.dataset.value = o.value;
+        b.onclick = () => { if (api.locked()) return; const ok = o.value === q.answer; b.classList.add(ok ? 'ok' : 'bad'); if (!ok) [...ch.children].forEach(c => { if (c.dataset.value === q.answer) c.classList.add('ok'); }); api.submit(ok, o.label || ''); }; ch.appendChild(b); });
+    };
+  }
+  function Q(o) { const q = Object.assign({ tags: [o.skill] }, o); q.render = renderQ(q); const a = (o.opts || []).find(x => x.value === o.answer); q.answerLabel = a ? a.label || '' : ''; return q; }
+  /* one trip, one answer: pairs where exactly one of train / ship works, or neither (then only a plane) */
+  function tripPair() { for (let g = 0; g < 200; g++) { const [a, b] = shuffle(G.CITIES).slice(0, 2); if (a.cc === b.cc) continue; const tr = G.can(a, b, 'train'), sh = G.can(a, b, 'ship'); if (tr && sh) continue; return { a, b, ans: tr ? 'train' : sh ? 'ship' : 'plane' }; } }
+  const fmtLat = v => t(v >= 0 ? 'n_' : 's_', { n: Math.round(Math.abs(v)) }), fmtLon = v => t(v >= 0 ? 'e_' : 'w_', { n: Math.round(Math.abs(v)) });
+  const GEN = {
+    landsea(tier, band) { const k = pick(Object.keys(VEH)), v = VEH[k]; return Q({ skill: 'landsea', key: 'ls' + k, prompt: t('q_landsea'), speak: speak4(band, t('q_landsea')), answer: v[1], opts: [['land', '🏡'], ['water', '🌊'], ['air', '☁️']].map(([w, ic]) => ({ value: w, label: t('a_' + w), pic: () => I(ic) })), pic: () => { const d = el('div', 'hero'); d.appendChild(I(v[0])); return d; }, x: { k } }); },
+    vehicle(tier, band) { const kind = pick(['sea', 'air', 'land']), ans = kind === 'sea' ? 'ship' : kind === 'air' ? 'plane' : 'train', wrong = kind === 'sea' ? ['train', 'car', 'bike'] : kind === 'air' ? ['ship', 'train', 'bus'] : ['ship', 'balloon', 'plane'];
+      return Q({ skill: 'vehicle', key: 'v' + kind, prompt: t('q_veh_' + kind), speak: speak4(band, t('q_veh_' + kind)), answer: ans, opts: shuffle([ans, ...shuffle(wrong).slice(0, 2)]).map(k => ({ value: k, label: L(VEH[k][2]), pic: () => I(VEH[k][0]) })), x: { ans } }); },
+    continent(tier, band) { const ks = Object.keys(G.CONTINENT).filter(k => band >= 3 || k !== 'antarctica'), k = pick(ks), others = shuffle(ks.filter(x => x !== k)).slice(0, band <= 2 ? 2 : 3);
+      return Q({ skill: 'continent', key: 'ct' + k, prompt: t('q_continent'), speak: speak4(band, t('q_continent')), answer: k, opts: shuffle([k, ...others]).map(x => ({ value: x, label: contName(x) })), pic: () => mapBox({ highlight: k }), x: { k } }); },
+    flag(tier, band) { const cs = Object.keys(G.FLAGS), cc = pick(cs), others = shuffle(cs.filter(x => x !== cc)).slice(0, band <= 2 ? 2 : 3);
+      return Q({ skill: 'flag', key: 'f' + cc, prompt: t('q_flag'), speak: speak4(band, t('q_flag')), answer: cc, opts: shuffle([cc, ...others]).map(x => ({ value: x, label: country(x) })), pic: () => { const d = el('div', 'bigflag'); d.appendChild(G.flag(cc)); return d; }, x: { cc } }); },
+    rail(tier, band) { let a, b, g = 0; do { [a, b] = shuffle(G.CITIES).slice(0, 2); } while ((a.cc === b.cc || (Math.random() < 0.5 && !(a.rail && a.rail === b.rail))) && ++g < 80); const yes = G.can(a, b, 'train');
+      return Q({ skill: 'rail', key: 'r' + a.id + b.id, prompt: t('q_rail', { a: cn(a), b: cn(b) }), speak: speak4(band, t('q_railg')),   /* one recorded line instead of one per pair of cities */ wordy: true, answer: yes ? 'yes' : 'no', opts: [{ value: 'yes', label: t('a_yes'), pic: () => I('🚂') }, { value: 'no', label: t('a_no'), pic: () => I('🌊') }], pic: () => mapBox({ cities: [a, b].map(c => Object.assign({ label: cn(c) }, c)), route: [a, b], routeMode: 'train' }), x: { a, b, yes } }); },
+    trip(tier, band) { const { a, b, ans } = tripPair();
+      return Q({ skill: 'trip', key: 't' + a.id + b.id, prompt: t('q_trip', { a: cn(a), b: cn(b) }), wordy: true, answer: ans, opts: ['train', 'ship', 'plane'].map(k => ({ value: k, label: t('v_' + k), pic: () => I(VEH[k][0]) })), pic: () => mapBox({ cities: [a, b].map(c => Object.assign({ label: cn(c) }, c)), route: [a, b] }), x: { a, b, ans } }); },
+    where(tier, band) { const [ic, k] = pick(WHERE), others = shuffle(Object.keys(G.CONTINENT).filter(x => x !== k)).slice(0, 3);
+      return Q({ skill: 'where', key: 'wh' + ic, prompt: t('q_where'), answer: k, opts: shuffle([k, ...others]).map(x => ({ value: x, label: contName(x) })), pic: () => { const d = el('div', 'hero'); d.appendChild(I(ic)); return d; }, x: { k } }); },
+    compass(tier, band) { let a, b, g = 0; do { [a, b] = shuffle(G.CITIES).slice(0, 2); const dx = Math.abs(b.lon - a.lon), dy = Math.abs(b.lat - a.lat); if (a.cc !== b.cc && dx < 180 && (dx > 2.2 * dy || dy > 2.2 * dx) && Math.max(dx, dy) > 8) break;   /* never across the date line, where the short way is the other direction */ } while (++g < 200); const d = G.dir(a, b);
+      return Q({ skill: 'compass', key: 'cp' + a.id + b.id, prompt: t('q_compass', { a: cn(a), b: cn(b) }), wordy: true, answer: d, opts: ['north', 'south', 'east', 'west'].map(x => ({ value: x, label: t('a_' + x) })), pic: () => mapBox({ cities: [a, b].map(c => Object.assign({ label: cn(c) }, c)), grid: true }), x: { a, b, d } }); },
+    capital(tier, band) { const keys = Object.keys(G.CAPITAL).filter(c => band >= 5 || !['au', 'br', 'ca', 'ch', 'za', 'in'].includes(c)), cc = pick(keys), others = shuffle(keys.filter(x => x !== cc)).slice(0, 3);
+      return Q({ skill: 'capital', key: 'cap' + cc, prompt: t('q_capital', { c: country(cc) }), answer: cc, opts: shuffle([cc, ...others]).map(x => ({ value: x, label: L(G.CAPITAL[x]) })), pic: G.FLAGS[cc] ? () => { const d = el('div', 'bigflag'); d.appendChild(G.flag(cc)); return d; } : null, x: { cc } }); },
+    ocean(tier, band) { const ks = Object.keys(G.OCEANS), k = pick(ks); return Q({ skill: 'ocean', key: 'oc' + k, prompt: t('q_ocean'), answer: k, opts: shuffle([k, ...shuffle(ks.filter(x => x !== k)).slice(0, 3)]).map(x => ({ value: x, label: L(G.OCEANS[x][0]).replace(/^the /, 'The ') })), pic: () => mapBox({ ocean: k }), x: { k } }); },
+    equator(tier, band) { const c = pick(G.CITIES), d = c.lat >= 0 ? 'north' : 'south'; return Q({ skill: 'equator', key: 'eq' + c.id, prompt: t('q_equator', { a: cn(c) }), answer: d, opts: [{ value: 'north', label: t('a_north') }, { value: 'south', label: t('a_south') }], pic: () => mapBox({ cities: [Object.assign({ label: cn(c) }, c)], equator: true }), x: { c, d } }); },
+    latlong(tier, band) { const c = pick(G.CITIES), others = shuffle(G.CITIES.filter(x => x !== c)).slice(0, 3);
+      return Q({ skill: 'latlong', key: 'll' + c.id, prompt: t('q_latlong', { lat: fmtLat(c.lat), lon: fmtLon(c.lon) }), answer: c.id, opts: shuffle([c, ...others]).map(x => ({ value: x.id, label: cn(x) })), pic: () => mapBox({ grid: true }), x: { c } }); }
+  };
+  const big = text => [{ text, big: true }];
+  const inland = (a, b) => cn(!a.coast ? a : b);
+  const EXPLAIN = {
+    landsea: q => big(t('x_landsea', { v: L(VEH[q.x.k][2]), w: lc(t('a_' + VEH[q.x.k][1])) })), vehicle: q => big(t('x_vehicle', { v: L(VEH[q.x.ans][2]) })),
+    continent: q => big(t('x_continent', { c: contName(q.x.k) })), flag: q => big(t('x_flag', { c: country(q.x.cc) })),
+    rail: q => big(q.x.yes ? t('x_railYes', { a: cn(q.x.a), b: cn(q.x.b), tunnel: (q.x.a.cc === 'gb' || q.x.b.cc === 'gb') ? t('x_tunnel') : '' }) : t('x_railNo', { a: cn(q.x.a), b: cn(q.x.b), why: G.noRailWhy(q.x.a, q.x.b) === 'sea' ? t('x_why_sea') : t('x_why_net') })),
+    trip: q => { const tw = t('tw_' + G.noRailWhy(q.x.a, q.x.b)); return big(q.x.ans === 'train' ? t('x_trip_train', { inl: inland(q.x.a, q.x.b) }) : q.x.ans === 'ship' ? t('x_trip_ship', { tw }) : t('x_trip_plane', { tw, inl: inland(q.x.a, q.x.b) })); },
+    where: q => big(t('x_where', { c: contName(q.x.k) })), compass: q => big(t('x_compass', { a: cn(q.x.a), b: cn(q.x.b), d: lc(t('a_' + q.x.d)) })),
+    capital: q => big(t('x_capital', { c: country(q.x.cc), cap: L(G.CAPITAL[q.x.cc]) })), ocean: q => big(t('x_ocean', { o: L(G.OCEANS[q.x.k][0]) })),
+    equator: q => big(t('x_equator', { a: cn(q.x.c), d: lc(t('a_' + q.x.d)) })), latlong: q => big(t('x_latlong', { city: cn(q.x.c), lat: fmtLat(q.x.c.lat), lon: fmtLon(q.x.c.lon) }))
+  };
+  KQ.quest.shell();
+  const api = KQ.quest({ world: 'explore', title: 'we_title', sub: 'we_sub', bands: { 1: ['landsea', 'vehicle'], 2: ['continent', 'flag', 'rail'], 3: ['trip', 'where', 'continent'], 4: ['compass', 'capital', 'trip'], 5: ['ocean', 'equator', 'capital'], 6: ['latlong', 'ocean', 'capital'] },
+    bandKey: 'band', icons: { landsea: '🌊', vehicle: '🚂', continent: '🌍', flag: '🚩', rail: '🚂', trip: '🗺️', where: '🔍', compass: '🧭', capital: '🏛️', ocean: '🌊', equator: '🌍', latlong: '🧭' }, n: 8, fastMs: 12000, speakBands: [1, 2], gen: GEN, explain: EXPLAIN });
+  /* the Trip planner: from → to, choose how, the real rules decide; every arrival stamps the passport */
+  const store = () => { const st = KQ.state(); st.explore = st.explore || {}; const pid = (KQ.profiles.active() || {}).id || 'guest'; return (st.explore[pid] = st.explore[pid] || { stamps: [] }); };
+  function planner() {
+    const root = el('div', 'tp'); root.setAttribute('role', 'dialog'); document.body.appendChild(root); let from = null, to = null;
+    const say = msg => { const s = root.querySelector('.tp-say'); s.textContent = msg; if ((api.R.band || 1) <= 2 && KQ.store.settings.voice) KQ.speak(msg); };
+    function draw(msg, route, mode) {
+      root.replaceChildren(); const hd = el('div', 'tp-head'); hd.appendChild(el('h2', null, t('tp_card'))); const x = el('button', 'tp-x', '×'); x.type = 'button'; x.onclick = () => root.remove(); hd.appendChild(x); root.appendChild(hd);
+      root.appendChild(el('div', 'tp-say', msg || t('tp_pick')));
+      const m = el('div', 'mapbox'); m.style.width = 'min(100%, 760px)'; m.style.margin = '0 auto'; m.appendChild(G.map({ cities: [from, to].filter(Boolean).map(c => Object.assign({ label: cn(c) }, c)), route: route ? [from, to] : null, routeMode: mode })); root.appendChild(m);
+      for (const [lab, which] of [[t('tp_from'), 'from'], [t('tp_to'), 'to']]) { root.appendChild(el('b', null, lab)); const row = el('div', 'tp-row'); G.CITIES.forEach(c => { const b = el('button', 'tp-city' + ((which === 'from' ? from : to) === c ? ' on' : ''), cn(c)); b.type = 'button'; b.onclick = () => { if (which === 'from') from = c; else to = c; if (from === to) to = null; draw(); }; row.appendChild(b); }); root.appendChild(row); }
+      if (from && to) { root.appendChild(el('b', null, t('tp_how'))); const vr = el('div', 'tp-veh'); for (const k of ['train', 'ship', 'plane']) { const b = el('button'); b.type = 'button'; b.appendChild(I(VEH[k][0])); b.appendChild(el('span', null, L(VEH[k][2]))); b.onclick = () => go(k); vr.appendChild(b); } root.appendChild(vr); }
+      const ps = el('div', 'tp-pass'); ps.appendChild(el('h3', null, t('tp_passport'))); for (const id of store().stamps) { const c = G.CITIES.find(x => x.id === id); if (!c) continue; const s = el('div', 'tp-stamp'); if (G.FLAGS[c.cc]) s.appendChild(G.flag(c.cc)); s.appendChild(el('span', null, cn(c))); ps.appendChild(s); } root.appendChild(ps);
+    }
+    function go(k) {
+      if (!G.can(from, to, k)) { const msg = k === 'train' ? t('tp_no_train', { a: cn(from), b: cn(to), why: G.noRailWhy(from, to) === 'sea' ? t('x_why_sea') : t('x_why_net') }) : t('tp_no_ship', { inl: cn(!from.coast ? from : to) }); draw(msg); say(msg); return; }
+      const st = store(); const fresh = !st.stamps.includes(to.id); if (fresh) { st.stamps.push(to.id); try { KQ.save(); } catch (e) {} }
+      const msg = t('tp_go_' + k, { a: cn(from), b: cn(to) }) + (fresh ? ' ' + t('tp_stamp', { c: cn(to) }) : ''); draw(msg, true, k); say(msg); from = to; to = null;
+    }
+    draw();
+  }
+  function card() { const pk = document.getElementById('pick'); if (!pk || document.querySelector('.tp-card')) return; const b = el('button', 'tp-card'); b.type = 'button'; const th = el('div', 'thumbs'); ['🚂', '⛵', '✈️'].forEach(e => th.appendChild(I(e))); b.appendChild(th); const tx = el('div'); tx.appendChild(el('b', null, t('tp_card'))); tx.appendChild(el('span', null, t('tp_cardSub'))); b.appendChild(tx); b.onclick = planner; pk.prepend(b); }
+  card(); document.addEventListener('kq:lang', () => { const c = document.querySelector('.tp-card'); if (c) c.remove(); card(); });
+  window.__explore = { GEN, api };
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('river');</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+/* the Music Creator: a full-screen glass studio over the concert hall */
+.mc{position:fixed; inset:0; z-index:40; overflow:auto; padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px)); display:flex; flex-direction:column; gap:12px;
+  background:radial-gradient(120% 90% at 50% 0%, #5e1a3c, #140a1e 70%); color:#fff4e6; font-family:var(--font-body, Rubik, sans-serif); --mc-cell:clamp(30px,5.2vw,46px); --mc-lab:clamp(52px,9vw,84px)}
+body.mc-open{overflow:hidden}
+.mc-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.mc-head h2{margin:0; font:900 clamp(22px,4vw,32px)/1.1 Cinzel, 'Frank Ruhl Libre', serif; color:#ffe7a8; flex:1 1 auto}
+.mc-modes{display:flex; gap:6px}
+.mc-mode{border:1px solid rgba(255,224,138,.6); background:transparent; color:#ffe7a8; border-radius:999px; padding:9px 16px; font:800 15px var(--font-body, Rubik); cursor:pointer}
+.mc-mode.on{background:linear-gradient(180deg,#ffe08a,#f2b84a); color:#3a1020; border-color:transparent}
+.mc-x{width:44px; height:44px; border-radius:50%; border:0; background:rgba(255,255,255,.14); color:#fff; font:400 28px/1 sans-serif; cursor:pointer}
+.mc-guide{display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:14px; background:rgba(255,224,138,.14); border:1px solid rgba(255,224,138,.5); font:700 clamp(16px,2.6vw,20px)/1.3 var(--font-body, Rubik)}
+.mc-guide span{flex:1}
+.mc-say{width:42px; height:42px; border-radius:50%; border:0; background:#ffe08a; color:#3a1020; display:grid; place-items:center; cursor:pointer; flex:none}
+.mc-say .kq-g, .mc-say .kq-i{width:22px; height:22px}
+.mc-insts, .mc-tracks{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px}
+.mc-inst, .mc-track{flex:none; display:flex; flex-direction:column; align-items:center; gap:4px; width:clamp(78px,11vw,100px); padding:8px 4px; border-radius:16px; border:2px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:#fff4e6; font:800 13px var(--font-body, Rubik); cursor:pointer}
+.mc-inst svg, .mc-track svg{width:56px; height:56px}
+.mc-inst.on, .mc-track.on{border-color:#ffe08a; background:rgba(255,224,138,.18)}
+.mc-track{flex-direction:row; width:auto; padding:6px 12px 6px 6px} .mc-track svg{width:34px; height:34px}
+.mc-piece{display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center} .mc-piece b{font-size:20px; color:#ffe7a8} .mc-piece span{font-size:14px; opacity:.85}
+.mc-gridwrap{direction:ltr; overflow-x:auto; padding:10px; border-radius:18px; background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.12)}
+.mc-grid{display:grid; gap:4px; width:max-content; margin:0 auto}
+.mc-lab{display:flex; align-items:center; justify-content:flex-end; padding-inline-end:6px; font:800 clamp(12px,2vw,15px) var(--font-body, Rubik); cursor:pointer; white-space:nowrap}
+.mc-lab.drum{color:#d8d0e8; font-size:12px}
+.mc-cell{width:var(--mc-cell); height:var(--mc-cell); border-radius:8px; border:0; background:rgba(255,255,255,.07); cursor:pointer; transition:transform .08s}
+.mc-cell.bar{background:rgba(255,255,255,.13)} .mc-cell.sharp{background:rgba(0,0,0,.28)}
+.mc-cell.on{background:var(--hue, #ffe08a); box-shadow:inset 0 -4px 0 rgba(0,0,0,.22)}
+.mc-cell.ghost{background:color-mix(in srgb, var(--hue, #fff) 35%, transparent)}
+.mc-cell.drum.on{background:#ffe08a}
+.mc-cell.glow{background:var(--hue); animation:mcGlow 1s ease-in-out infinite}
+@keyframes mcGlow{50%{transform:scale(1.12); box-shadow:0 0 0 6px color-mix(in srgb, var(--hue) 45%, transparent), 0 0 22px var(--hue)}}
+.mc-cell.nope{animation:mcNope .35s}
+@keyframes mcNope{25%{transform:translateX(-4px)} 75%{transform:translateX(4px)}}
+.mc-cell.now{outline:3px solid #fff; outline-offset:-1px}
+.mc-cell:active{transform:scale(.9)}
+.mc-staff{display:grid; gap:4px; justify-items:center} .mc-staff small{opacity:.8; font-weight:700} .mc-staff svg{max-width:100%; width:auto; height:clamp(96px,17vh,150px)}
+.mc-ctl{display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:center}
+.mc-ctl .btn.on{outline:3px solid #ffe08a}
+.mc-tempo{display:flex; align-items:center; gap:8px; font-weight:700} .mc-tempo input{width:130px}
+.mc-sample{width:auto; max-width:240px; flex:0 0 auto; height:44px; border-radius:12px; padding:0 10px; font:700 15px var(--font-body, Rubik); background:rgba(255,255,255,.12); color:#fff4e6; border:1px solid rgba(255,255,255,.3)}
+.mc-sample option{color:#222}
+.mc-tunes{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px}
+.mc-tune{display:flex; flex-direction:column; gap:4px; padding:14px; border-radius:16px; border:1px solid rgba(255,224,138,.5); background:rgba(255,255,255,.06); color:#fff4e6; cursor:pointer; text-align:start; font:inherit}
+.mc-tune b{font-size:18px; color:#ffe7a8} .mc-tune span{font-size:14px; opacity:.85}
+.mc-concert{padding:12px 14px; border-radius:16px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12)}
+.mc-concert h3{margin:0 0 8px; font:800 18px Cinzel, 'Frank Ruhl Libre', serif; color:#ffe7a8} .mc-concert p{margin:0; opacity:.8}
+.mc-songrow{display:flex; align-items:center; gap:10px; padding:6px 0} .mc-songrow b{flex:1}
+.mc-songart svg{width:36px; height:36px}
+.mc-big{display:inline-flex; align-items:center; gap:8px; min-height:48px} .mc-big .kq-i{width:30px; height:30px}
+.mc > *{flex-shrink:0}   /* the studio scrolls as one page; no panel gets squeezed (the grid used to lose its bottom rows and the drums) */
+.mc-mode.mc-band{background:linear-gradient(180deg,#e2bf68,#c9952f); color:#24120a; border-color:#e2bf68}

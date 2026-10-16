@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Story Forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=25">
+<style>
+:root{ --accent:#8a3b5c; --accent-2:#4d1c32; }
+.bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
+@media (max-width:600px){ .bands{grid-template-columns:1fr} }
+.bigpic{font-size:clamp(56px,12vw,96px); line-height:1.1}
+.line{min-height:64px; padding:10px 14px; border-radius:14px; border:3px dashed var(--line); background:var(--paper-2); font:800 clamp(20px,4.4vw,30px)/1.6 var(--font-body); display:flex; flex-wrap:wrap; gap:8px; justify-content:center; align-items:center; margin:8px 0}
+.line .w{padding:4px 10px; border-radius:10px; background:var(--paper); border:2px solid var(--gold-2)}
+.line.ok{border-color:var(--ok); background:#d9f2df} .line.bad{border-color:var(--bad); background:#f8d7d7}
+.words{display:flex; flex-wrap:wrap; gap:10px; justify-content:center}
+.words button{font:800 clamp(18px,4vw,26px) var(--font-body); padding:10px 16px; border-radius:12px; border:3px solid var(--line); background:var(--paper-2); cursor:pointer}
+.words button.used{opacity:.25}
+.words.sent button{text-align:start; max-width:100%; font-size:clamp(16px,3.4vw,20px); line-height:1.7}
+.story{font:600 clamp(18px,3.8vw,23px)/2 var(--font-body); text-align:start; max-width:640px; margin:4px auto 16px}
+/* reading comfort (Yoni 2026-09-26): more air between the lines, and a word is never split across two lines */
+.story,.line,.words button{word-break:normal; overflow-wrap:break-word; hyphens:manual}
+/* the shadow theatre under the story (tale.js, Yoni 2026-09-26): the words sit on the dark still sky, the puppets act in the stage band below them */
+.story.tale{--stage:clamp(124px,30vw,210px); max-width:780px; position:relative; isolation:isolate; overflow:hidden; border-radius:18px; padding:16px 20px calc(var(--stage) + 8px); background:#0c0907; color:#f4ead6; box-shadow:inset 0 0 0 1px rgba(216,176,74,.3), 0 12px 28px rgba(0,0,0,.35)}
+.story.tale kq-tale{position:absolute; inset:0; z-index:-1; display:block; pointer-events:none}
+.story.tale kq-tale canvas{display:block; width:100%; height:100%}
+.story.tale .tale-tx{position:relative; text-shadow:0 1px 2px rgba(0,0,0,.7)}
+.choice.word{font-size:clamp(18px,3.8vw,26px)}
+.tile .m{width:100%; display:grid; gap:3px} .tile .m small{font-size:11px; color:var(--muted); font-weight:700}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap"><header class="kq-header"></header><main class="play" style="margin-top:18px"></main></div>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/voices/lines.js?v=11"></script>
+<script src="../shared/avatars.js?v=10"></script>
+<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="../shared/flora.js?v=1"></script>
+<script src="../shared/heart.js?v=3"></script>
+<script src="../shared/quest.js?v=18"></script>
+<script src="tale.js?v=1"></script>
+<script>
+(function () {
+  'use strict';
+  KQ.i18n.extend({
+    en: { sf_title: 'Story Forge', sf_sub: 'Build sentences, order stories', s_build3: 'Little sentences', s_order: 'Word order', s_connect: 'The right word', s_sequence: 'Story order', s_title: 'Name the story', sf_build: 'Tap the words in order to build the sentence', sf_seq: 'Tap the sentences in the order they happen', sf_title_q: 'Which title fits this story best?', sf_connect: 'Which word fits?', clear: 'Clear',
+      x_sent: 'The sentence', x_cap: 'A sentence starts with a capital letter and ends with a full stop.', x_who: 'First WHO (the doer), then WHAT they do, then the rest.', x_seq: 'The story in order', x_first: 'Look for the beginning: it introduces who and where. The end usually tells what changed.', x_title: 'A good title says what the whole story is about, not one small detail.', tg_wordOrder: 'word order', tg_sequence: 'story order' },
+    he: { sf_title: 'נפחיית הסיפורים', sf_sub: 'בונים משפטים, מסדרים סיפורים', s_build3: 'משפטים קטנים', s_order: 'סדר המילים', s_connect: 'המילה הנכונה', s_sequence: 'סדר הסיפור', s_title: 'שם לסיפור', sf_build: 'לוחצים על המילים לפי הסדר כדי לבנות את המשפט', sf_seq: 'לוחצים על המשפטים לפי הסדר שבו הם קורים', sf_title_q: 'איזה שם מתאים לסיפור הזה?', sf_connect: 'איזו מילה מתאימה?', clear: 'ניקוי',
+      x_sent: 'המשפט', x_cap: 'משפט מתחיל במילה שמספרת מי, ומסתיים בנקודה.', x_who: 'קודם מי (העושה), אחר כך מה עושים, ואז השאר.', x_seq: 'הסיפור לפי הסדר', x_first: 'מחפשים את ההתחלה: היא מספרת מי ואיפה. הסוף בדרך כלל מספר מה השתנה.', x_title: 'שם טוב אומר על מה כל הסיפור, לא על פרט קטן אחד.', tg_wordOrder: 'סדר מילים', tg_sequence: 'סדר הסיפור' }
+  });
+  const { t } = KQ;
+  const ri = (a, b) => a + Math.floor(Math.random() * (b - a + 1)), pick = a => a[Math.floor(Math.random() * a.length)];
+  const shuffle = a => { const x = a.slice(); for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
+  const D = () => KQ_WORDS[KQ.i18n.lang] || KQ_WORDS.en, he = () => KQ.i18n.lang === 'he';
+  const LITTLE = {
+    en: [['🐶', 'The dog runs.'], ['🐱', 'The cat sleeps.'], ['☀️', 'The sun is hot.'], ['🐸', 'The frog jumps high.'], ['👑', 'The king has a crown.'], ['🐟', 'Fish swim in water.'], ['🌧️', 'Rain falls down.'], ['🐦', 'The bird can fly.'], ['🍎', 'I eat an apple.'], ['📖', 'We read a book.'], ['🚗', 'Dad drives the car.'], ['🐝', 'The bee makes honey.'], ['❄️', 'Snow is cold.'], ['🎂', 'Mum bakes a cake.']],
+    he: [['🐶', 'הכלב רץ מהר.'], ['🐱', 'החתול ישן.'], ['☀️', 'השמש חמה.'], ['🐸', 'הצפרדע קופצת גבוה.'], ['👑', 'למלך יש כתר.'], ['🐟', 'דגים שוחים במים.'], ['🌧️', 'יורד גשם חזק.'], ['🐦', 'הציפור עפה.'], ['🍎', 'אני אוכל תפוח.'], ['📖', 'אנחנו קוראים ספר.'], ['🚗', 'אבא נוהג במכונית.'], ['🐝', 'הדבורה מכינה דבש.'], ['❄️', 'השלג קר.'], ['🎂', 'אמא אופה עוגה.']]
+  };
+  const TITLES = {
+    en: [['The Key with the Crown', ['A Day at the Beach', 'The Broken Bicycle']], ['The Early Baker', ['A Trip to the Zoo', 'The Lost Kitten']], ['Bolt and the Broken Tap', ['The Flying Robot', 'A Picnic in the Park']], ['The Fox and the Riddles', ['The Sleepy Bear', 'A New Bicycle']], ['Finishing Is Winning Too', ['The Fastest Runner', 'A Rainy Day']], ['The Light in the Storm', ['A Boat Race', 'The Quiet Village']], ['Penguins, Great Swimmers', ['Birds of the Forest', 'A Snowman']], ['The Flower in the Clock', ['Grandpa\'s Garden', 'The Late Train']]],
+    he: [['המפתח עם הכתר', ['יום בחוף', 'האופניים השבורים']], ['האופה שקם לפני השמש', ['טיול לגן החיות', 'הגור האבוד']], ['בולט והברז השבור', ['הרובוט המעופף', 'פיקניק בפארק']], ['השועלה והחידות', ['הדוב הישנוני', 'אופניים חדשים']], ['גם לסיים זה לנצח', ['הרץ הכי מהיר', 'יום גשום']], ['האור בסערה', ['מרוץ סירות', 'הכפר השקט']], ['פינגווינים, השחיינים הגדולים', ['ציפורי היער', 'איש שלג']], ['הפרח שבשעון', ['הגינה של סבא', 'הרכבת המאחרת']]]
+  };
+  const tale = (text, i) => { const box = document.createElement('div'), bg = document.createElement('kq-tale'), tx = document.createElement('div'); box.className = 'story tale'; box.dir = he() ? 'rtl' : 'ltr'; bg.dataset.story = i; if (he()) bg.dataset.rtl = '1'; tx.className = 'tale-tx'; tx.textContent = text; box.append(bg, tx); return box; };   // the story over its shadow theatre
+  const splitSentences = text => text.match(/[^.!?"]+[.!?]+"?/g).map(s => s.trim()).filter(s => s.length > 3);
+  const words = s => s.split(/\s+/);
+  // tap tiles in order; the line fills up and submits when every tile is placed
+  function orderer(stage, api, tiles, target, cls, join) {
+    const line = api.el('div', 'line'); const pool = api.el('div', 'words' + (cls ? ' ' + cls : '')); const placed = []; let cur = [];
+    line.style.direction = he() ? 'rtl' : 'ltr'; pool.style.direction = he() ? 'rtl' : 'ltr';
+    shuffle(tiles.map((w, i) => ({ w, i }))).forEach(({ w, i }) => { const b = api.el('button', null, w); b.onclick = () => { if (api.locked() || b.classList.contains('used')) return; b.classList.add('used'); placed.push(b); cur.push(i); line.appendChild(api.el('span', 'w', w)); api.sfx.play('tap'); if (cur.length === tiles.length) { const ok = cur.every((x, k) => tiles[x] === target[k]); line.classList.add(ok ? 'ok' : 'bad'); api.submit(ok, cur.map(x => tiles[x]).join(join)); } }; pool.appendChild(b); });
+    const bar = api.el('div', 'qtools'); const undo = api.el('button', 'btn ghost sm', '⌫'); undo.onclick = () => { if (api.locked() || !placed.length) return; placed.pop().classList.remove('used'); cur.pop(); line.removeChild(line.lastChild); };
+    const clr = api.el('button', 'btn ghost sm', t('clear')); clr.onclick = () => { if (api.locked()) return; placed.forEach(b => b.classList.remove('used')); placed.length = 0; cur = []; line.replaceChildren(); };
+    bar.appendChild(undo); bar.appendChild(clr); stage.appendChild(line); stage.appendChild(pool); stage.appendChild(bar);
+  }
+  const GEN = {
+    build3() { const it = pick(LITTLE[KQ.i18n.lang] || LITTLE.en), ws = words(it[1]); return { key: 'b' + it[1], prompt: t('sf_build'), wordy: true, visualEl: Object.assign(document.createElement('div'), { className: 'bigpic', textContent: it[0] }), answer: it[1], speak: it[1], journal: it[0], tags: ['build3', 'wordOrder'], render(stage, api) { orderer(stage, api, ws, ws, '', ' '); }, x: { s: it[1] } }; },
+    order(tier, band) { const d = D(); let pool = d.sentences.map(s => s[0]).filter(s => { const n = words(s).length; return band === 3 ? n >= 7 : n >= 4 && n <= (tier ? 8 : 6); }); if (band === 3) pool = pool.concat(d.stories.flatMap(s => splitSentences(s.text)).filter(s => words(s).length >= 7 && words(s).length <= 12)); const s = pick(pool), ws = words(s); return { key: 'o' + s, prompt: t('sf_build'), wordy: true, answer: s, speak: s, journal: s.slice(0, 40), tags: ['order', 'wordOrder'], render(stage, api) { orderer(stage, api, ws, ws, '', ' '); }, x: { s } }; },
+    connect(tier, band) { const d = D(), b = pick(band === 3 ? d.blanks3 : d.blanks); return { key: 'c' + b[0], prompt: t('sf_connect'), visualEl: Object.assign(document.createElement('div'), { className: 'story', textContent: b[0], dir: he() ? 'rtl' : 'ltr' }), answer: b[1], choices: shuffle([b[1], ...b[2].filter(x => x !== b[1])]), speak: b[0].replace('___', '...'), journal: b[0], tags: ['connect'], x: { s: b[0].replace('___', b[1]) } }; },
+    sequence() { const d = D(), st = pick(d.stories), ss = splitSentences(st.text); return { key: 'q' + st.text.slice(0, 20), prompt: t('sf_seq'), wordy: true, answer: ss.join(' '), answerLabel: '', journal: ss[0].slice(0, 40), tags: ['sequence'], render(stage, api) { orderer(stage, api, ss, ss, 'sent', ' '); }, x: { ss, story: st } }; },
+    title() { const d = D(), i = ri(0, d.stories.length - 1), st = d.stories[i], tt = (TITLES[KQ.i18n.lang] || TITLES.en)[i]; return { key: 't' + i, prompt: t('sf_title_q'), wordy: true, visualEl: tale(st.text, i), answer: tt[0], choices: shuffle([tt[0], ...tt[1]]), speak: [st.text, t('sf_title_q')], journal: tt[0], tags: ['title'], x: { story: st } }; }
+  };
+  const EXPLAIN = {
+    build3: q => [{ text: t('x_who') }, { text: t('x_sent') + ': ' + q.x.s, big: true }],
+    order: q => [{ text: t('x_cap') }, { text: t('x_who') }, { text: t('x_sent') + ': ' + q.x.s, big: true }],
+    connect: q => [{ text: t('x_sent') + ': ' + q.x.s, big: true }],
+    sequence: q => [{ text: t('x_first') }, { text: t('x_seq') + ': ' + q.x.ss.map((s, i) => (i + 1) + '. ' + s).join(' ') }],
+    title: q => [{ text: t('x_title') }, { text: q.answer, big: true }]
+  };
+  KQ.quest.shell();
+  KQ.quest({ world: 'story', title: 'sf_title', sub: 'sf_sub', bands: { 1: ['build3'], 2: ['order', 'connect'], 3: ['order', 'sequence', 'title'] }, bandKey: 'band', bandIcons: ['🛡️', '⚔️', '🐴'], icons: { build3: '🧱', order: '🔀', connect: '🔗', sequence: '📜', title: '🏷️' }, n: (s, b) => s === 'sequence' || s === 'title' ? 5 : 8, fastMs: 12000, speakBands: [1], gen: GEN, explain: EXPLAIN });
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/fx3d.js?v=9"></script>
+<script src="../shared/rooms3d.js?v=51"></script>
+<script>window.Room3D && Room3D.stage('ember');</script>
+</body>
+</html>
