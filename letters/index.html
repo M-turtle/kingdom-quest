@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Letter Mountain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
+<link rel="stylesheet" href="../shared/kq.css?v=26">
+<style>
+/* Letter Mountain (Yoni 2026-10-17): letters for children who cannot read yet — camps up a mountain, three games, a big speaker on every question */
+:root{ --accent:#2b6cb0; --accent-2:#1a4a80; }
+.lm-mtn{position:relative; aspect-ratio:16/10; max-width:100%; border-radius:16px; overflow:hidden; background:linear-gradient(#7fb2e8,#c9ddf2 60%,#e8eef5)}
+.lm-mtn svg{position:absolute; inset:0; width:100%; height:100%}
+.lm-camp{position:absolute; transform:translate(-50%,-50%); border:0; background:var(--paper); border-radius:14px; padding:6px 8px; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; box-shadow:0 3px 0 var(--paper-3),0 6px 14px rgba(0,0,0,.3); min-width:64px; font:inherit; color:var(--ink)}
+.lm-camp .lm-ls{font:900 18px/1 var(--font-body); letter-spacing:.08em; direction:ltr}
+.lm-camp .lm-fl{display:flex; gap:3px} .lm-camp .lm-fl i{width:9px; height:9px; border-radius:50%; background:var(--paper-3)}
+.lm-camp .lm-fl i.lm-l1{background:#f3e2b2} .lm-camp .lm-fl i.lm-l2{background:var(--gold)} .lm-camp .lm-fl i.lm-l3{background:#2f7d4f}
+.lm-camp[disabled]{opacity:.55; cursor:default; filter:grayscale(.5)} .lm-camp.lm-cur{outline:3px solid var(--gold)}
+.lm-count{text-align:center; font:900 18px var(--font-body); color:var(--ink-2)}
+.lm-gpick{display:grid; grid-template-columns:repeat(3,1fr); gap:10px} @media (max-width:560px){ .lm-gpick{grid-template-columns:1fr} }
+.lm-gbtn{border:2px solid var(--line); background:var(--paper-2); border-radius:16px; padding:14px 10px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:6px; font:inherit; color:var(--ink); min-height:120px}
+.lm-gbtn b{font:900 19px var(--font-body); text-align:center} .lm-gbtn small{color:var(--muted); font-size:14px; text-align:center}
+.lm-gbtn .lm-ic{width:40px; height:40px; color:var(--accent); display:grid; place-items:center; font:900 22px var(--font-body)}
+.lm-speak{width:112px; height:112px; border-radius:50%; border:0; background:radial-gradient(circle at 35% 30%,#fff6d0,var(--gold) 55%,var(--gold-2)); color:#2b1c10; display:grid; place-items:center; cursor:pointer; box-shadow:0 6px 0 var(--gold-2),0 10px 20px rgba(0,0,0,.25); align-self:center; margin:0 auto}
+.lm-speak:active{transform:translateY(3px); box-shadow:0 3px 0 var(--gold-2)} .lm-speak svg{width:64px; height:64px}
+.lm-speak.lm-talking{animation:talk .6s ease infinite alternate} @keyframes talk{from{transform:scale(1)} to{transform:scale(1.08)}}
+.lm-say{text-align:center; font:800 20px/1.35 var(--font-body); color:var(--ink-2); margin:0}
+.lm-lcards{display:flex; flex-wrap:wrap; justify-content:center; gap:12px}
+.lm-lcard{width:clamp(84px,22vw,120px); height:clamp(84px,22vw,120px); flex:none; border-radius:18px; border:3px solid var(--line); background:#fff; font:900 clamp(48px,12vw,72px)/1 var(--font-body); color:#2b1c10; cursor:pointer; display:grid; place-items:center; direction:ltr}
+.lm-lcard.lm-right{background:#d8f2df; border-color:#2f7d4f; animation:pop .5s ease} .lm-lcard.lm-wrong{background:#f8dcd5; border-color:#b5402e; animation:shake .35s}
+.lm-lcard.lm-hint{animation:pulse .7s ease 2; border-color:var(--gold)}
+@keyframes pop{40%{transform:scale(1.15)}} @keyframes shake{25%{transform:translateX(-8px)} 75%{transform:translateX(8px)}} @keyframes pulse{50%{transform:scale(1.1); box-shadow:0 0 0 8px rgba(217,180,90,.4)}}
+.lm-pic{display:flex; justify-content:center} .lm-pic .kq-i{width:clamp(110px,28vw,160px); height:clamp(110px,28vw,160px); font-size:1px}
+.lm-prog{display:flex; gap:5px; justify-content:center} .lm-prog i{width:14px; height:14px; border-radius:50%; background:var(--paper-3)} .lm-prog i.lm-ok{background:#2f7d4f} .lm-prog i.lm-miss{background:#b5402e} .lm-prog i.lm-cur{outline:3px solid var(--gold)}
+.lm-pgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; max-width:480px; margin:0 auto; width:100%; direction:ltr}
+.lm-pc{aspect-ratio:3/4; min-height:100px; border-radius:14px; border:0; cursor:pointer; perspective:600px; background:transparent; padding:0}
+.lm-pc .lm-in{position:relative; width:100%; height:100%; transition:transform .45s; transform-style:preserve-3d} .lm-pc.lm-open .lm-in,.lm-pc.lm-done .lm-in{transform:rotateY(180deg)}
+.lm-pc .lm-f,.lm-pc .lm-b{position:absolute; inset:0; border-radius:14px; backface-visibility:hidden; display:grid; place-items:center}
+.lm-pc .lm-f{background:linear-gradient(160deg,#4e86c8,#2b5fa8); border:3px solid #1d4a96} .lm-pc .lm-f svg{width:40%; height:40%; color:#fff; opacity:.8}
+.lm-pc .lm-b{background:#fff; border:3px solid var(--line); transform:rotateY(180deg); font:900 clamp(34px,9vw,54px)/1 var(--font-body); color:#2b1c10; direction:ltr} .lm-pc .lm-b .kq-i{width:70%; height:70%; font-size:1px}
+.lm-pc.lm-done .lm-b{background:#d8f2df; border-color:#2f7d4f}
+.lm-cheer{text-align:center; display:flex; flex-direction:column; gap:12px; align-items:center}
+.lm-medal{width:96px; height:96px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#fff6d0,var(--gold) 55%,var(--gold-2)); display:grid; place-items:center; font:900 40px var(--font-display); color:#2b1c10; box-shadow:0 0 0 6px rgba(217,180,90,.35); animation:pop .9s ease; direction:ltr}
+.lm-stack{display:flex; flex-direction:column; gap:12px}
+.lm-ltr{direction:ltr; unicode-bidi:isolate}
+</style>
+<link rel="stylesheet" href="../shared/skin.css?v=6">
+</head>
+<body>
+<div class="kq-wrap">
+  <header class="kq-header"></header>
+  <main class="play" style="margin-top:18px">
+    <section class="card lm-stack" id="home"></section>
+    <section class="card lm-stack" id="camp" hidden></section>
+    <section class="card lm-stack" id="round" hidden></section>
+  </main>
+</div>
+<script src="../shared/voices/en_map.js?v=2"></script>
+<script src="../shared/voices/he_map.js?v=4"></script>
+<script src="../shared/words.js?v=2"></script>
+<script src="../shared/kq.js?v=65"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script>
+(function () {
+  'use strict';
+  const { profiles, store, ui, sfx, t: tt } = KQ; const $ = s => document.querySelector(s);
+  const profile = profiles.active(); if (!profile) { location.href = '../index.html'; return; }
+  KQ.i18n.extend({
+    en: { l_title: 'Letter Mountain', l_sub: 'Letters, one camp at a time', l_board: 'Climb the mountain one letter at a time. Every camp teaches new letters.', l_known: '{n} of {t} letters known', l_camp: 'Camp {n}', l_pick: 'Choose a game', l_new: 'New letters here:', l_locked: 'Finish the camp below first', l_back: 'Back',
+      l_g1: 'Hear and find', l_g1s: 'Tap the letter you hear', l_g2: 'First letter', l_g2s: 'Which letter starts the word?', l_g3: 'Letter pairs', l_g3s: 'Turn the cards and find the pairs',
+      l_hear: 'Tap the big speaker, then tap the letter you heard.', l_first: 'Tap the speaker to hear the word. Which letter does it start with?', l_pairs: 'Turn two cards. Do they belong together?',
+      l_done: 'Camp {n} flag planted!', l_more: 'Play again', l_home: 'Back to the mountain', l_all: 'You know every letter!', l_hearIt: 'Hear it again' },
+    he: { l_title: 'הר האותיות', l_sub: 'אותיות, מחנה אחרי מחנה', l_board: 'מטפסים על ההר אות אחרי אות. בכל מחנה לומדים אותיות חדשות.', l_known: '{n} מתוך {t} אותיות', l_camp: 'מחנה {n}', l_pick: 'בוחרים משחק', l_new: 'אותיות חדשות כאן:', l_locked: 'קודם מסיימים את המחנה שלמטה', l_back: 'חזרה',
+      l_g1: 'שומעים ומוצאים', l_g1s: 'לוחצים על האות ששומעים', l_g2: 'האות הראשונה', l_g2s: 'באיזו אות מתחילה המילה?', l_g3: 'זוגות אותיות', l_g3s: 'הופכים קלפים ומוצאים זוגות',
+      l_hear: 'לוחצים על הרמקול הגדול, ואז על האות ששמעתם.', l_first: 'לוחצים על הרמקול ושומעים את המילה. באיזו אות היא מתחילה?', l_pairs: 'הופכים שני קלפים. הם שייכים ביחד?',
+      l_done: 'הדגל של מחנה {n} נטוע!', l_more: 'עוד פעם', l_home: 'חזרה להר', l_all: 'כל האותיות ידועות!', l_hearIt: 'לשמוע שוב' } });
+  const t = (k, v) => tt(k, v);
+  const lang = () => KQ.i18n.lang === 'he' ? 'he' : 'en';
+
+  /* ---------- the letters: camps up the mountain. English opens with the letters that build the most words first ---------- */
+  const W = window.KQ_WORDS;
+  const CAMPS = { en: ['SATPI', 'NMDGO', 'CKERU', 'HBFLJ', 'VWXYZQ'].map(s => s.split('')), he: ['אבגד', 'הוזח', 'טיכל', 'מנסע', 'פצקר', 'שת'].map(s => s.split('')) };
+  const FINALS = W.he.finals;
+  const sayLetter = l => lang() === 'he' ? W.he.letterName(l) : l;
+  const wordsFor = () => W[lang()].words.map(w => ({ word: w[0], pic: w[1], first: lang() === 'he' ? w[0][0] : w[0][0].toUpperCase() }));
+
+  /* ---------- memory: a level 0–3 per letter for this player; 3 quick right answers = known; a camp opens when the one below is mostly known ---------- */
+  const KEY = 'kq-letters:' + profile.id; let S = { en: {}, he: {}, flags: { en: {}, he: {} } };
+  try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+  const lvl = l => (S[lang()][l] || 0), known = l => lvl(l) >= 3;
+  const bump = (l, d) => { S[lang()][l] = Math.max(0, Math.min(3, lvl(l) + d)); KQ.skills.note('letters', { key: 'L:' + l, tags: [l], ok: d > 0 }); save(); };
+  const campOpen = i => i === 0 || CAMPS[lang()][i - 1].every(l => lvl(l) >= 2);
+  const knownCount = () => CAMPS[lang()].flat().filter(known).length;
+  const pool = i => CAMPS[lang()].slice(0, i + 1).flat();
+
+  /* ---------- the voice: slices of the recorded sprite, by exact clip key (letters are case-sensitive: "A" and "a" are different clips) ---------- */
+  const SPR = { en: window.KQ_VOICES_EN, he: window.KQ_VOICES_HE }, audio = {}; let stopAt = null, talking = null;
+  function player(L) { if (!audio[L]) { const a = new Audio(SPR[L].base + SPR[L].file); a.preload = 'auto'; a.addEventListener('timeupdate', () => { if (stopAt != null && a.currentTime >= stopAt) { a.pause(); stopAt = null; if (talking) talking.classList.remove('lm-talking'); } }); audio[L] = a; } return audio[L]; }
+  function say(keys, btn) { const m = SPR[lang()], a = player(lang()); keys = (Array.isArray(keys) ? keys : [keys]).filter(k => m && m.clips[k]); if (!keys.length) return false;
+    if (talking) talking.classList.remove('lm-talking'); talking = btn || null; if (btn) btn.classList.add('lm-talking');
+    let i = 0; const next = () => { if (i >= keys.length) return; const [st, du] = m.clips[keys[i++]]; stopAt = st + du - 0.02; a.pause(); a.currentTime = st; a.play().catch(() => {}); const guard = setInterval(() => { if (a.paused || stopAt == null) { clearInterval(guard); if (i < keys.length) setTimeout(next, 120); else if (talking) talking.classList.remove('lm-talking'); } }, 60); };
+    next(); return true; }
+  function speakerSvg() { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); const p1 = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p1.setAttribute('d', 'M4 9.5h3.5L12 5.5v13l-4.5-4H4z'); p1.setAttribute('fill', 'currentColor'); const p2 = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p2.setAttribute('d', 'M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11'); p2.setAttribute('fill', 'none'); p2.setAttribute('stroke', 'currentColor'); p2.setAttribute('stroke-width', '2'); p2.setAttribute('stroke-linecap', 'round'); s.append(p1, p2); return s; }
+  function speakerBtn(label) { const b = el('button', 'lm-speak'); b.type = 'button'; b.setAttribute('aria-label', label || t('l_hearIt')); b.append(speakerSvg()); return b; }
+
+  /* ---------- small builders ---------- */
+  function el(tag, cls, ...kids) { const e = document.createElement(tag); if (cls) e.className = cls; for (const k of kids) if (k != null) e.append(k instanceof Node ? k : String(k)); return e; }
+  const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const picEl = emoji => (window.KQIcons && KQIcons.icon(emoji)) || el('span', null, emoji);
+  const show = id => { for (const s of ['home', 'camp', 'round']) $('#' + s).hidden = s !== id; scrollTo({ top: 0, behavior: 'smooth' }); };
+  let campNow = 0;
+
+  /* ---------- the mountain ---------- */
+  function mountainEl() { const m = el('div', 'lm-mtn'); const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('viewBox', '0 0 160 100'); svg.setAttribute('preserveAspectRatio', 'none');
+    const path = (d, fill) => { const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', d); p.setAttribute('fill', fill); svg.append(p); };
+    path('M0 100 L0 70 Q20 55 40 62 Q60 40 80 20 L84 14 Q100 36 120 58 Q140 50 160 68 L160 100 Z', '#7a6a5a'); path('M72 30 L84 14 L96 30 Q84 26 72 30 Z', '#f4f7fb'); path('M0 100 L0 80 Q30 70 60 82 Q100 78 160 84 L160 100 Z', '#5f8a4a');
+    const trail = document.createElementNS('http://www.w3.org/2000/svg', 'path'); trail.setAttribute('d', 'M20 88 Q40 80 48 70 Q60 60 70 56 Q80 48 84 38 Q86 28 84 18'); trail.setAttribute('fill', 'none'); trail.setAttribute('stroke', '#f1d98a'); trail.setAttribute('stroke-width', '1.6'); trail.setAttribute('stroke-dasharray', '3 2'); svg.append(trail); m.append(svg);
+    const C = CAMPS[lang()], spots = C.length === 6 ? [[22, 86], [45, 72], [68, 58], [84, 42], [78, 26], [86, 14]] : [[22, 86], [45, 72], [68, 58], [84, 42], [85, 18]];
+    C.forEach((letters, i) => { const [x, y] = spots[i]; const b = el('button', 'lm-camp'); b.type = 'button'; b.style.left = x + '%'; b.style.top = y + '%';
+      b.append(el('span', 'lm-ls', letters.join('')), el('span', 'lm-fl', ...letters.map(l => el('i', 'lm-l' + lvl(l))))); if (!campOpen(i)) { b.disabled = true; b.title = t('l_locked'); } b.onclick = () => { sfx.play('tap'); openCamp(i); }; b.setAttribute('aria-label', t('l_camp', { n: i + 1 }) + ' ' + letters.join(' ')); m.append(b); });
+    return m; }
+  function renderHome() { const h = $('#home'); h.replaceChildren(el('p', 'muted', t('l_board')), mountainEl(), el('div', 'lm-count', t('l_known', { n: knownCount(), t: CAMPS[lang()].flat().length }))); show('home'); }
+  function openCamp(i) { campNow = i; const letters = CAMPS[lang()][i], c = $('#camp'); c.replaceChildren();
+    const back = el('button', 'back', el('span', 'chev', '‹'), el('span', null, t('l_back'))); back.type = 'button'; back.onclick = () => renderHome();
+    const row = el('div', 'lm-lcards'); for (const l of letters) { const b = el('button', 'lm-lcard' + (known(l) ? ' lm-right' : ''), l); b.type = 'button'; b.onclick = () => say(sayLetter(l), b); row.append(b); }
+    const g = el('div', 'lm-gpick'); for (const [id, n] of [['hear', 1], ['first', 2], ['pairs', 3]]) { const b = el('button', 'lm-gbtn'); b.type = 'button'; const ic = el('span', 'lm-ic'); if (id === 'hear') ic.append(speakerSvg()); else if (id === 'first') ic.append(picEl(pick(wordsFor()).pic)); else ic.append(el('span', 'lm-ltr', lang() === 'he' ? 'כ ך' : 'A a')); b.append(ic, el('b', null, t('l_g' + n)), el('small', null, t('l_g' + n + 's'))); b.onclick = () => { sfx.play('tap'); GAMES[id](i); }; g.append(b); }
+    c.append(el('div', 'rhead', back, el('div', 'pill', t('l_camp', { n: i + 1 }))), el('p', 'muted', t('l_new')), row, el('div', 'sec', t('l_pick')), g); show('camp'); }
+
+  /* ---------- round frame ---------- */
+  function frame(title, i) { const c = $('#round'); c.replaceChildren(); const back = el('button', 'back', el('span', 'chev', '‹'), el('span', null, t('l_back'))); back.type = 'button'; back.onclick = () => openCamp(i); c.append(el('div', 'rhead', back, el('div', 'pill', title))); show('round'); return c; }
+  function cheer(c, i, correct, total, mode) { const flag = S.flags[lang()][i] = (S.flags[lang()][i] || 0) + 1; save();
+    const stars = KQ.score.stars(correct, total); store.record('letters', { stars, points: correct * 10, correct, total, mode, level: i + 1, label: t('l_camp', { n: i + 1 }) + ' · ' + t('l_g' + ({ hear: 1, first: 2, pairs: 3 })[mode]) });
+    sfx.play('star'); c.replaceChildren(el('div', 'lm-cheer', el('div', 'lm-medal', String(flag)), el('h2', null, t('l_done', { n: i + 1 })), ui.starsEl ? ui.starsEl(stars) : el('div', null, '★'.repeat(stars)), el('p', 'muted', t('l_known', { n: knownCount(), t: CAMPS[lang()].flat().length }))));
+    const r = el('div', 'btns'); const a = el('button', 'btn crimson', t('l_more')); a.type = 'button'; a.onclick = () => GAMES[mode](i); const h = el('button', 'btn ghost', t('l_home')); h.type = 'button'; h.onclick = () => renderHome(); r.append(a, h); c.firstChild.append(r); }
+  function progEl(n) { const p = el('div', 'lm-prog'); for (let k = 0; k < n; k++) p.append(el('i')); p.children[0].className = 'lm-cur'; return p; }
+  const mark = (p, k, ok) => { const d = p.children[k]; if (d) d.className = ok ? 'lm-ok' : 'lm-miss'; const n = p.children[k + 1]; if (n) n.className = 'lm-cur'; };
+  const GAMES = {};
+
+  /* GAME 1 · Hear and find: the speaker says a letter, the child taps it. 2 cards at the first camp, up to 4 higher up */
+  GAMES.hear = i => { const c = frame(t('l_g1'), i), P = pool(i), N = 8, nCards = Math.min(4, 2 + Math.floor(i / 2)); let q = 0, t0 = 0, tries = 0, cur = null, right = 0;
+    const prog = progEl(N), spk = speakerBtn(t('l_g1s')), cards = el('div', 'lm-lcards'); c.append(prog, el('p', 'lm-say', t('l_hear')), spk, cards);
+    function ask() { if (q >= N) return cheer(c, i, right, N, 'hear'); const fresh = P.filter(l => l !== cur), weights = fresh.map(l => 4 - lvl(l) + (CAMPS[lang()][i].includes(l) ? 2 : 0)); let r = Math.random() * weights.reduce((a, b) => a + b, 0); cur = fresh[0]; for (let k = 0; k < fresh.length; k++) { r -= weights[k]; if (r <= 0) { cur = fresh[k]; break; } }
+      const others = shuffle(P.filter(l => l !== cur)).slice(0, nCards - 1); cards.replaceChildren(); tries = 0; for (const l of shuffle([cur, ...others])) { const b = el('button', 'lm-lcard', l); b.type = 'button'; b.onclick = () => answer(l, b); cards.append(b); }
+      t0 = performance.now(); setTimeout(() => say(sayLetter(cur), spk), 350); }
+    spk.onclick = () => say(sayLetter(cur), spk);
+    function answer(l, b) { if (b.classList.contains('lm-right')) return; if (l === cur) { b.classList.add('lm-right'); sfx.play('correct'); const quick = performance.now() - t0 < 5000 && tries === 0; bump(cur, quick ? 1 : 0); if (tries === 0) right++; mark(prog, q, tries === 0); q++; setTimeout(ask, 900); }
+      else { tries++; b.classList.add('lm-wrong'); sfx.play('wrong'); setTimeout(() => b.classList.remove('lm-wrong'), 400); bump(cur, -1); [...cards.children].find(x => x.textContent === cur).classList.add('lm-hint'); setTimeout(() => say(sayLetter(cur), spk), 300); } }
+    ask(); };
+
+  /* GAME 2 · First letter: a painted picture, the word is spoken, the child taps the letter it starts with */
+  GAMES.first = i => { const c = frame(t('l_g2'), i), P = pool(i), N = 8; let q = 0, t0 = 0, tries = 0, cur = null, right = 0;
+    const all = wordsFor(), inPool = all.filter(w => P.includes(w.first)), bank = inPool.length >= 4 ? inPool : all;
+    const prog = progEl(N), spk = speakerBtn(t('l_g2s')), pic = el('div', 'lm-pic'), cards = el('div', 'lm-lcards'); c.append(prog, el('p', 'lm-say', t('l_first')), pic, spk, cards);
+    function ask() { if (q >= N) return cheer(c, i, right, N, 'first'); const fresh = bank.filter(w => !cur || w.word !== cur.word); cur = pick(fresh); const letters = P.includes(cur.first) ? P : CAMPS[lang()].flat(); const others = shuffle(letters.filter(l => l !== cur.first)).slice(0, 2);
+      const pe = picEl(cur.pic); pe.setAttribute('role', 'img'); pe.setAttribute('aria-label', cur.word); pic.dataset.word = cur.word; pic.replaceChildren(pe); cards.replaceChildren(); tries = 0; for (const l of shuffle([cur.first, ...others])) { const b = el('button', 'lm-lcard', l); b.type = 'button'; b.onclick = () => answer(l, b); cards.append(b); } t0 = performance.now(); setTimeout(() => say(cur.word, spk), 350); }
+    spk.onclick = () => say(cur.word, spk);
+    function answer(l, b) { if (b.classList.contains('lm-right')) return; if (l === cur.first) { b.classList.add('lm-right'); sfx.play('correct'); bump(cur.first, performance.now() - t0 < 6000 && tries === 0 ? 1 : 0); if (tries === 0) right++; mark(prog, q, tries === 0); q++; say([sayLetter(cur.first), cur.word], spk); setTimeout(ask, 1500); }
+      else { tries++; b.classList.add('lm-wrong'); sfx.play('wrong'); setTimeout(() => b.classList.remove('lm-wrong'), 400); bump(cur.first, -1); setTimeout(() => say(cur.word, spk), 300); } }
+    ask(); };
+
+  /* GAME 3 · Letter pairs: memory. English pairs big and small letters; Hebrew pairs a letter with its final form, or with a picture that starts with it */
+  GAMES.pairs = i => { const c = frame(t('l_g3'), i), P = pool(i), nPairs = i < 2 ? 4 : 6, words = wordsFor(), L = lang();
+    const pairs = []; for (const l of shuffle(CAMPS[L][i].concat(shuffle(P)))) { if (pairs.length >= nPairs || pairs.some(p => p.l === l)) continue;
+      if (L === 'en') pairs.push({ l, a: { txt: l, say: l }, b: { txt: l.toLowerCase(), say: l.toLowerCase() } });
+      else if (FINALS[l]) pairs.push({ l, a: { txt: l, say: W.he.letterName(l) }, b: { txt: FINALS[l], say: FINALS[l] } });
+      else { const w = words.find(x => x.first === l); if (w) pairs.push({ l, a: { txt: l, say: W.he.letterName(l) }, b: { pic: w.pic, say: w.word } }); } }
+    const prog = progEl(pairs.length), grid = el('div', 'lm-pgrid'); if (pairs.length > 4) grid.style.maxWidth = '560px'; c.append(prog, el('p', 'lm-say', t('l_pairs')), grid); let open = [], done = 0, lock = false, misses = 0;
+    for (const x of shuffle(pairs.flatMap(p => [{ p, f: p.a }, { p, f: p.b }]))) { const b = el('button', 'lm-pc'); b.type = 'button'; const back = el('div', 'lm-b'); if (x.f.pic) back.append(picEl(x.f.pic)); else back.append(el('span', 'lm-ltr', x.f.txt)); b.append(el('div', 'lm-in', el('div', 'lm-f', speakerSvg()), back));
+      b.onclick = () => { if (lock || b.classList.contains('lm-open') || b.classList.contains('lm-done')) return; b.classList.add('lm-open'); say(x.f.say, null); open.push({ b, x });
+        if (open.length === 2) { lock = true; const [u, v] = open, match = u.x.p === v.x.p; setTimeout(() => { if (match) { u.b.classList.replace('lm-open', 'lm-done'); v.b.classList.replace('lm-open', 'lm-done'); sfx.play('correct'); bump(u.x.p.l, 1); mark(prog, done, true); done++; if (done === pairs.length) setTimeout(() => cheer(c, i, Math.max(0, pairs.length * 2 - misses), pairs.length * 2, 'pairs'), 700); } else { misses++; u.b.classList.remove('lm-open'); v.b.classList.remove('lm-open'); } open = []; lock = false; }, match ? 500 : 1100); } }; grid.append(b); } };
+
+  ui.header({ title: t('l_title'), sub: t('l_sub'), homeHref: '../index.html' }); renderHome();
+  const want = new URLSearchParams(location.search).get('skill'); if (want && GAMES[want]) GAMES[want](0);   /* the hub's search can open a game straight away */
+  document.addEventListener('kq:lang', () => { ui.header({ title: t('l_title'), sub: t('l_sub'), homeHref: '../index.html' }); renderHome(); });
+  window.__letters = { S, lvl, say, learn(i) { for (const l of CAMPS[lang()][i]) S[lang()][l] = 3; save(); renderHome(); } };   /* test hook */
+})();
+</script>
+</body>
+</html>

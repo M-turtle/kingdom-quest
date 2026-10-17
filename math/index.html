@@ -425,7 +425,7 @@
   document.addEventListener('kq:ladder', () => { R.band = KQ.ladder.band(profile.id, 'math', [1, 2, 3, 4, 5, 6]) || R.band; if ($('#round').hidden) renderPick(); });
   $('#btnQuit').onclick = () => { $('#round').hidden = true; if (KQ.ui.peek) KQ.ui.peek(null); $('#pick').hidden = false; document.body.classList.remove('focus'); renderPick(); };
   $('#btnSpeak').onclick = () => { if (R.q) KQ.speak(R.q.speak, null, { force: true }); };
-  function boot() { ui.header({ title: t('m_title'), sub: t('m_sub'), homeHref: '../index.html' }); renderPick(); if (eggId && !R.egg && $('#round').hidden) startRound(BANDS[4][BANDS[4].length - 1], { egg: true }); }
+  function boot() { ui.header({ title: t('m_title'), sub: t('m_sub'), homeHref: '../index.html' }); renderPick(); if (eggId && !R.egg && $('#round').hidden) startRound(BANDS[4][BANDS[4].length - 1], { egg: true }); const want = new URLSearchParams(location.search).get('skill'); if (want && GEN[want] && $('#round').hidden) { for (const b of [1, 2, 3, 4, 5, 6]) if (BANDS[b].includes(want)) { if (b !== R.band) { R.band = b; KQ.ladder.setBand(profile.id, 'math', b); } break; } startRound(want); } }
   document.addEventListener('kq:lang', () => { boot(); if (!$('#round').hidden) $('#skillName').textContent = R.skill === 'focus' ? t('s_focus') : t('s_' + R.skill) + ' · ' + t('band' + R.band); });
   KQ.i18n.apply(); boot();
   window.KQMath = { GEN, BANDS, EXPLAIN };   // for tests

@@ -146,7 +146,7 @@
     }
     $('#btnQuit').onclick = () => { $('#round').hidden = true; if (KQ.ui.peek) KQ.ui.peek(null); $('#pick').hidden = false; document.body.classList.remove('focus'); renderPick(); };
     $('#btnSpeak').onclick = () => { if (R.q && R.q.speak) KQ.speak(R.q.speak, null, { force: true }); };
-    function boot() { ui.header({ title: t(cfg.title), sub: t(cfg.sub), homeHref: cfg.homeHref || '../index.html' }); renderPick(); if (eggId && !R.egg && $('#round').hidden) { const top = BANDS[bandIds[bandIds.length - 1]]; startRound(top[top.length - 1], { egg: true }); } }
+    function boot() { ui.header({ title: t(cfg.title), sub: t(cfg.sub), homeHref: cfg.homeHref || '../index.html' }); renderPick(); if (eggId && !R.egg && $('#round').hidden) { const top = BANDS[bandIds[bandIds.length - 1]]; startRound(top[top.length - 1], { egg: true }); } const want = new URLSearchParams(location.search).get('skill'); if (want && $('#round').hidden) { for (const b of bandIds) if (BANDS[b].includes(want)) { if (b !== R.band) { R.band = b; KQ.ladder.setBand(profile.id, W, b); } startRound(want); break; } } }
     document.addEventListener('kq:ladder', () => { R.band = KQ.ladder.band(profile.id, W, bandIds) || R.band; if ($('#round').hidden) renderPick(); });
     document.addEventListener('kq:lang', () => { boot(); if (!$('#round').hidden && !R.egg) { $('#round').hidden = true; if (KQ.ui.peek) KQ.ui.peek(null); $('#pick').hidden = false; } });   // a language switch resets a normal round, never the egg challenge
     KQ.i18n.apply(); boot();
