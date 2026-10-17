@@ -657,7 +657,7 @@ body.rich .kingdom .label:not(.named):not(.hot){width:40px; height:40px; padding
 <script src="shared/heart.js?v=3"></script>
 <script src="shared/fx3d.js?v=9"></script>
 <script src="shared/cast3d.js?v=5"></script>
-<script src="shared/kingdom3d.js?v=82"></script>
+<script src="shared/kingdom3d.js?v=83"></script>
 <script src="shared/rooms3d.js?v=51"></script>
 <script src="shared/ride3d.js?v=30"></script>
 <script src="shared/rocket.js?v=8"></script>
@@ -713,7 +713,7 @@ const REALMS_IDX = {"cloud": [["rg_bakery", "math", "The Cloud Bakery", "מאפ�
     for (const p of profiles.list()) {
       const pr = store.progress(p.id);
       const d = el('div', 'profile' + (active && active.id === p.id ? ' on' : '')); d.appendChild(ui.avatar('div', 'av', p.avatar)); d.appendChild(el('div', 'nm', p.name)); const ht = ui.avatarTitle(p.avatar); if (ht) d.appendChild(el('div', 'ttl', ht[1])); d.appendChild(el('div', 'st', '★ ' + pr.stars + ' · ✨ ' + KQ.elements.held(p.id)));
-      d.onclick = () => { const was = profiles.active(); profiles.setActive(p.id); sfx.play('tap'); renderAll(); if (!was || was.id !== p.id) playIntro(true); };
+      d.onclick = () => { const was = profiles.active(); profiles.setActive(p.id); sfx.play('tap'); renderAll(); if (!was || was.id !== p.id) playIntro(); };
       box.appendChild(d);
     }
     const add = el('div', 'profile add'); add.appendChild(el('div', 'av', '＋')); add.appendChild(el('div', 'nm', t('addPlayer'))); add.onclick = openAdd; box.appendChild(add);
@@ -1177,42 +1177,16 @@ const REALMS_IDX = {"cloud": [["rg_bakery", "math", "The Cloud Bakery", "מאפ�
     sec.appendChild(list); box.appendChild(sec); }
   /* the demon realm is reconciled FIRST and every render step is fenced: one bad step used to leave a stale demon state
      showing the escape sign over a green meadow (Yoni 2026-09-21). If the realm cannot take, the trap is dropped. */
-  /* ---------- the WELCOME FLIGHT (Yoni 2026-10-17): the first thing after sign-up, login or opening the kingdom is not the players page but the
-     elements of the games — letters, numbers, animals, fruit, space, music, chess, time, maps, books — flying in and landing in their own worlds.
-     Painted tiles: the game's own icon sheet, the Gemini animals and fruit (KQMix.art), and letters/numbers/notes drawn in the game font. A tap skips. ---------- */
-  const INTRO = { busy: false, sheet: null };
-  function tileCanvas(draw) { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); draw(x, c); return c; }
-  function tileText(txt, bg1, bg2, fg) { return tileCanvas(x => { const g = x.createLinearGradient(0, 0, 0, 128); g.addColorStop(0, bg1); g.addColorStop(1, bg2); x.fillStyle = g; x.beginPath(); x.roundRect(6, 6, 116, 116, 26); x.fill(); x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 4; x.stroke();
-    x.fillStyle = fg; x.font = '900 72px ' + getComputedStyle(document.body).getPropertyValue('--font-body'); x.textAlign = 'center'; x.textBaseline = 'middle'; x.shadowColor = 'rgba(0,0,0,.35)'; x.shadowBlur = 6; x.shadowOffsetY = 3; x.fillText(txt, 64, 70); }); }
-  function tileArt(key) { const i = KQMix.art.keys.indexOf(key); if (i < 0 || !INTRO.sheet) return null; return tileCanvas(x => { x.beginPath(); x.arc(64, 64, 60, 0, Math.PI * 2); x.fillStyle = '#fff6e4'; x.fill(); x.save(); x.beginPath(); x.arc(64, 64, 57, 0, Math.PI * 2); x.clip(); x.drawImage(INTRO.sheet, (i % 10) * 160, Math.floor(i / 10) * 160, 160, 160, 7, 7, 114, 114); x.restore(); x.strokeStyle = 'rgba(255,255,255,.7)'; x.lineWidth = 4; x.beginPath(); x.arc(64, 64, 59, 0, Math.PI * 2); x.stroke(); }); }
-  async function tileIcon(key) { try { const c = await KQ.iconCanvas(key, 128); const d = c.getContext('2d').getImageData(32, 32, 64, 64).data; let a = 0; for (let i = 3; i < d.length; i += 64) a += d[i]; return a > 2000 ? c : null; } catch (e) { return null; } }   /* a blank canvas (unknown key) is left out */
-  function loadSheet() { return INTRO.sheet ? Promise.resolve(INTRO.sheet) : new Promise(res => { const im = new Image(); im.onload = () => { INTRO.sheet = im; res(im); }; im.onerror = () => res(null); im.src = KQMix.art.url; }); }
-  async function introFlocks() { await loadSheet(); const he = KQ.i18n.lang === 'he', icons = async ks => (await Promise.all(ks.map(tileIcon))).filter(Boolean), arts = ks => ks.map(tileArt).filter(Boolean);
-    const gold = (s) => tileText(s, '#ffe9a6', '#e3a92f', '#3a2408'), sky = (s) => tileText(s, '#bfe8ff', '#4aa3e0', '#0b2a4a'), rose = (s) => tileText(s, '#ffd1ec', '#d8569c', '#3a0a26'), mint = (s) => tileText(s, '#d6ffe3', '#3fbf77', '#0a2e18');
-    return [
-      { world: 'letters', tiles: (he ? ['א', 'ב', 'ג'] : ['A', 'B', 'C']).map(gold) },
-      { world: 'math', tiles: ['1', '2', '3', '+'].map(sky) },
-      { world: 'nature', tiles: arts(['fox', 'owl', 'bunny', 'frog']) },
-      { world: 'market', tiles: arts(['apple', 'strawberry', 'grapes']) },
-      { world: 'gate', tiles: await icons(['rocket', 'moon', 'comet']) },
-      { world: 'music', tiles: [...(await icons(['guitar', 'drum'])), rose('♪'), rose('♫')] },
-      { world: 'chess', tiles: [...(await icons(['w_chess'])), mint('♞')] },
-      { world: 'clock', tiles: await icons(['clock']) },
-      { world: 'explore', tiles: await icons(['globe', 'map']) },
-      { world: 'reading', tiles: [...(await icons(['book'])), gold(he ? 'ספר' : 'ab')] },
-      { world: 'spelling', tiles: (he ? ['ד', 'ה'] : ['D', 'E']).map(gold) },
-      { world: 'memory', tiles: await icons(['dinosaur']) },
-      { world: 'kindness', tiles: await icons(['heart', 'flower']) }
-    ]; }
-  /* the FILM (Yoni 2026-10-17 'do it'): an 8-second Veo clip of the kingdom with the elements floating down, shown full-screen before the flight
-     on the login moments (sign-up done, name + picture login, switching player). The clip lives in shared/intro.js as data (the artifact serves no
+  /* ---------- the WELCOME FILM (Yoni 2026-10-17; the in-engine flight was removed the same evening: 'remove the animation that we made and keep only the new video') ---------- */
+  const INTRO = { busy: false };
+  /* the FILM: an 8-second Veo clip of the kingdom with the elements floating down, shown full-screen after sign-up, after a name + picture
+     login, when switching player, and on opening the kingdom. The clip lives in shared/intro.js as data (the artifact serves no
      loose .mp4 and is at its file cap); it is fetched only when needed, never on page load. A tap or Skip ends it; any failure just starts the flight. */
   function playFilm() { return new Promise(res => { const ov = $('#filmOverlay'), v = $('#filmVideo'); if (!ov || !v || !window.HTMLVideoElement) return res(); let done = false; const end = () => { if (done) return; done = true; ov.classList.add('out'); setTimeout(() => { ov.hidden = true; ov.classList.remove('out'); v.removeAttribute('src'); v.load(); }, 700); res(); };
     const start = () => { if (!window.KQ_INTRO_MP4) return end(); v.src = window.KQ_INTRO_MP4; v.currentTime = 0; v.onended = end; v.onerror = end; ov.hidden = false; const pl = v.play(); if (pl && pl.catch) pl.catch(end); setTimeout(end, 12000); };
     ov.onclick = end; $('#filmSkip').onclick = e => { e.stopPropagation(); end(); };
     if (window.KQ_INTRO_MP4) return start(); const sc = document.createElement('script'); sc.src = 'shared/intro.js?v=1'; sc.onload = start; sc.onerror = end; document.head.appendChild(sc); setTimeout(() => { if (!done && !window.KQ_INTRO_MP4) end(); }, 15000); }); }
-  async function playIntro(withFilm) { if (!k3d || !k3d.intro || INTRO.busy || !IS_MEADOW || KQ.state().demon || !profiles.active()) return; if (withFilm) { INTRO.busy = true; try { await playFilm(); } catch (e) {} INTRO.busy = false; } INTRO.busy = true; document.body.dataset.intro = '1'; const end = () => { INTRO.busy = false; delete document.body.dataset.intro; }; try { openDrawer(false); const flocks = await introFlocks(); if (!k3d.intro(flocks, end, (world, first) => { if (first) sfx.play('tap'); })) end(); } catch (e) { console.error('intro', e); end(); } }
-  $('#kingdom').addEventListener('pointerdown', () => { if (k3d && k3d.introOn && k3d.introOn()) k3d.skipIntro(); }, true);
+  async function playIntro() { if (INTRO.busy || !IS_MEADOW || KQ.state().demon || !profiles.active()) return; INTRO.busy = true; document.body.dataset.intro = '1'; try { openDrawer(false); await playFilm(); } catch (e) {} INTRO.busy = false; delete document.body.dataset.intro; }
   function renderAll() { const safe = (name, f) => { try { f(); } catch (e) { console.error('renderAll:' + name, e); } }; safe('age', ensureAge);
     { let dm = demonState(); safe('realm', () => { if (k3d && !!dm !== k3d.isDemon()) k3d.setRealm(!!dm); }); if (dm && k3d && !k3d.isDemon()) { KQ.state().demon = null; KQ.save(); dm = null; } document.body.classList.toggle('demon', !!dm); if (!dm) document.body.classList.remove('trial'); if (dm && !demonMusic.want) { demonMusic.start(); setTimeout(openTrial, 600); } }
     safe('hud', renderHud); if (!profiles.active()) { showTab('players'); openDrawer(true); } safe('profiles', renderProfiles); safe('castle', renderCastle); safe('chest', renderChest); safe('worlds', renderWorlds); safe('board', renderBoard); safe('recent', renderRecent); safe('rail', renderRail); if (k3d) { const p0 = profiles.active(); k3d.setEggs(p0 ? KQ.eggs.ids.filter(id => KQ.eggs.won(p0.id, id)) : []); /* hatched eggs leave the map */ k3d.setPlayerEggs(KQ.playerEggs.list()); k3d.setWorlds(worldNames()); k3d.setPortals(openIds()); if (k3d.setSignatures) { const ml = KQ.mountain.list(), sig = ml.map(x => x.ts + (x.text || '')).join('|'); if (sig !== renderAll.sig) { renderAll.sig = sig; k3d.setSignatures(ml); } } } }
@@ -1251,12 +1225,12 @@ const REALMS_IDX = {"cloud": [["rg_bakery", "math", "The Cloud Bakery", "מאפ�
   $('#btnHaveKey').onclick = () => { const kb = $('#keyBox'); kb.hidden = !kb.hidden; if (!kb.hidden) $('#keyName').focus(); };
   $('#btnKeyGo').onclick = async () => { const nm = $('#keyName').value.trim(); if (!nm) { $('#keyMsg').textContent = t('pics_needName'); $('#keyName').focus(); return; } if (WIZ.pics2.length !== 1) { $('#keyMsg').textContent = t('pics_need'); return; }
     $('#keyMsg').textContent = t('key_loading'); $('#btnKeyGo').disabled = true; const r = await KQ.cloud.load(KQ.cloud.keyFrom(nm, WIZ.pics2)); $('#btnKeyGo').disabled = false; if (!r.ok) { $('#keyMsg').textContent = t(r.why === 'notfound' ? 'pics_bad' : 'key_err'); return; }
-    profiles.setActive(r.profile.id); $('#addOverlay').hidden = true; sfx.play('star'); ui.toast(t('welcome', { name: r.profile.name })); renderAll(); playIntro(true); };
+    profiles.setActive(r.profile.id); $('#addOverlay').hidden = true; sfx.play('star'); ui.toast(t('welcome', { name: r.profile.name })); renderAll(); playIntro(); };
   $('#keyName').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnKeyGo').click(); });
   $$('#wtabs button').forEach(b => { b.onclick = () => { sfx.play('tap'); wizPane(b.dataset.tab); }; });
   $('#btnWizNext').onclick = () => { const nc = profiles.nameCheck($('#pname').value); if (!MXR.lang) { ui.toast(t('lang_need')); return; } if (!nc.ok) { ui.toast(t(nc.why, { n: nc.name || $('#pname').value.trim() })); $('#pname').focus(); return; } if (MXR.age == null) { ui.toast(t('age_need')); return; } if (WIZ.pics.length !== 1) { ui.toast(t('pics_need')); return; } MXR.name = nc.name; sfx.play('tap'); wizStep(2); };
   $('#btnWizBack').onclick = () => { sfx.play('tap'); wizStep(1); };
-  $('#btnWizDone').onclick = () => { $('#addOverlay').hidden = true; sfx.play('star'); renderAll(); playIntro(true); };
+  $('#btnWizDone').onclick = () => { $('#addOverlay').hidden = true; sfx.play('star'); renderAll(); playIntro(); };
   $('#btnKeyCopy').onclick = () => { const k = $('#bigKey').textContent; const done = () => { $('#btnKeyCopy').textContent = t('key_copied'); }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(k).then(done, () => { const r = document.createRange(); r.selectNodeContents($('#bigKey')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }); else { const r = document.createRange(); r.selectNodeContents($('#bigKey')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } };
   /* ---------- the Menu (the gear, far right): Avatar first, then Parents, then Settings (Yoni 2026-09-29: 'everything to do with the avatars
      in a menu … the first thing should be the avatar selection, not in the pond'). ---------- */
