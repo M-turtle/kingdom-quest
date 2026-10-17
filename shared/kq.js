@@ -25,7 +25,7 @@
   const DEFAULT = { lang: '', profiles: [], activeId: null, settings: { sfx: true, voice: false, music: true }, results: [], skills: {}, inv: {}, active: {} };
   let state = JSON.parse(JSON.stringify(DEFAULT));
   try { const raw = localStorage.getItem(KEY); if (raw) { const o = JSON.parse(raw); state = Object.assign(state, o); state.settings = Object.assign({}, DEFAULT.settings, o.settings || {}); for (const k of ['profiles', 'results']) if (!Array.isArray(state[k])) state[k] = []; for (const k of ['skills', 'inv', 'active']) if (!state[k] || typeof state[k] !== 'object') state[k] = {}; } } catch (e) {}
-  if (!state.lang) state.lang = /^he/i.test(navigator.language || '') ? 'he' : 'en';
+  if (!state.lang) state.lang = 'he';   /* Yoni 2026-10-17: Hebrew first, unless changed to English */
   /* Yoni 2026-10-17: every player picks a language at sign-up and the whole interface stays in it, on every page, until they change it in
      Settings. The active player's language wins over the device's; a player made before this keeps the language they were using. */
   { const ap = state.profiles.find(p => p.id === state.activeId) || state.profiles[0]; if (ap) { if (ap.lang !== 'he' && ap.lang !== 'en') ap.lang = state.lang; state.lang = ap.lang; } }
@@ -83,7 +83,7 @@
     }
   };
   const i18n = {
-    langs: [{ id: 'en', name: 'English', dir: 'ltr' }, { id: 'he', name: 'עברית', dir: 'rtl' }],
+    langs: [{ id: 'he', name: 'עברית', dir: 'rtl' }, { id: 'en', name: 'English', dir: 'ltr' }],
     get lang() { return state.lang; },
     extend(more) { for (const l in more) dict[l] = Object.assign(dict[l] || {}, more[l]); },
     t(key, vars) { let s = (dict[state.lang] || dict.en)[key]; if (s == null) s = dict.en[key] != null ? dict.en[key] : key; if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]); return s; },
@@ -976,9 +976,9 @@
   function cloudKey() { const a = new Uint8Array(12); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach((_, i) => { a[i] = Math.floor(Math.random() * 256); }); let k = ''; for (let i = 0; i < 12; i++) { k += KEY_CHARS[a[i] % KEY_CHARS.length]; if (i === 3 || i === 7) k += '-'; } return k; }
   const KEY_RE = /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
   const PER_PLAYER = ['skills', 'ladder', 'ladderLog', 'growth', 'inv', 'active', 'avatars', 'heart', 'eggs', 'qseen', 'scrolls', 'journal'];
-  /* Yoni 2026-10-17: 'no kid will remember that, we need something simple' — the key is DERIVED from the child's name and three
-     secret pictures tapped in order, so the same name + pictures on any device rebuild the same key. 12 pictures, order matters:
-     1,728 sequences per name. Two children with the same name AND the same three pictures would share one save; the parents' key
+  /* Yoni 2026-10-17: 'no kid will remember that, we need something simple' — the key is DERIVED from the child's name (first name + family initial)
+     and ONE secret picture, so the same name + picture on any device rebuild the same key (Yoni: 'a child name, first letter of family name
+     and a pic is enough'). 12 pictures: two children with the same name AND the same picture would share one save; the parents' key
      in the Parents tab stays as the exact fallback. The name is folded: letters only, lower-case, so "Noa E." and "noa e" match. */
   const SECRET_PICS = ['apple', 'banana', 'bear', 'bee', 'star', 'heart', 'fish', 'car', 'tree', 'house', 'sun', 'moon'];
   const foldName = n => String(n || '').toLowerCase().replace(/[^\p{L}]/gu, '');
@@ -1003,16 +1003,19 @@
         try { if (d.chess) { const C = JSON.parse(localStorage.getItem('castle-chess-skill') || '{}'); C[pid] = d.chess.skill; C['#' + pid] = d.chess.games; localStorage.setItem('castle-chess-skill', JSON.stringify(C)); } } catch (e) {}
         const p = profiles.get(pid); p.synced = d.ts || Date.now(); save(); } finally { cloud.quiet = false; }
       return profiles.get(pid); },
-    async push(pid) { const key = cloud.keyOf(pid), d = cloud.slice(pid); if (!key || !d || !navigator.onLine) return false;
+    _last: {}, ready: false,
+    /* nothing goes up before this page's first pull has finished (or failed), and nothing goes up if it is identical to the last save:
+       a stale copy must never overwrite a newer one made elsewhere */
+    async push(pid) { if (!cloud.ready) { clearTimeout(cloud._t); cloud._t = setTimeout(() => cloud.push(pid), 1500); return false; } const key = cloud.keyOf(pid), d = cloud.slice(pid); if (!key || !d || !navigator.onLine) return false; const sig = JSON.stringify(Object.assign({}, d, { ts: 0 })); if (cloud._last[pid] === sig) return false; cloud._last[pid] = sig;
       try { const r = await fetch(cloud.url() + '/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, data: d }) }); if (!r.ok) return false; const p = profiles.get(pid); if (p) { p.synced = d.ts; cloud.quiet = true; try { save(); } finally { cloud.quiet = false; } } return true; } catch (e) { return false; } },
     async load(key) { key = cloud.tidy(key); if (!cloud.valid(key) || !navigator.onLine) return { ok: false, why: 'offline' };
       try { const r = await fetch(cloud.url() + '/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) }); if (r.status === 404) return { ok: false, why: 'notfound' }; if (!r.ok) return { ok: false, why: 'error' }; const j = await r.json(); const p = cloud.apply(j.data); if (!p) return { ok: false, why: 'error' }; p.key = key; save(); return { ok: true, profile: p }; } catch (e) { return { ok: false, why: 'error' }; } },
     /* on every page open: a player saved more recently somewhere else is refreshed here */
-    async refresh() { if (!navigator.onLine) return; for (const p of profiles.list()) { if (!p.key) continue; try { const r = await fetch(cloud.url() + '/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: p.key }) }); if (!r.ok) continue; const j = await r.json(); if (j.data && (j.data.ts || 0) > (p.synced || 0)) { cloud.apply(j.data); document.dispatchEvent(new CustomEvent('kq:cloud', { detail: { id: p.id } })); } } catch (e) {} } },
+    async refresh() { try { if (!navigator.onLine) return; for (const p of profiles.list()) { if (!p.key) continue; try { const r = await fetch(cloud.url() + '/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: p.key }) }); if (!r.ok) continue; const j = await r.json(); if (j.data && (j.data.ts || 0) > (p.synced || 0)) { cloud.apply(j.data); cloud._last[p.id] = JSON.stringify(Object.assign({}, cloud.slice(p.id), { ts: 0 })); document.dispatchEvent(new CustomEvent('kq:cloud', { detail: { id: p.id } })); } else if (j.data) cloud._last[p.id] = JSON.stringify(Object.assign({}, cloud.slice(p.id), { ts: 0 })); } catch (e) {} } } finally { cloud.ready = true; } },
     _t: null, quiet: false,
     /* a few seconds after any change, the active player's slice goes up */
     schedule() { if (cloud.quiet) return; const p = profiles.active(); if (!p) return; clearTimeout(cloud._t); cloud._t = setTimeout(() => cloud.push(p.id), 3000); }
   };
-  setTimeout(() => { try { cloud.refresh(); } catch (e) {} }, 1200);
+  setTimeout(() => { try { cloud.refresh(); } catch (e) { cloud.ready = true; } }, 300);
   window.KQ = { state: () => state, save, i18n, t, quiet, profiles, store, forge, elements, parent, ladder, realm, growth, bridge, eggs, playerEggs, rotate, praise, score, skills, journal, intro, tickets, mountain, sfx, speak, cloud, ui: { el, svgEl, crownSvg, starsEl, ringEl, toast, peek, switcher, header, report, vis, howto, potionBar, itemName, potionName, celebrate, burst, avatar, avatarTitle, ladder: ladderUi, progress: roundProgress }, tts, tagLabel, requireProfile, AVATARS, WORLDS, POTIONS, ITEMS, dayKey };
 })();
