@@ -170,7 +170,7 @@ input[type=range]{accent-color:var(--accent)}
 .choice{font:800 clamp(22px,4vw,30px) var(--font-body); padding:18px 12px; min-height:72px; border-radius:14px; background:linear-gradient(180deg,#fffdf6,var(--paper-2)); border:3px solid var(--line); color:var(--ink); cursor:pointer; transition:transform .08s}
 .choice:active{transform:scale(.97)}
 .choice.ok{background:#d9f2df; border-color:var(--ok)} .choice.bad{background:#f8d7d7; border-color:var(--bad)} .choice.dim{opacity:.5}
-.numpad{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:360px; margin:12px auto 0}
+.numpad{direction:ltr; display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:360px; margin:12px auto 0}   /* Yoni 2026-10-18: a number pad reads 1 2 3 in Hebrew too */
 .numpad button.act{font-size:22px}
 .numpad button{font:800 26px var(--font-body); padding:14px; min-height:60px; border-radius:12px; background:var(--paper-2); border:3px solid var(--line); cursor:pointer}
 .numpad button.act{background:var(--paper-3)} .numpad button.go{background:linear-gradient(180deg,var(--gold-3),var(--gold-2)); border-color:#7d6014}
