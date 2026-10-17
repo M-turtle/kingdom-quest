@@ -29,7 +29,7 @@
   /* Yoni 2026-10-17: every player picks a language at sign-up and the whole interface stays in it, on every page, until they change it in
      Settings. The active player's language wins over the device's; a player made before this keeps the language they were using. */
   { const ap = state.profiles.find(p => p.id === state.activeId) || state.profiles[0]; if (ap) { if (ap.lang !== 'he' && ap.lang !== 'en') ap.lang = state.lang; state.lang = ap.lang; } }
-  const save = () => { for (let k = 0; k < 4; k++) { try { localStorage.setItem(KEY, JSON.stringify(state)); return; } catch (e) { if (!state.results || state.results.length < 50) return; state.results = state.results.slice(Math.floor(state.results.length / 3)); } } };   /* a full storage used to drop every save in silence: now the oldest third of the round history goes first, never the progress */
+  const save = () => { try { if (window.KQ && KQ.cloud) KQ.cloud.schedule(); } catch (e) {} for (let k = 0; k < 4; k++) { try { localStorage.setItem(KEY, JSON.stringify(state)); return; } catch (e) { if (!state.results || state.results.length < 50) return; state.results = state.results.slice(Math.floor(state.results.length / 3)); } } };   /* a full storage used to drop every save in silence: now the oldest third of the round history goes first, never the progress */
 
   // ---------- i18n (Hebrew: everyday, plural/neutral forms — never assume the player's gender) ----------
   const dict = {
@@ -106,7 +106,7 @@
     get(id) { return state.profiles.find(p => p.id === id) || null; },
     active() { return profiles.get(state.activeId) || state.profiles[0] || null; },
     setActive(id) { state.activeId = id; const p = profiles.get(id); if (p && (p.lang === 'he' || p.lang === 'en') && p.lang !== state.lang) { state.lang = p.lang; save(); i18n.apply(); } else save(); document.dispatchEvent(new CustomEvent('kq:profile', { detail: { id } })); },   /* switching players switches the language with them */
-    add(p) { const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); const prof = { id, lang: p.lang === 'he' || p.lang === 'en' ? p.lang : state.lang, age: p.age == null ? null : +p.age, name: (p.name || '').trim().slice(0, 18) || t('player'), avatar: AVATARS.includes(p.avatar) || /^[cf]:/.test(p.avatar || '') ? p.avatar : AVATARS[state.profiles.length % AVATARS.length], created: Date.now(), main: (p.lang === 'he' || p.lang === 'en' ? p.lang : state.lang) === 'he' ? 'he' : 'en' }; state.profiles.push(prof); state.activeId = id; save(); return prof; },
+    add(p) { const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); const prof = { id, key: p.key || cloudKey(), lang: p.lang === 'he' || p.lang === 'en' ? p.lang : state.lang, age: p.age == null ? null : +p.age, name: (p.name || '').trim().slice(0, 18) || t('player'), avatar: AVATARS.includes(p.avatar) || /^[cf]:/.test(p.avatar || '') ? p.avatar : AVATARS[state.profiles.length % AVATARS.length], created: Date.now(), main: (p.lang === 'he' || p.lang === 'en' ? p.lang : state.lang) === 'he' ? 'he' : 'en' }; state.profiles.push(prof); state.activeId = id; save(); return prof; },
     update(id, patch) { const p = profiles.get(id); if (!p) return; Object.assign(p, patch); save(); },
     /* Yoni 2026-10-07: a player is a first name and the first letter of the last name ('Noa E.', 'נועה א׳'), and a name belongs to one
        player only. Returns { ok, name } (the tidy form) or { ok: false, why: 'nm_format' | 'nm_taken' } */
@@ -966,5 +966,44 @@
     en: { earnedEl: 'Elements found', foundPotion: 'You found a potion: {name}!', pt_el: '+{n} {name}', el_fire: 'Fire', el_water: 'Water', el_earth: 'Earth', el_wind: 'Wind', el_light: 'Light', el_frost: 'Frost' },
     he: { earnedEl: 'יסודות שנמצאו', foundPotion: 'מצאתם שיקוי: {name}!', pt_el: '+{n} {name}', el_fire: 'אש', el_water: 'מים', el_earth: 'אדמה', el_wind: 'רוח', el_light: 'אור', el_frost: 'כפור' }
   });
-  window.KQ = { state: () => state, save, i18n, t, quiet, profiles, store, forge, elements, parent, ladder, realm, growth, bridge, eggs, playerEggs, rotate, praise, score, skills, journal, intro, tickets, mountain, sfx, speak, ui: { el, svgEl, crownSvg, starsEl, ringEl, toast, peek, switcher, header, report, vis, howto, potionBar, itemName, potionName, celebrate, burst, avatar, avatarTitle, ladder: ladderUi, progress: roundProgress }, tts, tagLabel, requireProfile, AVATARS, WORLDS, POTIONS, ITEMS, dayKey };
+
+  // ---------- Kingdom keys + cloud saves (Yoni 2026-10-17: 'save progress by user, not only by device') ----------
+  /* Every player has a Kingdom key (XXXX-XXXX-XXXX). Their whole slice of the state is pushed to the relay a few seconds after any
+     change, under that key, and pulled back on any device where the key is typed in. The key is the only secret: whoever has it can
+     load that player (first name + initial, age, game progress — nothing more). Last save wins; two devices playing the same player at
+     the same moment would overwrite each other. The relay keeps the table (kq_saves) private; only its own routes read it. */
+  const KEY_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  function cloudKey() { const a = new Uint8Array(12); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach((_, i) => { a[i] = Math.floor(Math.random() * 256); }); let k = ''; for (let i = 0; i < 12; i++) { k += KEY_CHARS[a[i] % KEY_CHARS.length]; if (i === 3 || i === 7) k += '-'; } return k; }
+  const KEY_RE = /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
+  const PER_PLAYER = ['skills', 'ladder', 'ladderLog', 'growth', 'inv', 'active', 'avatars', 'heart', 'eggs', 'qseen', 'scrolls', 'journal'];
+  const cloud = {
+    url() { return (window.KQ_TTS_ENDPOINT || DEFAULT_RELAY).replace(/\/$/, ''); },
+    keyOf(pid) { const p = profiles.get(pid); if (!p) return null; if (!p.key) { p.key = cloudKey(); save(); } return p.key; },
+    tidy(k) { return String(k || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^(.{4})(.{4})(.{4})$/, '$1-$2-$3'); },
+    valid(k) { return KEY_RE.test(k); },
+    slice(pid) { const p = profiles.get(pid); if (!p) return null; const d = { v: 1, ts: Date.now(), profile: JSON.parse(JSON.stringify(p)), results: state.results.filter(r => r.pid === pid) };
+      for (const k of PER_PLAYER) if (state[k] && state[k][pid] !== undefined) d[k] = state[k][pid];
+      try { const L = localStorage.getItem('kq-letters:' + pid); if (L) d.letters = JSON.parse(L); } catch (e) {}
+      try { const C = JSON.parse(localStorage.getItem('castle-chess-skill') || '{}'); if (C && C[pid] != null) d.chess = { skill: C[pid], games: C['#' + pid] || 0 }; } catch (e) {}
+      return d; },
+    apply(d) { if (!d || !d.profile || !d.profile.id) return null; const pid = d.profile.id; cloud.quiet = true;
+      try { const old = profiles.get(pid); if (old) Object.assign(old, d.profile); else state.profiles.push(d.profile);
+        state.results = state.results.filter(r => r.pid !== pid).concat(Array.isArray(d.results) ? d.results : []);
+        for (const k of PER_PLAYER) if (d[k] !== undefined) { state[k] = state[k] || {}; state[k][pid] = d[k]; }
+        try { if (d.letters) localStorage.setItem('kq-letters:' + pid, JSON.stringify(d.letters)); } catch (e) {}
+        try { if (d.chess) { const C = JSON.parse(localStorage.getItem('castle-chess-skill') || '{}'); C[pid] = d.chess.skill; C['#' + pid] = d.chess.games; localStorage.setItem('castle-chess-skill', JSON.stringify(C)); } } catch (e) {}
+        const p = profiles.get(pid); p.synced = d.ts || Date.now(); save(); } finally { cloud.quiet = false; }
+      return profiles.get(pid); },
+    async push(pid) { const key = cloud.keyOf(pid), d = cloud.slice(pid); if (!key || !d || !navigator.onLine) return false;
+      try { const r = await fetch(cloud.url() + '/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, data: d }) }); if (!r.ok) return false; const p = profiles.get(pid); if (p) { p.synced = d.ts; cloud.quiet = true; try { save(); } finally { cloud.quiet = false; } } return true; } catch (e) { return false; } },
+    async load(key) { key = cloud.tidy(key); if (!cloud.valid(key) || !navigator.onLine) return { ok: false, why: 'offline' };
+      try { const r = await fetch(cloud.url() + '/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) }); if (r.status === 404) return { ok: false, why: 'notfound' }; if (!r.ok) return { ok: false, why: 'error' }; const j = await r.json(); const p = cloud.apply(j.data); if (!p) return { ok: false, why: 'error' }; p.key = key; save(); return { ok: true, profile: p }; } catch (e) { return { ok: false, why: 'error' }; } },
+    /* on every page open: a player saved more recently somewhere else is refreshed here */
+    async refresh() { if (!navigator.onLine) return; for (const p of profiles.list()) { if (!p.key) continue; try { const r = await fetch(cloud.url() + '/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: p.key }) }); if (!r.ok) continue; const j = await r.json(); if (j.data && (j.data.ts || 0) > (p.synced || 0)) { cloud.apply(j.data); document.dispatchEvent(new CustomEvent('kq:cloud', { detail: { id: p.id } })); } } catch (e) {} } },
+    _t: null, quiet: false,
+    /* a few seconds after any change, the active player's slice goes up */
+    schedule() { if (cloud.quiet) return; const p = profiles.active(); if (!p) return; clearTimeout(cloud._t); cloud._t = setTimeout(() => cloud.push(p.id), 3000); }
+  };
+  setTimeout(() => { try { cloud.refresh(); } catch (e) {} }, 1200);
+  window.KQ = { state: () => state, save, i18n, t, quiet, profiles, store, forge, elements, parent, ladder, realm, growth, bridge, eggs, playerEggs, rotate, praise, score, skills, journal, intro, tickets, mountain, sfx, speak, cloud, ui: { el, svgEl, crownSvg, starsEl, ringEl, toast, peek, switcher, header, report, vis, howto, potionBar, itemName, potionName, celebrate, burst, avatar, avatarTitle, ladder: ladderUi, progress: roundProgress }, tts, tagLabel, requireProfile, AVATARS, WORLDS, POTIONS, ITEMS, dayKey };
 })();
