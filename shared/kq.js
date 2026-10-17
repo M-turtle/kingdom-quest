@@ -975,7 +975,7 @@
   const KEY_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
   function cloudKey() { const a = new Uint8Array(12); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach((_, i) => { a[i] = Math.floor(Math.random() * 256); }); let k = ''; for (let i = 0; i < 12; i++) { k += KEY_CHARS[a[i] % KEY_CHARS.length]; if (i === 3 || i === 7) k += '-'; } return k; }
   const KEY_RE = /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
-  const PER_PLAYER = ['skills', 'ladder', 'ladderLog', 'growth', 'inv', 'active', 'avatars', 'heart', 'eggs', 'qseen', 'scrolls', 'journal'];
+  const PER_PLAYER = ['skills', 'ladder', 'ladderLog', 'growth', 'inv', 'active', 'avatars', 'heart', 'eggs', 'qseen', 'scrolls', 'journal', 'music', 'art', 'studio'];   /* Yoni 2026-10-17: everything a child keeps — songs, paintings, the doll studio's progress — travels with the player too */
   /* Yoni 2026-10-17: 'no kid will remember that, we need something simple' — the key is DERIVED from the child's name (first name + family initial)
      and ONE secret picture, so the same name + picture on any device rebuild the same key (Yoni: 'a child name, first letter of family name
      and a pic is enough'). 12 pictures: two children with the same name AND the same picture would share one save; the parents' key
@@ -992,6 +992,7 @@
     valid(k) { return KEY_RE.test(k); },
     slice(pid) { const p = profiles.get(pid); if (!p) return null; const d = { v: 1, ts: Date.now(), profile: JSON.parse(JSON.stringify(p)), results: state.results.filter(r => r.pid === pid) };
       for (const k of PER_PLAYER) if (state[k] && state[k][pid] !== undefined) d[k] = state[k][pid];
+      /* the shared lists, this child's part: the eggs they hid and their marks on Mount Glory */ d.playerEggs = (state.playerEggs || []).filter(e => e.by === pid); d.mountain = (state.mountain || []).filter(m => m.pid === pid);
       try { const L = localStorage.getItem('kq-letters:' + pid); if (L) d.letters = JSON.parse(L); } catch (e) {}
       try { const C = JSON.parse(localStorage.getItem('castle-chess-skill') || '{}'); if (C && C[pid] != null) d.chess = { skill: C[pid], games: C['#' + pid] || 0 }; } catch (e) {}
       return d; },
@@ -999,6 +1000,7 @@
       try { const old = profiles.get(pid); if (old) Object.assign(old, d.profile); else state.profiles.push(d.profile);
         state.results = state.results.filter(r => r.pid !== pid).concat(Array.isArray(d.results) ? d.results : []);
         for (const k of PER_PLAYER) if (d[k] !== undefined) { state[k] = state[k] || {}; state[k][pid] = d[k]; }
+        if (Array.isArray(d.playerEggs)) state.playerEggs = (state.playerEggs || []).filter(e => e.by !== pid).concat(d.playerEggs); if (Array.isArray(d.mountain)) state.mountain = (state.mountain || []).filter(m => m.pid !== pid).concat(d.mountain).sort((a, b) => (a.ts || 0) - (b.ts || 0));
         try { if (d.letters) localStorage.setItem('kq-letters:' + pid, JSON.stringify(d.letters)); } catch (e) {}
         try { if (d.chess) { const C = JSON.parse(localStorage.getItem('castle-chess-skill') || '{}'); C[pid] = d.chess.skill; C['#' + pid] = d.chess.games; localStorage.setItem('castle-chess-skill', JSON.stringify(C)); } } catch (e) {}
         const p = profiles.get(pid); p.synced = d.ts || Date.now(); save(); } finally { cloud.quiet = false; }
