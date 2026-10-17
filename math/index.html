@@ -6,7 +6,7 @@
 <title>Math Tower</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
-<link rel="stylesheet" href="../shared/kq.css?v=25">
+<link rel="stylesheet" href="../shared/kq.css?v=26">
 <style>
 :root{ --accent:#2b5fa8; --accent-2:#1a3c6e; }
 .bands{display:grid; grid-template-columns:repeat(4,1fr); gap:10px}
@@ -54,7 +54,7 @@
 <script src="../shared/avatars.js?v=10"></script>
 <script src="../shared/words.js?v=2"></script>
 <script>window.KQ_PERSONA = 'daddy';</script>   <!-- Hebrew here is read by daddy (Calm man C); Word Garden and the rest by mommy -->
-<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/kq.js?v=65"></script>
 <script src="../shared/icons.js?v=3"></script>
 <script src="../shared/flora.js?v=1"></script>
 <script src="../shared/heart.js?v=3"></script>
@@ -263,7 +263,8 @@
   function renderPick() {
     KQ.ui.potionBar($('#potions'));
     const bb = $('#bands'); bb.replaceChildren();
-    for (const b of [1, 2, 3, 4, 5, 6]) { const d = el('div', 'tile' + (R.band === b ? ' on' : '')); d.appendChild(el('div', 'e', ['🛡️', '⚔️', '🐴', '👑', '🏰', '🌟'][b - 1])); d.appendChild(el('div', 'n', t('band' + b))); if (KQ.ladder.get(profile.id, 'math', b).complete) d.appendChild(el('span', 'done', '✅')); d.onclick = () => { R.band = b; KQ.ladder.setBand(profile.id, 'math', b); sfx.play('tap'); renderPick(); }; bb.appendChild(d); }
+    R.band = KQ.ladder.band(profile.id, 'math', [1, 2, 3, 4, 5, 6]) || R.band;   /* Yoni 2026-10-17: no age picker — the ladder places the child and moves them both ways */
+    bb.appendChild(el('div', 'bandnow', t('band' + R.band)));
     { const lad = KQ.ladder.get(profile.id, 'math', R.band); ui.ladder(bb, Object.assign({ steps: KQ.ladder.steps, nextName: R.band < 6 ? t('band' + (R.band + 1)) : '' }, lad)); }
     const sk = $('#skills'); sk.replaceChildren();
     const weak = KQ.skills.weak(profile.id, 'math', 4).map(w => w.key);

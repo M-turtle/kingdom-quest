@@ -6,7 +6,7 @@
 <title>Word Garden</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
-<link rel="stylesheet" href="../shared/kq.css?v=25">
+<link rel="stylesheet" href="../shared/kq.css?v=26">
 <style>
 :root{ --accent:#2f7a3f; --accent-2:#1a4a24; }
 .bands{display:grid; grid-template-columns:repeat(3,1fr); gap:10px}
@@ -57,7 +57,7 @@
 <script src="../shared/voices/lines.js?v=11"></script>
 <script src="../shared/words.js?v=2"></script>
 <script src="../shared/avatars.js?v=10"></script>
-<script src="../shared/kq.js?v=64"></script>
+<script src="../shared/kq.js?v=65"></script>
 <script src="../shared/icons.js?v=3"></script>
 <script src="../shared/flora.js?v=1"></script>
 <script src="../shared/heart.js?v=3"></script>
@@ -68,12 +68,12 @@
   const $ = s => document.querySelector(s);
   const profile = KQ.requireProfile('../index.html'); if (!profile) return;
   KQ.i18n.extend({
-    en: { r_title: 'Word Garden', r_sub: 'Letters, words, stories', r_skill: 'Choose a game', rb1: 'Sprout (4–5)', rb2: 'Bud (6–7)', rb3: 'Bloom (8–10)', r_answered: '{n} answered',
+    en: { r_title: 'Word Garden', r_sub: 'Letters, words, stories', r_skill: 'Choose a game', rb1: 'Sprout', rb2: 'Bud', rb3: 'Bloom', r_answered: '{n} answered',
       s_focus: 'Practice the tricky bits', s_findLetter: 'Find the letter', s_caseMatch: 'Big & small letters', s_firstLetter: 'First letter', s_pickWord: 'Pick the word', s_buildWord: 'Build the word', s_listenPick: 'Listen & find', s_sentence: 'Read & answer', s_fillBlank: 'Fill the blank',
       q_findLetter: 'Which letter is this?', q_caseMatch: 'Find the small letter for', q_firstLetter: 'Which letter starts the word?', q_pickWord: 'Which word is it?', q_buildWord: 'Tap the letters in order', q_listenPick: 'Listen. Which picture is it?', q_fillBlank: 'Which word fits?', clear: 'Clear',
       k_word: 'The word', k_sounds: 'Sound it out', k_rhymes: 'Rhymes with', k_letter: 'The letter', k_like: '{L} like in', k_root: 'The root (shoresh)', k_family: 'Word family', k_answer: 'The answer', k_because: 'Look in the story', r_focusHint: 'Extra practice on: {tags}',
       s_spell: 'Spell it', s_story: 'Story time', s_synonym: 'Same meaning', s_antonym: 'Opposites', s_grammar: 'Word forms', s_root: 'Word parts', s_homophone: 'Sounds alike', q_spell: 'Read the clue and spell the word', q_synonym: 'Which word means the same as "{w}"?', q_antonym: 'What is the opposite of "{w}"?', q_grammar: 'Which form fits?', q_root: 'What is the root?', q_homophone: 'Which spelling is right here?', k_rule: 'The rule', k_same: '{a} and {b} mean the same', k_opp: 'The opposite of {a} is {b}', k_example: 'For example' },
-    he: { r_title: 'גן המילים', r_sub: 'אותיות, מילים, סיפורים', r_skill: 'בחרו משחק', rb1: 'נבט (4–5)', rb2: 'ניצן (6–7)', rb3: 'פריחה (8–10)', r_answered: '{n} תשובות',
+    he: { r_title: 'גן המילים', r_sub: 'אותיות, מילים, סיפורים', r_skill: 'בחרו משחק', rb1: 'נבט', rb2: 'ניצן', rb3: 'פריחה', r_answered: '{n} תשובות',
       s_focus: 'תרגול של מה שקשה', s_findLetter: 'מוצאים את האות', s_caseMatch: 'אותיות סופיות', s_firstLetter: 'האות הראשונה', s_pickWord: 'בוחרים את המילה', s_buildWord: 'בונים את המילה', s_listenPick: 'מקשיבים ומוצאים', s_sentence: 'קוראים ועונים', s_fillBlank: 'משלימים את החסר',
       q_findLetter: 'איזו אות זו?', q_caseMatch: 'מה האות הסופית של', q_firstLetter: 'באיזו אות מתחילה המילה?', q_pickWord: 'איזו מילה זו?', q_buildWord: 'לוחצים על האותיות לפי הסדר', q_listenPick: 'מקשיבים. איזו תמונה זו?', q_fillBlank: 'איזו מילה מתאימה?', clear: 'ניקוי',
       k_word: 'המילה', k_sounds: 'מפרקים לצלילים', k_rhymes: 'מתחרז עם', k_letter: 'האות', k_like: '{L} כמו במילה', k_root: 'השורש', k_family: 'מילים מאותה משפחה', k_answer: 'התשובה', k_because: 'מחפשים בסיפור', r_focusHint: 'תרגול נוסף של: {tags}',
@@ -154,7 +154,8 @@
   function renderPick() {
     KQ.ui.potionBar($('#potions'));
     const bb = $('#bands'); bb.replaceChildren();
-    for (const b of [1, 2, 3]) { const d = el('div', 'tile' + (R.band === b ? ' on' : '')); d.appendChild(el('div', 'e', ['🌱', '🌷', '🌸'][b - 1])); d.appendChild(el('div', 'n', t('rb' + b))); if (KQ.ladder.get(profile.id, 'reading', b).complete) d.appendChild(el('span', 'done', '✅')); d.onclick = () => { R.band = b; KQ.ladder.setBand(profile.id, 'reading', b); sfx.play('tap'); renderPick(); }; bb.appendChild(d); }
+    R.band = KQ.ladder.band(profile.id, 'reading', [1, 2, 3]) || R.band;   /* Yoni 2026-10-17: no age picker — the ladder places the child and moves them both ways */
+    bb.appendChild(el('div', 'bandnow', t('rb' + R.band)));
     { const lad = KQ.ladder.get(profile.id, 'reading', R.band); ui.ladder(bb, Object.assign({ steps: KQ.ladder.steps, nextName: R.band < 3 ? t('rb' + (R.band + 1)) : '' }, lad)); }
     const sk = $('#skills'); sk.replaceChildren();
     const weak = KQ.skills.weak(profile.id, 'reading', 5).map(w => w.key).filter(k => k.length <= 1 || k.startsWith('w:'));

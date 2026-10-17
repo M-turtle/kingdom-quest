@@ -20,7 +20,8 @@
     function renderPick() {
       KQ.ui.potionBar($('#potions'));
       const bb = $('#bands'); bb.replaceChildren();
-      bandIds.forEach((b, i) => { const d = el('div', 'tile' + (R.band === b ? ' on' : '')); d.appendChild(el('div', 'e', (cfg.bandIcons && cfg.bandIcons[i]) || ['🛡️', '⚔️', '🐴', '👑', '🏰', '🌟'][i] || '🌟'));   /* every age band shows its rank emblem, the same six as Math Tower */ d.appendChild(el('div', 'n', t(cfg.bandKey ? cfg.bandKey + b : 'band' + b))); if (KQ.ladder.get(profile.id, W, b).complete) d.appendChild(el('span', 'done', '✅')); d.onclick = () => { R.band = b; KQ.ladder.setBand(profile.id, W, b); sfx.play('tap'); renderPick(); }; bb.appendChild(d); });
+      R.band = KQ.ladder.band(profile.id, W, bandIds) || R.band;   /* Yoni 2026-10-17: no age picker — the ladder places the child and moves them both ways */
+      bb.appendChild(el('div', 'bandnow', t(cfg.bandKey ? cfg.bandKey + R.band : 'band' + R.band)));
       const lad = KQ.ladder.get(profile.id, W, R.band), nb = bandIds[bandIds.indexOf(R.band) + 1]; ui.ladder(bb, Object.assign({ steps: KQ.ladder.steps, nextName: nb ? t(cfg.bandKey ? cfg.bandKey + nb : 'band' + nb) : '' }, lad));
       const sk = $('#skills'); sk.replaceChildren();
       const weak = KQ.skills.weak(profile.id, W, 4).map(w => w.key);

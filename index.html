@@ -6,7 +6,7 @@
 <title>Kingdom Quest</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Rubik:wght@500;700;900&family=Secular+One&display=swap">
-<link rel="stylesheet" href="shared/kq.css?v=25">
+<link rel="stylesheet" href="shared/kq.css?v=26">
 <style>
 /* the meadow IS the app: full screen. Everything else lives in the Keep, a drawer that slides in from the side. */
 html,body{height:100%; overflow:hidden}
@@ -306,6 +306,7 @@ body.rich .kingdom .label:not(.named):not(.hot){width:40px; height:40px; padding
 .tline.est .tn{opacity:.75} .tline .tr{flex-wrap:wrap; justify-content:flex-end; text-align:end}
 .paname{display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:10px 0 4px; font-weight:800} .paname input{flex:1 1 160px; font:700 16px var(--font-body); padding:8px 10px; border-radius:10px; background:#241d33; color:var(--ink); border:1px solid var(--edge-2)} .pawarn{color:#ffb3bb; font-weight:800}
 /* the parents' report in school terms: the class picker, topic lines with a status chip, the ⓘ 'where in the game' reference, subject details */
+.agerow{display:flex; flex-wrap:wrap; gap:6px; margin-top:6px} .agerow button{min-width:46px; min-height:46px; padding:0 10px; border-radius:12px; border:1.5px solid var(--edge-2); background:#241d33; color:var(--ink); font:800 17px var(--font-body); cursor:pointer} .agerow button.on{background:var(--gold); color:#1a1408; border-color:var(--gold)}
 .pagrade{display:flex; align-items:center; gap:10px; margin:12px 0; font-weight:800}
 .pagrade select{font:700 15px var(--font-body); padding:8px 10px; border-radius:10px; background:#241d33; color:var(--ink); border:1px solid var(--edge-2)}
 .iref{display:inline-grid; place-items:center; width:18px; height:18px; margin-inline-start:6px; padding:0; border-radius:50%; border:1px solid var(--edge-2); background:transparent; color:var(--muted); font:italic 700 11px/1 Georgia, serif; cursor:pointer; vertical-align:middle}
@@ -562,11 +563,19 @@ body.rich .kingdom .label:not(.named):not(.hot){width:40px; height:40px; padding
     <div class="btns" style="display:flex; gap:10px; justify-content:center; margin-top:14px"><button class="btn crimson" id="eggGo" data-i18n="eggGo">Take the challenge</button><button class="btn ghost" id="eggClose" data-i18n="cancel">Cancel</button></div>
   </div>
 </div>
+<div class="overlay" id="ageOverlay" hidden>
+  <div class="scroll" role="dialog" aria-modal="true">
+    <h2 id="ageTitle"></h2>
+    <p class="muted" data-i18n="age_why">Every player tells us their age once. The games start at the right level and then follow how you play.</p>
+    <div class="agerow" id="ageRow2" role="group"></div>
+  </div>
+</div>
 <div class="overlay" id="addOverlay" hidden>
   <div class="scroll">
     <h2 data-i18n="addPlayer">Add a player</h2>
     <div class="formrow">
       <div class="field"><label for="pname" data-i18n="nm_label">First name and the first letter of the last name</label><input type="text" id="pname" maxlength="18" data-i18n-ph="nm_ph"></div>
+      <div class="field"><label data-i18n="age_label">How old are you?</label><div class="agerow" id="ageRow" role="group"></div></div>
       <div class="field"><label data-i18n="mx_title">Make your avatar: pick an animal and a fruit</label>
         <div class="mxpick"><div class="mxrow" id="mxA"></div><div class="mx-x">×</div><div class="mxrow" id="mxB"></div></div>
         <div class="mixer" id="mixer"><div class="mixres" id="mixRes"><span class="q">?</span></div></div>
@@ -601,7 +610,7 @@ body.rich .kingdom .label:not(.named):not(.hot){width:40px; height:40px; padding
 <script src="shared/avatars.js?v=10"></script>
 <script src="shared/mixes.js?v=1"></script>
 <script src="shared/curriculum.js?v=8"></script>
-<script src="shared/kq.js?v=64"></script>
+<script src="shared/kq.js?v=65"></script>
 <script src="shared/icons.js?v=3"></script>
 <script src="shared/flora.js?v=1"></script>
 <script src="shared/heart.js?v=3"></script>
@@ -1110,7 +1119,7 @@ body.rich .kingdom .label:not(.named):not(.hot){width:40px; height:40px; padding
     sec.appendChild(list); box.appendChild(sec); }
   /* the demon realm is reconciled FIRST and every render step is fenced: one bad step used to leave a stale demon state
      showing the escape sign over a green meadow (Yoni 2026-09-21). If the realm cannot take, the trap is dropped. */
-  function renderAll() { const safe = (name, f) => { try { f(); } catch (e) { console.error('renderAll:' + name, e); } };
+  function renderAll() { const safe = (name, f) => { try { f(); } catch (e) { console.error('renderAll:' + name, e); } }; safe('age', ensureAge);
     { let dm = demonState(); safe('realm', () => { if (k3d && !!dm !== k3d.isDemon()) k3d.setRealm(!!dm); }); if (dm && k3d && !k3d.isDemon()) { KQ.state().demon = null; KQ.save(); dm = null; } document.body.classList.toggle('demon', !!dm); if (!dm) document.body.classList.remove('trial'); if (dm && !demonMusic.want) { demonMusic.start(); setTimeout(openTrial, 600); } }
     safe('hud', renderHud); if (!profiles.active()) { showTab('players'); openDrawer(true); } safe('profiles', renderProfiles); safe('castle', renderCastle); safe('chest', renderChest); safe('worlds', renderWorlds); safe('board', renderBoard); safe('recent', renderRecent); safe('rail', renderRail); if (k3d) { const p0 = profiles.active(); k3d.setEggs(p0 ? KQ.eggs.ids.filter(id => KQ.eggs.won(p0.id, id)) : []); /* hatched eggs leave the map */ k3d.setPlayerEggs(KQ.playerEggs.list()); k3d.setWorlds(worldNames()); k3d.setPortals(openIds()); if (k3d.setSignatures) { const ml = KQ.mountain.list(), sig = ml.map(x => x.ts + (x.text || '')).join('|'); if (sig !== renderAll.sig) { renderAll.sig = sig; k3d.setSignatures(ml); } } } }
 
@@ -1125,11 +1134,15 @@ body.rich .kingdom .label:not(.named):not(.hot){width:40px; height:40px; padding
     MXR.key = 'f:' + MXR.a + '-' + MXR.b; res.replaceChildren(ui.avatar('div', 'av reveal', MXR.key)); $('#mixName').textContent = mxLabel(MXR.a, MXR.b); sfx.play('star'); $('#btnSave').disabled = false; }
   const mxName = (list, k) => { const it = window.KQMix && KQMix.item(list, k); return it ? it[KQ.i18n.lang === 'he' ? 2 : 1] : k; };
   const mxLabel = (a, b) => mxName('animals', a) + ' × ' + mxName('fruits', b);
-  function openAdd() { $('#pname').value = ''; Object.assign(MXR, { a: null, b: null, key: null }); mxRow('mxA', MXA, 'a'); mxRow('mxB', MXB, 'b'); mxShow(); $('#addOverlay').hidden = false; setTimeout(() => $('#pname').focus(), 50); }
+  const AGES = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+  function ageRow(box, cur, onPick) { box.replaceChildren(); for (const a of AGES) { const b = el('button', cur === a ? 'on' : '', a === 15 ? t('age_plus') : String(a)); b.type = 'button'; b.setAttribute('aria-pressed', String(cur === a)); b.onclick = () => { sfx.play('tap'); onPick(a); }; box.appendChild(b); } }
+  /* a player without an age (made before 2026-10-17) is asked once, before anything else */
+  function ensureAge() { const p = profiles.active(); const ov = $('#ageOverlay'); if (!ov) return; if (!p || p.age != null) { ov.hidden = true; return; } $('#ageTitle').textContent = t('age_title', { name: p.name }); ageRow($('#ageRow2'), null, a => { profiles.update(p.id, { age: a }); KQ.ladder.resetBands(p.id); ov.hidden = true; sfx.play('star'); renderAll(); }); ov.hidden = false; }
+  function openAdd() { $('#pname').value = ''; Object.assign(MXR, { a: null, b: null, key: null, age: null }); const pickAge = a => { MXR.age = a; ageRow($('#ageRow'), a, pickAge); }; ageRow($('#ageRow'), null, pickAge); mxRow('mxA', MXA, 'a'); mxRow('mxB', MXB, 'b'); mxShow(); $('#addOverlay').hidden = false; setTimeout(() => $('#pname').focus(), 50); }
   /* ---------- the Menu (the gear, far right): Avatar first, then Parents, then Settings (Yoni 2026-09-29: 'everything to do with the avatars
      in a menu … the first thing should be the avatar selection, not in the pond'). ---------- */
   KQ.i18n.extend({
-    en: { menu: 'Menu', m_avatar: 'Avatar', m_parents: 'Parents', no_player: 'Add a player first.', av_title: 'Your avatar', av_pick: 'Tap one to wear it.', av_mine: 'Your mixes', av_all: 'Heroes and creatures',
+    en: { age_label: 'How old are you?', age_title: 'How old is {name}?', age_why: 'Every player tells us their age once. The games start at the right level and then follow how you play.', age_need: 'Pick an age first.', age_plus: '15+', menu: 'Menu', m_avatar: 'Avatar', m_parents: 'Parents', no_player: 'Add a player first.', av_title: 'Your avatar', av_pick: 'Tap one to wear it.', av_mine: 'Your mixes', av_all: 'Heroes and creatures',
       el_title: 'Elements', el_sub: 'Every assignment you finish drops elements (more for more stars). Mix them into new avatars.', el_all: 'Collected in all: {n}', tb_elements: 'Elements',
       potions: 'Potions', potions_sub: 'Found in assignments. Choose one before a round.', lab_open: 'Open the Avatar Lab',
       lab_title: 'Avatar Lab', lab_sub: 'Pick one from each list, then mix them into a brand-new avatar.', lab_locked: 'Opens after {n} more elements', lab_cost: 'Costs:', lab_mix: 'Mix!', lab_wear: 'Wear it',
@@ -1148,7 +1161,7 @@ body.rich .kingdom .label:not(.named):not(.hot){width:40px; height:40px; padding
       tix_have: 'Mixes ready: {n}', tix_how: 'A new mix opens when you move up a level in any game, or when you finish the path to Mount Glory: one round in every game ({d}/{n}).', tix_left: 'Still to visit:', tix_none: 'No mix ready yet. Move up a level in a world, or play every world once, to open one.',
       pa_code: 'The corner code', pa_code_sub: 'While a question is up, the very top-right of the screen shows two tiny dots and a number. They mean nothing to a child; this is how to read them.',
       pa_code_new: 'Hollow dot: a question they have never had. Filled dot: one they had before (a repeat builds confidence).', pa_code_rep: 'Second dot: their recent accuracy on this skill: green 80%+, amber 60–79%, red under 60%, grey = not enough answers yet.', pa_code_key: 'The number is age band · level: 3·7 means band 3 (ages 8–9), level 7 of 10.' },
-    he: { menu: 'תפריט', m_avatar: 'דמות', m_parents: 'הורים', no_player: 'קודם מוסיפים שחקן.', av_title: 'הדמות שלך', av_pick: 'לוחצים על דמות כדי ללבוש אותה.', av_mine: 'התערובות שלך', av_all: 'גיבורים ויצורים',
+    he: { age_label: 'מה הגיל שלך?', age_title: 'מה הגיל של {name}?', age_why: 'כל מי שמשחקים מספרים לנו את הגיל פעם אחת. המשחקים מתחילים ברמה המתאימה ואז עוקבים אחרי המשחק עצמו.', age_need: 'קודם בוחרים גיל.', age_plus: '15+', menu: 'תפריט', m_avatar: 'דמות', m_parents: 'הורים', no_player: 'קודם מוסיפים שחקן.', av_title: 'הדמות שלך', av_pick: 'לוחצים על דמות כדי ללבוש אותה.', av_mine: 'התערובות שלך', av_all: 'גיבורים ויצורים',
       el_title: 'יסודות', el_sub: 'כל משימה שמסיימים נותנת יסודות (יותר כוכבים, יותר יסודות). מערבבים אותם לדמויות חדשות.', el_all: 'נאספו בסך הכול: {n}', tb_elements: 'יסודות',
       potions: 'שיקויים', potions_sub: 'נמצאים במשימות. בוחרים אחד לפני סבב.', lab_open: 'למעבדת הדמויות',
       lab_title: 'מעבדת הדמויות', lab_sub: 'בוחרים אחד מכל רשימה ומערבבים לדמות חדשה לגמרי.', lab_locked: 'נפתח אחרי עוד {n} יסודות', lab_cost: 'עולה:', lab_mix: 'לערבב!', lab_wear: 'ללבוש',
@@ -1255,7 +1268,7 @@ body.rich .kingdom .label:not(.named):not(.hot){width:40px; height:40px; padding
       rc_now: 'Where they are now', rc_now_sub: 'Each world has stages by age, and 10 levels in every stage.', rc_lvl: 'Level {l} of 10', rc_lvlDone: 'All 10 levels done', rc_since: 'since {d}', rc_waits: 'the next stage opens when the skills are secure',
       rc_games: 'Games and adventures', rc_games_sub: 'These have no levels: rounds played and wins.', rc_n_rounds: '{n} rounds', rc_n_wins: '{n} wins',
       rc_timeline: 'Progress over time', rc_timeline_sub: 'Every level opened, every stage reached, newest first.', rc_more: 'Show everything ({n})', rc_less: 'Show less',
-      rc_up: 'Level {l} opened · {b}', rc_skip: 'a perfect round skipped a level', rc_wait: 'after the language lesson', rc_band: 'Up a stage: {b} → {nb}', rc_back: 'Back to level {l} · {b}: the jump was not confirmed', rc_held: 'All 10 levels of {b} done; the next stage waits for secure skills', rc_start: 'Started {b}',
+      rc_up: 'Level {l} opened · {b}', rc_skip: 'a perfect round skipped a level', rc_wait: 'after the language lesson', rc_band: 'Up a stage: {b} → {nb}', rc_back: 'Back to level {l} · {b}: the jump was not confirmed', rc_down: 'Down to level {l} · {b}: two hard rounds', rc_bdown: 'Down a stage: {b} → {nb}: two hard rounds at level 1', rc_held: 'All 10 levels of {b} done; the next stage waits for secure skills', rc_start: 'Started {b}',
       rc_est: 'estimated from rounds', rc_logFrom: 'Moves are recorded exactly from {d}. Earlier ones are estimated from the saved rounds.', rc_logNone: 'Moves are recorded exactly from now on. Earlier ones are estimated from the saved rounds.', rc_noMoves: 'No level moves yet.',
       rc_act: 'Activity, last 8 weeks', rc_act_sub: 'Each square is a day. The darker, the more rounds.', rc_where: 'Rounds per world, all time', rc_device: 'This report reads what is saved in this browser on this device. Play on another device is not in it.',
       nm_label: 'First name and the first letter of the last name', nm_ph: 'e.g. Noa E.', nm_format: 'Please write a first name and the first letter of the last name, like “Noa E.”', nm_taken: '“{n}” is already a player. Every child has their own name.', pa_name: 'Name', pa_nameSave: 'Save the name', pa_nameFix: 'Add the first letter of the last name, like “Noa E.”', pa_dupes: 'These players share a name: {n}. Every child needs their own name: rename one (or remove one that was made by mistake).', pa_nameSaved: 'Name saved.' },
@@ -1263,7 +1276,7 @@ body.rich .kingdom .label:not(.named):not(.hot){width:40px; height:40px; padding
       rc_now: 'איפה הם עומדים עכשיו', rc_now_sub: 'בכל עולם יש שלבים לפי גיל, ובכל שלב 10 רמות.', rc_lvl: 'רמה {l} מתוך 10', rc_lvlDone: 'כל 10 הרמות הושלמו', rc_since: 'מאז {d}', rc_waits: 'השלב הבא נפתח כשהמיומנויות יציבות',
       rc_games: 'משחקים והרפתקאות', rc_games_sub: 'כאן אין רמות: סבבים וניצחונות.', rc_n_rounds: '{n} סבבים', rc_n_wins: '{n} ניצחונות',
       rc_timeline: 'ההתקדמות לאורך זמן', rc_timeline_sub: 'כל רמה שנפתחה וכל שלב שהושג, מהחדש לישן.', rc_more: 'להציג הכול ({n})', rc_less: 'להציג פחות',
-      rc_up: 'נפתחה רמה {l} · {b}', rc_skip: 'סבב מושלם דילג על רמה', rc_wait: 'אחרי שיעור השפה', rc_band: 'עלייה בשלב: {b} ← {nb}', rc_back: 'חזרה לרמה {l} · {b}: הקפיצה לא אושרה', rc_held: 'כל 10 הרמות של {b} הושלמו; השלב הבא מחכה למיומנויות יציבות', rc_start: 'התחלה ב{b}',
+      rc_up: 'נפתחה רמה {l} · {b}', rc_skip: 'סבב מושלם דילג על רמה', rc_wait: 'אחרי שיעור השפה', rc_band: 'עלייה בשלב: {b} ← {nb}', rc_back: 'חזרה לרמה {l} · {b}: הקפיצה לא אושרה', rc_down: 'ירידה לרמה {l} · {b}: שני סבבים קשים', rc_bdown: 'ירידה בשלב: {b} ← {nb}: שני סבבים קשים ברמה 1', rc_held: 'כל 10 הרמות של {b} הושלמו; השלב הבא מחכה למיומנויות יציבות', rc_start: 'התחלה ב{b}',
       rc_est: 'הערכה לפי הסבבים', rc_logFrom: 'המעברים נרשמים במדויק מ-{d}. מה שלפני כן מוערך לפי הסבבים השמורים.', rc_logNone: 'מעכשיו המעברים נרשמים במדויק. מה שלפני כן מוערך לפי הסבבים השמורים.', rc_noMoves: 'עוד אין מעברים בין רמות.',
       rc_act: 'פעילות, 8 השבועות האחרונים', rc_act_sub: 'כל ריבוע הוא יום. ככל שהוא כהה יותר, היו יותר סבבים.', rc_where: 'סבבים בכל עולם, מאז ומעולם', rc_device: 'התעודה קוראת את מה שנשמר בדפדפן הזה, במכשיר הזה. משחק במכשיר אחר לא מופיע כאן.',
       nm_label: 'שם פרטי ואות ראשונה של שם המשפחה', nm_ph: 'למשל נועה א׳', nm_format: 'כותבים שם פרטי ואת האות הראשונה של שם המשפחה, למשל “נועה א׳”', nm_taken: '“{n}” כבר קיים. לכל ילד ולכל ילדה יש שם משלהם.', pa_name: 'שם', pa_nameSave: 'לשמור את השם', pa_nameFix: 'מוסיפים את האות הראשונה של שם המשפחה, למשל “נועה א׳”', pa_dupes: 'לשחקנים האלה יש אותו שם: {n}. לכל ילד ולכל ילדה צריך שם משלהם: משנים שם לאחד מהם (או מוחקים אחד שנוצר בטעות).', pa_nameSaved: 'השם נשמר.' }
@@ -1279,7 +1292,7 @@ body.rich .kingdom .label:not(.named):not(.hot){width:40px; height:40px; padding
     return out; }
   function moveText(m) { const b = t('band' + m.b), parts = [];
     if (m.k === 'up') { parts.push(t('rc_up', { l: m.l, b })); if (m.skip) parts.push(t('rc_skip')); if (m.wait) parts.push(t('rc_wait')); }
-    else if (m.k === 'band') parts.push(t('rc_band', { b, nb: t('band' + m.nb) })); else if (m.k === 'back') parts.push(t('rc_back', { l: m.l, b })); else if (m.k === 'held') parts.push(t('rc_held', { b })); else parts.push(t('rc_start', { b }));
+    else if (m.k === 'band') parts.push(t('rc_band', { b, nb: t('band' + m.nb) })); else if (m.k === 'back') parts.push(t('rc_back', { l: m.l, b })); else if (m.k === 'held') parts.push(t('rc_held', { b })); else if (m.k === 'down') parts.push(t('rc_down', { l: m.l, b })); else if (m.k === 'bdown') parts.push(t('rc_bdown', { b, nb: t('band' + m.nb) })); else parts.push(t('rc_start', { b }));
     return parts.join(' · '); }
   function renderCard(box, pid, kid) {
     const all = store.results(pid).slice().sort((a, b) => a.ts - b.ts), log = KQ.ladder.history(pid), since = log.length ? log[0].ts : Date.now(), moves = pastMoves(pid, since).concat(log).sort((a, b) => b.ts - a.ts);
@@ -1472,7 +1485,7 @@ body.rich .kingdom .label:not(.named):not(.hot){width:40px; height:40px; padding
   function rewardShow(points, rec) { const g = KQ.elements.group(rec && rec.elements), ids = Object.keys(g).sort((a, b) => g[b] - g[a]).slice(0, 2);
     return { item: rec && rec.potion ? { icon: rec.potion.e, tier: 'rare', tierName: ui.potionName(rec.potion.id) } : null,
       tokens: [{ icon: 'star', text: t('pt_pts', { n: points }) }].concat(ids.map(id => ({ icon: KQ.elements.icon(id), text: t('pt_el', { n: g[id], name: t('el_' + id) }) }))) }; }
-  $('#btnSave').onclick = () => { const nc = profiles.nameCheck($('#pname').value); if (!nc.ok) { ui.toast(t(nc.why, { n: nc.name || $('#pname').value.trim() })); $('#pname').focus(); return; } if (!MXR.a || !MXR.b) { ui.toast(t('mx_need')); return; } const pr = profiles.add({ name: nc.name, avatar: MXR.key }); KQ.forge.add(pr.id, MXR.key, mxLabel(MXR.a, MXR.b)); $('#addOverlay').hidden = true; sfx.play('star'); renderAll(); };
+  $('#btnSave').onclick = () => { const nc = profiles.nameCheck($('#pname').value); if (!nc.ok) { ui.toast(t(nc.why, { n: nc.name || $('#pname').value.trim() })); $('#pname').focus(); return; } if (MXR.age == null) { ui.toast(t('age_need')); return; } if (!MXR.a || !MXR.b) { ui.toast(t('mx_need')); return; } const pr = profiles.add({ name: nc.name, avatar: MXR.key, age: MXR.age }); KQ.forge.add(pr.id, MXR.key, mxLabel(MXR.a, MXR.b)); $('#addOverlay').hidden = true; sfx.play('star'); renderAll(); };
   $('#btnCancel').onclick = () => { $('#addOverlay').hidden = true; };
   $('#pname').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnSave').click(); });
   $('#optSfx').onchange = e => store.setSetting('sfx', e.target.checked); $('#optVoice').onchange = e => store.setSetting('voice', e.target.checked);

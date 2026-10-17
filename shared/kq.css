@@ -337,3 +337,6 @@ body.focus .qtools .btn.ghost:hover{opacity:1}
 /* growth detector: the status of each skill, on the skill tiles and in Wizard's Pond */
 .gchip{display:inline-block; margin-top:4px; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:900; background:#eee6d6; color:#5a4a36} .gchip.g-learning{background:#fde2d6; color:#8a3a1a} .gchip.g-practicing{background:#fdf0c8; color:#7a5a10} .gchip.g-confirming{background:#dde8fb; color:#1f4a8a} .gchip.g-secure{background:#d6f2dc; color:#1f6a34} .gchip.g-stretch{background:#ead6fb; color:#5a1f8a}
 .kqr-growth{margin:12px 0 4px; padding:10px 14px; border:2px solid #cfe6c8; border-radius:14px; background:#f3fbef; text-align:start} .kqr-growth .h{font-weight:900; font-size:13px; letter-spacing:.04em; color:#2f6a34; margin-bottom:4px} .kqr-growth .li{font-size:15px; font-weight:700; line-height:1.35; padding:3px 0; color:#3a4a30; text-transform:none} .kqr-growth .li b{color:#1f5a2a}
+
+/* the child's current stage, shown where the age tiles used to be (2026-10-17) */
+.bandnow{font:800 15px var(--font-body); color:var(--muted); margin:2px 0 6px}
