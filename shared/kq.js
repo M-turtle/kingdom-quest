@@ -106,7 +106,7 @@
     get(id) { return state.profiles.find(p => p.id === id) || null; },
     active() { return profiles.get(state.activeId) || state.profiles[0] || null; },
     setActive(id) { state.activeId = id; const p = profiles.get(id); if (p && (p.lang === 'he' || p.lang === 'en') && p.lang !== state.lang) { state.lang = p.lang; save(); i18n.apply(); } else save(); document.dispatchEvent(new CustomEvent('kq:profile', { detail: { id } })); },   /* switching players switches the language with them */
-    add(p) { const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); const prof = { id, key: p.key || cloudKey(), lang: p.lang === 'he' || p.lang === 'en' ? p.lang : state.lang, age: p.age == null ? null : +p.age, name: (p.name || '').trim().slice(0, 18) || t('player'), avatar: AVATARS.includes(p.avatar) || /^[cf]:/.test(p.avatar || '') ? p.avatar : AVATARS[state.profiles.length % AVATARS.length], created: Date.now(), main: (p.lang === 'he' || p.lang === 'en' ? p.lang : state.lang) === 'he' ? 'he' : 'en' }; state.profiles.push(prof); state.activeId = id; save(); return prof; },
+    add(p) { const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); const prof = { id, key: p.key || (p.pics && p.pics.length ? cloud.keyFrom(p.name, p.pics) : cloudKey()), pics: Array.isArray(p.pics) ? p.pics.slice(0, 4) : null, lang: p.lang === 'he' || p.lang === 'en' ? p.lang : state.lang, age: p.age == null ? null : +p.age, name: (p.name || '').trim().slice(0, 18) || t('player'), avatar: AVATARS.includes(p.avatar) || /^[cf]:/.test(p.avatar || '') ? p.avatar : AVATARS[state.profiles.length % AVATARS.length], created: Date.now(), main: (p.lang === 'he' || p.lang === 'en' ? p.lang : state.lang) === 'he' ? 'he' : 'en' }; state.profiles.push(prof); state.activeId = id; save(); return prof; },
     update(id, patch) { const p = profiles.get(id); if (!p) return; Object.assign(p, patch); save(); },
     /* Yoni 2026-10-07: a player is a first name and the first letter of the last name ('Noa E.', 'נועה א׳'), and a name belongs to one
        player only. Returns { ok, name } (the tidy form) or { ok: false, why: 'nm_format' | 'nm_taken' } */
@@ -976,7 +976,16 @@
   function cloudKey() { const a = new Uint8Array(12); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach((_, i) => { a[i] = Math.floor(Math.random() * 256); }); let k = ''; for (let i = 0; i < 12; i++) { k += KEY_CHARS[a[i] % KEY_CHARS.length]; if (i === 3 || i === 7) k += '-'; } return k; }
   const KEY_RE = /^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
   const PER_PLAYER = ['skills', 'ladder', 'ladderLog', 'growth', 'inv', 'active', 'avatars', 'heart', 'eggs', 'qseen', 'scrolls', 'journal'];
+  /* Yoni 2026-10-17: 'no kid will remember that, we need something simple' — the key is DERIVED from the child's name and three
+     secret pictures tapped in order, so the same name + pictures on any device rebuild the same key. 12 pictures, order matters:
+     1,728 sequences per name. Two children with the same name AND the same three pictures would share one save; the parents' key
+     in the Parents tab stays as the exact fallback. The name is folded: letters only, lower-case, so "Noa E." and "noa e" match. */
+  const SECRET_PICS = ['apple', 'banana', 'bear', 'bee', 'star', 'heart', 'fish', 'car', 'tree', 'house', 'sun', 'moon'];
+  const foldName = n => String(n || '').toLowerCase().replace(/[^\p{L}]/gu, '');
+  function keyFromHash(str) { let h1 = 0x811c9dc5, h2 = 0x5bd1e995; for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 0x01000193) >>> 0; h2 = Math.imul(h2 ^ c, 0x9e3779b1) >>> 0; h2 = (h2 ^ (h2 >>> 15)) >>> 0; } let k = '', x = h1, y = h2; for (let i = 0; i < 12; i++) { k += KEY_CHARS[(x >>> 0) % KEY_CHARS.length]; x = Math.imul(x ^ (y >>> (i % 7)), 0x85ebca6b) >>> 0; y = Math.imul(y ^ (x >>> 13), 0xc2b2ae35) >>> 0; if (i === 3 || i === 7) k += '-'; } return k; }
   const cloud = {
+    pics: SECRET_PICS.slice(),
+    keyFrom(name, pics) { return keyFromHash('kq1|' + foldName(name) + '|' + (pics || []).join(',')); },
     url() { return (window.KQ_TTS_ENDPOINT || DEFAULT_RELAY).replace(/\/$/, ''); },
     keyOf(pid) { const p = profiles.get(pid); if (!p) return null; if (!p.key) { p.key = cloudKey(); save(); } return p.key; },
     tidy(k) { return String(k || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^(.{4})(.{4})(.{4})$/, '$1-$2-$3'); },
