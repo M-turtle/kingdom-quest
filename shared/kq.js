@@ -26,6 +26,9 @@
   let state = JSON.parse(JSON.stringify(DEFAULT));
   try { const raw = localStorage.getItem(KEY); if (raw) { const o = JSON.parse(raw); state = Object.assign(state, o); state.settings = Object.assign({}, DEFAULT.settings, o.settings || {}); for (const k of ['profiles', 'results']) if (!Array.isArray(state[k])) state[k] = []; for (const k of ['skills', 'inv', 'active']) if (!state[k] || typeof state[k] !== 'object') state[k] = {}; } } catch (e) {}
   if (!state.lang) state.lang = /^he/i.test(navigator.language || '') ? 'he' : 'en';
+  /* Yoni 2026-10-17: every player picks a language at sign-up and the whole interface stays in it, on every page, until they change it in
+     Settings. The active player's language wins over the device's; a player made before this keeps the language they were using. */
+  { const ap = state.profiles.find(p => p.id === state.activeId) || state.profiles[0]; if (ap) { if (ap.lang !== 'he' && ap.lang !== 'en') ap.lang = state.lang; state.lang = ap.lang; } }
   const save = () => { for (let k = 0; k < 4; k++) { try { localStorage.setItem(KEY, JSON.stringify(state)); return; } catch (e) { if (!state.results || state.results.length < 50) return; state.results = state.results.slice(Math.floor(state.results.length / 3)); } } };   /* a full storage used to drop every save in silence: now the oldest third of the round history goes first, never the progress */
 
   // ---------- i18n (Hebrew: everyday, plural/neutral forms — never assume the player's gender) ----------
@@ -84,7 +87,7 @@
     get lang() { return state.lang; },
     extend(more) { for (const l in more) dict[l] = Object.assign(dict[l] || {}, more[l]); },
     t(key, vars) { let s = (dict[state.lang] || dict.en)[key]; if (s == null) s = dict.en[key] != null ? dict.en[key] : key; if (vars) for (const k in vars) s = s.split('{' + k + '}').join(vars[k]); return s; },
-    set(lang) { const L = i18n.langs.find(l => l.id === lang) || i18n.langs[0]; state.lang = L.id; save(); i18n.apply(); },
+    set(lang, o) { const L = i18n.langs.find(l => l.id === lang) || i18n.langs[0]; state.lang = L.id; const ap = state.profiles.find(p => p.id === state.activeId); if (ap && !(o && o.transient)) ap.lang = L.id; save(); i18n.apply(); },   /* a change in Settings (or the header) sticks to the player; transient = only the screen flips (the sign-up dialog) */
     apply() {
       const L = i18n.langs.find(l => l.id === state.lang) || i18n.langs[0];
       document.documentElement.lang = L.id; document.documentElement.dir = L.dir;
@@ -102,8 +105,8 @@
     list() { return state.profiles.slice(); },
     get(id) { return state.profiles.find(p => p.id === id) || null; },
     active() { return profiles.get(state.activeId) || state.profiles[0] || null; },
-    setActive(id) { state.activeId = id; save(); document.dispatchEvent(new CustomEvent('kq:profile', { detail: { id } })); },
-    add(p) { const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); const prof = { id, age: p.age == null ? null : +p.age, name: (p.name || '').trim().slice(0, 18) || t('player'), avatar: AVATARS.includes(p.avatar) || /^[cf]:/.test(p.avatar || '') ? p.avatar : AVATARS[state.profiles.length % AVATARS.length], created: Date.now(), main: state.lang === 'he' ? 'he' : 'en' }; state.profiles.push(prof); state.activeId = id; save(); return prof; },
+    setActive(id) { state.activeId = id; const p = profiles.get(id); if (p && (p.lang === 'he' || p.lang === 'en') && p.lang !== state.lang) { state.lang = p.lang; save(); i18n.apply(); } else save(); document.dispatchEvent(new CustomEvent('kq:profile', { detail: { id } })); },   /* switching players switches the language with them */
+    add(p) { const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); const prof = { id, lang: p.lang === 'he' || p.lang === 'en' ? p.lang : state.lang, age: p.age == null ? null : +p.age, name: (p.name || '').trim().slice(0, 18) || t('player'), avatar: AVATARS.includes(p.avatar) || /^[cf]:/.test(p.avatar || '') ? p.avatar : AVATARS[state.profiles.length % AVATARS.length], created: Date.now(), main: (p.lang === 'he' || p.lang === 'en' ? p.lang : state.lang) === 'he' ? 'he' : 'en' }; state.profiles.push(prof); state.activeId = id; save(); return prof; },
     update(id, patch) { const p = profiles.get(id); if (!p) return; Object.assign(p, patch); save(); },
     /* Yoni 2026-10-07: a player is a first name and the first letter of the last name ('Noa E.', 'נועה א׳'), and a name belongs to one
        player only. Returns { ok, name } (the tidy form) or { ok: false, why: 'nm_format' | 'nm_taken' } */
