@@ -1157,7 +1157,7 @@ function updateDiorama(tm, camPos, motesGroup, pixelRatio, pointMats) {
     }
     let stage = 0; function setStage(n) { stage = Math.max(0, Math.min(stages.length - 1, n | 0)); stages.forEach((g, i) => { g.visible = i <= stage; }); }
     // ---------- worlds: buildings you can tap ----------
-    const pickables = [], anchors = [];
+    const pickables = [], anchors = []; let intro = null;   /* the welcome flight, declared early: the first forced frame runs before the flight code below */
     const CLASSIC = new Set(['letters', 'math', 'reading', 'chess', 'clock', 'market', 'memory', 'logic', 'story', 'spelling', 'scrolls', 'music', 'art', 'nature', 'timemachine', 'explore', 'kindness']);   /* the meadow's worlds: every other realm has its own games (realm-*.js) */
     /* ?look=rich: a clearing round each landmark that has a real model, and a wider one on the side it faces, so no tree stands in front of it */
     const RICH_CLEAR = { chess: [[0, 0, 9.5], [0, 9, 8]], door: [[0, 0, 7], [0, 6, 5]], fairy: [[0, 0, 5.5], [0, 5, 4.5]], kindness: [[0, 0, 6], [0, 5, 4.5]],
@@ -1814,7 +1814,7 @@ function updateDiorama(tm, camPos, motesGroup, pixelRatio, pointMats) {
       for (const gp of peggs.values()) { gp.rotation.y = tm * 0.6; gp.position.y = gp.userData.base + 0.1 + Math.sin(tm * 2 + gp.userData.k) * 0.12; } if (placing) placing.ghost.rotation.y = tm * 1.5;
       for (const g of eggs) { g.rotation.y = tm * 0.8; g.position.y = g.userData.base + (hovering === g ? 0.5 : 0.1 + Math.sin(tm * 2 + g.userData.k) * 0.12); }
       updateBoat(dt, tm); updateFly(dt); if (EG.g) updateEagle(dt, tm); updateRealm(dt, tm); if (!realm.demon && REALM !== 'ocean' && REALM !== 'space') updateFauna(dt, tm, camera.position); for (const f of realmFx) f(dt, tm);
-      updateFireworks(dt, tm);
+      updateFireworks(dt, tm); updateIntro(dt);
       if (post) { const tiltT = (ride.on || fly.on) ? 0 : (night ? 0.55 : 0.32); tiltK += (tiltT - tiltK) * Math.min(1, dt * 3); post.setTilt(tiltK, 0.5); post.render(dt); } else renderer.render(scene, camera); if (window.__kq3d) window.__kq3d.frames++;
       if (drawn >= 0 && ++drawn >= 4) { drawn = -1; if (opts && opts.onReady) setTimeout(() => { try { opts.onReady(); } catch (e) {} }, 0); }   /* the world has really drawn (shaders compiled): tell the page it may show it */
     }
@@ -1977,7 +1977,27 @@ function updateDiorama(tm, camPos, motesGroup, pixelRatio, pointMats) {
     document.addEventListener('visibilitychange', () => { running = !document.hidden; });
     frame();
     window.__kq3d = { renderer, scene, camera, fauna, realm, orbit, target, get post() { return post; }, get visible() { return visible; }, get running() { return running; }, frames: 0, step: () => frame(true), eagle: () => { EG.next = 0; }, get EG() { return EG; } };   /* step: one forced frame, for tests in a hidden tab */
-    return { setSignatures, viewGlory, gloryView: () => VIEW.on, arrive, setStage, setWorlds, setItems, setEggs, setPlayerEggs, startPlacing, stopPlacing, setRealm, flipRealm, isDemon: () => realm.demon, startBoat, endBoat, isRiding: () => ride.on, setPortals, flyTo, flyBack, isFlying: () => fly.on || !!EG.board, eagleBoard, eagleLand, nestTakeoff, nestLand, nestReset, eagleNow: () => { EG.next = 0; }, resize, destroy() { cancelAnimationFrame(raf); disposeDiorama(); ro.disconnect(); io.disconnect(); renderer.dispose(); cv.remove(); labels.forEach(L => L.remove()); }, night, evening };
+    /* ---------- the WELCOME FLIGHT (Yoni 2026-10-17: 'there should be an animation of letters, numbers, animals, space, music — all elements flying
+       around and landing in the games'): painted tiles rise out of the sky, swirl once around the castle, then flock by flock peel off along an arc,
+       land on their own world with a little bounce and a spark, and sink into it. A tap ends it. flocks: [{ world, tiles: [canvas…], size }] ---------- */
+    function startIntro(flocks, cb, onLand) { stopIntro(); const list = []; let order = 0, fi = 0;
+      for (const f of flocks) { const a = anchors.find(x => x.id === f.world); if (!a || !f.tiles || !f.tiles.length) continue; const top = a.g.position.clone(); top.y += (a.h || 6) * 0.75 + 1.4; const n0 = f.tiles.length;
+        f.tiles.forEach((cv, i) => { const tex = new T.CanvasTexture(cv); tex.colorSpace = T.SRGBColorSpace; const sp = new T.Sprite(new T.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false })); const ang = (order * 2.399) % (Math.PI * 2);   /* the golden angle: spread evenly around the sky */
+          const r0 = (17 + Math.random() * 11) * SPR; sp.position.set(Math.cos(ang) * r0, 13 + Math.random() * 6, Math.sin(ang) * r0); sp.scale.setScalar(0.01); sp.renderOrder = 60; scene.add(sp);
+          list.push({ sp, tex, world: f.world, first: i === 0, a0: ang, r0, h0: sp.position.y, size: f.size || 2.9, to: top.clone().add(new T.Vector3((i - (n0 - 1) / 2) * 1.2, 0, 0)), delay: order * 0.06, leave: 2.4 + fi * 0.45 + i * 0.12, state: 0, t: 0, from: new T.Vector3(), mid: new T.Vector3() }); order++; }); fi++; }
+      if (!list.length) { if (cb) cb(); return false; } intro = { list, t: 0, cb, onLand, back: { r: orbit.tRadius, p: orbit.tPhi } }; idle = 0; orbit.tRadius = Math.min(LIM.rMax, 84 * CAMR); orbit.tPhi = 0.74; arrive({ dur: 9, sweep: 0.9, phi: 0.74, radius: orbit.tRadius });   /* the whole kingdom in view for the whole flight; the view eases back after */ return true; }
+    function stopIntro() { if (!intro) return; for (const f of intro.list) { scene.remove(f.sp); f.sp.material.dispose(); f.tex.dispose(); } const cb = intro.cb; if (intro.back) { orbit.tRadius = intro.back.r; orbit.tPhi = intro.back.p; } arr = null; intro = null; if (cb) try { cb(); } catch (e) {} }
+    function updateIntro(dt) { if (!intro) return; const I = intro; I.t += dt; let landed = 0;
+      for (const f of I.list) { const t = I.t - f.delay; if (t < 0) continue;
+        if (f.state === 0) { const grow = Math.min(1, t / 0.6); f.sp.scale.setScalar(f.size * (0.15 + 0.85 * (1 - Math.pow(1 - grow, 3)))); const ang = f.a0 + t * 0.55, r = f.r0 - t * 1.1; f.sp.position.set(Math.cos(ang) * r, f.h0 + Math.sin(t * 2.3 + f.a0) * 1.1 - t * 0.3, Math.sin(ang) * r); f.sp.material.rotation = Math.sin(t * 3 + f.a0) * 0.12;
+          if (t >= f.leave) { f.state = 1; f.t = 0; f.from.copy(f.sp.position); f.mid.copy(f.from).lerp(f.to, 0.5); f.mid.y = Math.max(f.from.y, f.to.y) + 7; } }
+        else if (f.state === 1) { f.t += dt; const k = Math.min(1, f.t / 1.4), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, u = 1 - e;
+          f.sp.position.set(u * u * f.from.x + 2 * u * e * f.mid.x + e * e * f.to.x, u * u * f.from.y + 2 * u * e * f.mid.y + e * e * f.to.y, u * u * f.from.z + 2 * u * e * f.mid.z + e * e * f.to.z); f.sp.scale.setScalar(f.size * (1 - 0.3 * e)); f.sp.material.rotation = Math.sin(f.t * 7) * 0.18 * (1 - e);
+          if (k >= 1) { f.state = 2; f.t = 0; const a = anchors.find(x => x.id === f.world); if (a) firework(a.g); if (I.onLand) try { I.onLand(f.world, f.first); } catch (e) {} } }
+        else if (f.state === 2) { f.t += dt; const k = Math.min(1, f.t / 1.0); f.sp.position.y = f.to.y + Math.abs(Math.sin(k * Math.PI * 2)) * (1 - k) * 1.0 - k * k * 2.6; f.sp.scale.setScalar(f.size * 0.7 * (1 - k * k)); f.sp.material.opacity = 1 - k * k * k; if (k >= 1) { f.state = 3; f.sp.visible = false; } }
+        if (f.state === 3) landed++; }
+      if (landed === I.list.length) stopIntro(); }
+    return { intro: startIntro, skipIntro: stopIntro, introOn: () => !!intro, setSignatures, viewGlory, gloryView: () => VIEW.on, arrive, setStage, setWorlds, setItems, setEggs, setPlayerEggs, startPlacing, stopPlacing, setRealm, flipRealm, isDemon: () => realm.demon, startBoat, endBoat, isRiding: () => ride.on, setPortals, flyTo, flyBack, isFlying: () => fly.on || !!EG.board, eagleBoard, eagleLand, nestTakeoff, nestLand, nestReset, eagleNow: () => { EG.next = 0; }, resize, destroy() { cancelAnimationFrame(raf); disposeDiorama(); ro.disconnect(); io.disconnect(); renderer.dispose(); cv.remove(); labels.forEach(L => L.remove()); }, night, evening };
   };
   window.Kingdom3D = { create };
 })();
