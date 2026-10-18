@@ -1784,7 +1784,7 @@ function updateDiorama(tm, camPos, motesGroup, pixelRatio, pointMats) {
         m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; for (const mt of [].concat(o.material)) if (mt.map) { mt.map.anisotropy = an; mt.map.needsUpdate = true; } } }); const w = new T.Group(); w.add(m); w.userData.noMerge = true; w.userData.h = bb.max.y - bb.min.y; return w; };
       const keep = (o, root) => { for (let q = o; q && q !== root; q = q.parent) { const u = q.userData || {}; if (u.baseY !== undefined || u.orbit != null || u.spin || u.smoke != null || u.flame != null) return true; } return false; };
       const D = window.KQ_STYLE || {}, placed = [];
-      const SPOTS = { tower: { id: 'math', width: 4.6 }, host: { x: -15.2, z: -8.2, width: 2.6, rot: 0.6 }, creature: { x: -24.2, z: -8.6, width: 2.2, rot: -0.5 } };   /* beside Math Tower (-20, -12), on its camera side */
+      const SPOTS = { tower: { id: 'math', width: 4.6 }, host: { x: -16.3, z: -15.6, width: 2.6, rot: 0.7 }, creature: { x: -24.4, z: -9.6, width: 2.2, rot: -0.6 } };   /* beside Math Tower (-20, -12), on its camera side */
       for (const k of Object.keys(SPOTS)) { const b64 = D[k]; if (!b64) continue; const S = SPOTS[k]; let w; try { w = fit(await parse(b64), S.width, S.rot); } catch (e) { console.error('style test', k, e); continue; }
         if (S.id) { const a = anchors.find(x => x.id === S.id); if (!a) continue; a.g.traverse(o => { if (o.isMesh && !keep(o, a.g)) o.visible = false; }); w.traverse(o => { if (o.isMesh) { o.userData.plot = a.g; pickables.push(o); } }); a.g.add(w); a.h = Math.max(a.h, w.userData.h + 1.2); }
         else { const g = plotAt('st_' + k, S.x, S.z, () => {}, {}); g.add(w); }
