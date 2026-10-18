@@ -15,6 +15,9 @@ messages, 345 Aether findings, 79 memory files). Evidence and his quotes:
 `~/AETHER/principles/DEV_RULES_REVIEW_2026-10-18.md`. Where this text and an older section of a
 CLAUDE.md overlap, this text wins.
 
+**Proof it was read:** the first reply of every chat (and the first after a resume or compaction) opens with one
+line, `Bible 2026-10-18 loaded.`, then the answer. A chat that cannot show that line has not loaded this file.
+
 Owner: Yoni (Yehonatan Eyal), solo founder, based in Israel since 2026-07-31; his tenants and
 notices run on US Eastern time. Ventures: The Mindful Landlord (TML), Toledo SFR portfolio
 (Citadel OH / Novan), Briggs Pro, Dispatcher, Vouch (vouch.ink), Aether (aether.rent), IsraMich,
