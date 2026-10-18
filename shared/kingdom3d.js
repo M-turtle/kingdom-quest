@@ -1772,6 +1772,7 @@ function updateDiorama(tm, camPos, motesGroup, pixelRatio, pointMats) {
        under its own light and camera, so the looks can be judged where they will live. Models: shared/models/style_<name>.js
        (window.KQ_STYLE = { tower, host, creature } as base64 GLB). Without the parameter nothing here runs. ---------- */
     const STYLE_TEST = (() => { try { const v = new URLSearchParams(location.search).get('style') || ''; return /^(plush|voxel|nature|today)$/.test(v) ? v : null; } catch (e) { return null; } })();   /* 'today' = no models, only the camera hook, for side-by-side shots */
+    const SCENE_ON = (() => { try { return new URLSearchParams(location.search).get('scene') === '1'; } catch (e) { return false; } })();
     const STYLE_UNLIT = (() => { try { return new URLSearchParams(location.search).get('unlit') === '1'; } catch (e) { return false; } })();   /* &unlit=1: the filmed texture as is */
     const STYLE_LIFT = (() => { try { const v = parseFloat(new URLSearchParams(location.search).get('lift') || '0'); return v > 0 && v <= 1 ? v : 0; } catch (e) { return 0; } })();
     if (STYLE_TEST && isMeadow) (async () => {
@@ -1788,7 +1789,7 @@ function updateDiorama(tm, camPos, motesGroup, pixelRatio, pointMats) {
       const D = window.KQ_STYLE || {}, placed = [];
       const SPOTS = { tower: { id: 'math', width: 4.6 }, host: { x: -16.3, z: -15.6, width: 2.6, rot: 0.7 }, creature: { x: -24.4, z: -9.6, width: 2.2, rot: -0.6 } };   /* beside Math Tower (-20, -12), on its camera side */
       for (const k of Object.keys(SPOTS)) { const b64 = D[k]; if (!b64) continue; const S = SPOTS[k]; let w; try { w = fit(await parse(b64), S.width, S.rot); } catch (e) { console.error('style test', k, e); continue; }
-        if (S.id) { const a = anchors.find(x => x.id === S.id); if (!a) continue; a.g.traverse(o => { if (o.isMesh && !keep(o, a.g)) o.visible = false; }); w.traverse(o => { if (o.isMesh) { o.userData.plot = a.g; pickables.push(o); } }); a.g.add(w); a.h = Math.max(a.h, w.userData.h + 1.2); }
+        if (S.id) { const a = anchors.find(x => x.id === S.id); if (!a) continue; a.g.traverse(o => { if (o.isMesh && !keep(o, a.g)) o.visible = false; if (SCENE_ON && o.isMesh && o.userData.orbit != null) o.visible = false; }); w.traverse(o => { if (o.isMesh) { o.userData.plot = a.g; pickables.push(o); } }); a.g.add(w); a.h = Math.max(a.h, w.userData.h + 1.2); }
         else { const g = plotAt('st_' + k, S.x, S.z, () => {}, {}); g.add(w); }
         placed.push(k); }
       /* ---------- the WHOLE LOOK (&scene=1): the kingdom itself in the style, not only three objects — camera nearer and lower, day light,
@@ -1807,7 +1808,7 @@ function updateDiorama(tm, camPos, motesGroup, pixelRatio, pointMats) {
         const ring = []; for (let i = 0; i < 10; i++) { const a = -0.2 + i / 10 * Math.PI * 2; if (Math.cos(a) * 0.6 + Math.sin(a) * 0.8 > 0.55) continue; ring.push([C.x + Math.cos(a) * (15 + (i % 3) * 3), C.z + Math.sin(a) * (15 + (i % 3) * 3)]); }   /* not on the camera side */
         const spots = []; for (const [x, z] of ring) spots.push(['tree', x, z, 7 + Math.random() * 2]); for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2 + 0.4; spots.push(['bush', C.x + Math.cos(a) * (6 + (i % 2) * 3), C.z + Math.sin(a) * (6 + (i % 2) * 3), 1.6 + Math.random() * 0.6]); }
         const cache = {};
-        for (const [k, x, z, width] of spots) { const b64 = D[k]; if (!b64) continue; try { cache[k] = cache[k] || await parse(b64); const w = fit(cache[k].clone(), width, Math.random() * 6.28); const g = plotAt('st_' + k + '_' + x.toFixed(0) + '_' + z.toFixed(0), x, z, () => {}, {}); g.add(w); placed.push(k); } catch (e) { console.error('scene', k, e); } }
+        for (const [k, x, z, width] of spots) { const b64 = D[k]; if (!b64) continue; try { cache[k] = cache[k] || await parse(b64); const w = fit(cache[k].clone(), width, Math.random() * 6.28); if (k === 'bush') w.position.y -= w.userData.h * 0.12;   /* a filmed disc under a bush sinks into the felt */ const g = plotAt('st_' + k + '_' + x.toFixed(0) + '_' + z.toFixed(0), x, z, () => {}, {}); g.add(w); placed.push(k); } catch (e) { console.error('scene', k, e); } }
       }
       window.__styleTest = { style: STYLE_TEST, placed, scene: SCENE };
     })();
