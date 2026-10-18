@@ -1790,7 +1790,25 @@ function updateDiorama(tm, camPos, motesGroup, pixelRatio, pointMats) {
         if (S.id) { const a = anchors.find(x => x.id === S.id); if (!a) continue; a.g.traverse(o => { if (o.isMesh && !keep(o, a.g)) o.visible = false; }); w.traverse(o => { if (o.isMesh) { o.userData.plot = a.g; pickables.push(o); } }); a.g.add(w); a.h = Math.max(a.h, w.userData.h + 1.2); }
         else { const g = plotAt('st_' + k, S.x, S.z, () => {}, {}); g.add(w); }
         placed.push(k); }
-      window.__styleTest = { style: STYLE_TEST, placed };
+      /* ---------- the WHOLE LOOK (&scene=1): the kingdom itself in the style, not only three objects — camera nearer and lower, day light,
+         the ground and sky from the style's own stills, the style's trees and bushes in a ring, today's low-poly forest and neighbours hidden ---------- */
+      const SCENE = (() => { try { return new URLSearchParams(location.search).get('scene') === '1'; } catch (e) { return false; } })();
+      if (SCENE) {
+        const C = new T.Vector3(-20, 0, -12);   /* Math Tower */
+        orbit.tRadius = 34 * CAMR; orbit.tPhi = 0.92; LIM.rMin = 16; VIEW.home.set(C.x, 2.5, C.z); VIEW.to.copy(VIEW.home);
+        scene.traverse(o => { if (o.isInstancedMesh && o.userData.species) o.visible = false; });   /* today's forest */
+        for (const a of anchors) { if (a.id === 'math' || /^st_/.test(a.id)) continue; const d = Math.hypot(a.g.position.x - C.x, a.g.position.z - C.z); if (d < 34) a.g.visible = false; }   /* today's neighbours */
+        const tl = new T.TextureLoader(); const tex = (u, cb) => tl.load(u, t => { t.colorSpace = T.SRGBColorSpace; t.anisotropy = an; cb(t); });
+        if (D.ground) tex(D.ground, t => { t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(28, 28); const m = ground.material; m.map = t; m.vertexColors = false; m.color.set(0xffffff); m.needsUpdate = true; });
+        if (D.sky) tex(D.sky, t => { scene.background = t; const skyMesh = scene.children.find(o => o.isMesh && o.geometry && o.geometry.type === 'SphereGeometry' && o.material.side === T.BackSide); if (skyMesh) skyMesh.visible = false; scene.fog = null; });
+        try { hemiLight.intensity = 1.35; sun.intensity = 1.5; sun.color.set(0xfff6e8); } catch (e) {}
+        if (post) try { post.setGrade({ bloom: 0.1, threshold: 1.5, knee: 0.4, shadow: [1, 1, 1], high: [1, 1, 1], contrast: 0.04, sat: 1.0, vig: 0.1, grain: 0 }, true); } catch (e) {}
+        const ring = []; for (let i = 0; i < 10; i++) { const a = -0.2 + i / 10 * Math.PI * 2; if (Math.cos(a) * 0.6 + Math.sin(a) * 0.8 > 0.55) continue; ring.push([C.x + Math.cos(a) * (15 + (i % 3) * 3), C.z + Math.sin(a) * (15 + (i % 3) * 3)]); }   /* not on the camera side */
+        const spots = []; for (const [x, z] of ring) spots.push(['tree', x, z, 7 + Math.random() * 2]); for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2 + 0.4; spots.push(['bush', C.x + Math.cos(a) * (6 + (i % 2) * 3), C.z + Math.sin(a) * (6 + (i % 2) * 3), 1.6 + Math.random() * 0.6]); }
+        const cache = {};
+        for (const [k, x, z, width] of spots) { const b64 = D[k]; if (!b64) continue; try { cache[k] = cache[k] || await parse(b64); const w = fit(cache[k].clone(), width, Math.random() * 6.28); const g = plotAt('st_' + k + '_' + x.toFixed(0) + '_' + z.toFixed(0), x, z, () => {}, {}); g.add(w); placed.push(k); } catch (e) { console.error('scene', k, e); } }
+      }
+      window.__styleTest = { style: STYLE_TEST, placed, scene: SCENE };
     })();
     const HOME = RICH && LANDMARK_MODELS ? [0, 3, 7] : [0, 3, 2];   /* the new look: a little nearer the front, so Story Forge and Spelling Bee are not cut by the screen's bottom edge */
     const target = new T.Vector3(...HOME), VIEW = { on: false, home: new T.Vector3(...HOME), to: new T.Vector3(...HOME) }, LIM = { pMin: 0.55, pMax: 1.35, rMin: 26, rMax: 105 * SPR }, orbit = { theta: 0.3, phi: 0.98, radius: 76 * CAMR, tTheta: 0.3, tPhi: 0.98, tRadius: 76 * CAMR }; let focused = false;
