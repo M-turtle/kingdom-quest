@@ -6,9 +6,15 @@ Children play this. Development Bible D1 (children) applies: nothing new reaches
 
 # Yoni's Development Bible — every project, every session
 
-Canonical copy: `~/AETHER/principles/DEV_RULES.md`. Every repo carries this text in its own
-CLAUDE.md (cloud sessions see only the repo), and the global `~/.claude/CLAUDE.md` carries it too.
-Change it here first, then sync the copies in one pass (C1 applies to this file as well).
+**One Bible, one place.** The master is this file in the repo **github.com/M-turtle/bible**, cloned at
+`~/AETHER/principles/DEV_RULES.md` on Yoni's Mac. Nothing else is edited by hand: the global
+`~/.claude/CLAUDE.md`, the folder CLAUDE.md files and every repo's CLAUDE.md carry a synced copy
+between `BEGIN/END: Development Bible` markers (cloud chats see only their repo, so the copy must
+travel with it). To change the Bible: edit the master, commit and push it, then run one command,
+`python3 ~/AETHER/principles/sync_dev_rules.py --global --folders --repos --push --pr`, and merge
+the PRs it opens. A chat that finds a copy differing from the master reports it and runs the sync;
+it never edits a copy. (Yoni, 2026-10-18: "I want one Bible that will be managed in one location
+in one repo.")
 
 Approved by Yoni on 2026-10-18 after review of six months of chats (313 sessions, 5,570 of his
 messages, 345 Aether findings, 79 memory files). Evidence and his quotes:
@@ -16,7 +22,7 @@ messages, 345 Aether findings, 79 memory files). Evidence and his quotes:
 CLAUDE.md overlap, this text wins.
 
 **Proof it was read:** the first reply of every chat (and the first after a resume or compaction) opens with one
-line, `Bible 2026-10-18 loaded.`, then the answer. A chat that cannot show that line has not loaded this file.
+line, `Bible 2026-10-18 r2 loaded.`, then the answer. A chat that cannot show that line has not loaded this file.
 
 Owner: Yoni (Yehonatan Eyal), solo founder, based in Israel since 2026-07-31; his tenants and
 notices run on US Eastern time. Ventures: The Mindful Landlord (TML), Toledo SFR portfolio
@@ -188,9 +194,12 @@ is not applied until Yoni says so in that chat.
 
 ## E. Design, for projects with a screen
 
-**E1 · Options first, then the mock-up is the spec, then change only what's named.**
-A new screen or redesign goes: two or three visibly different rendered options (phone and
-desktop, same screens, same data) → his pick → the full mock-up → build to match it, with a
+**E1 · Options first, never capped; then the mock-up is the spec; then change only what's named.**
+A new look or screen starts with rendered options, and the number is never a limit: a new brand
+or a redesign gets a spread (eight to ten visibly different directions, the same screens and data
+in each); a single screen gets several; and whenever Yoni asks for more, more. Never cut the set
+to two or three on your own, never present one. Options are phone and desktop → his picks →
+round two deepens only those → his pick → the full mock-up → build to match it, with a
 side-by-side screenshot of mock-up and build before handover. The options round is the only
 "initial look" case; after his pick the mock-up covers every screen and every state before
 anything is built. Mock-ups are made with the strongest tool available (Figma, Canva, the Design
@@ -199,7 +208,8 @@ does not pay today, say so first (F1). Once approved, the mock-up is locked: eac
 only the elements he names; when his asks conflict, show versions inside his frame, never a new
 placement. When a reference is supplied (an image, a URL, code he gave), put the output next to it
 and list what is still below it. No screen is built from a prose description, and no partial set
-of screens is ever handed over as the design.
+of screens is ever handed over as the design. (Yoni, 2026-10-18: the old "two or three" wording
+made every chat stop at three; "I'm getting limited design options." Removed.)
 
 ## F. Cost
 
