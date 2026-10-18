@@ -1767,6 +1767,29 @@ function updateDiorama(tm, camPos, motesGroup, pixelRatio, pointMats) {
       for (let k = 0; k < 34; k++) { const i = FW.i = (FW.i + 1) % FW.n, j = i * 3, a = Math.random() * Math.PI * 2, sp = 3 + Math.random() * 5, up = 4 + Math.random() * 6; fwPos[j] = cx; fwPos[j + 1] = top; fwPos[j + 2] = cz; fwVel[j] = Math.cos(a) * sp; fwVel[j + 1] = up; fwVel[j + 2] = Math.sin(a) * sp; fwLife[i] = 1.1 + Math.random() * 0.5; const cc = Math.random() < 0.3 ? new T.Color(0xffffff) : c; fwCol[j] = cc.r; fwCol[j + 1] = cc.g; fwCol[j + 2] = cc.b; } }
     function updateFireworks(dt, tm) { if (hovering && tm > FW.next) { firework(hovering); FW.next = tm + 0.45; } let any = false; for (let i = 0; i < FW.n; i++) { if (fwLife[i] <= 0) continue; any = true; const j = i * 3; fwLife[i] -= dt; fwVel[j + 1] -= 11 * dt; fwPos[j] += fwVel[j] * dt; fwPos[j + 1] += fwVel[j + 1] * dt; fwPos[j + 2] += fwVel[j + 2] * dt; const f = Math.max(0, Math.min(1, fwLife[i])); fwCol[j] *= 0.985; fwCol[j + 1] *= 0.985; fwCol[j + 2] *= 0.985; if (fwLife[i] <= 0) { fwPos[j + 1] = -50; } } fwPts.visible = any; fwGeo.attributes.position.needsUpdate = true; fwGeo.attributes.color.needsUpdate = true; }
     // ---------- camera / orbit ----------
+    /* ---------- STYLE TEST (staging only; 2026-10-18, Yoni's three looks by age): ?style=plush|voxel|nature swaps Math Tower for the
+       tower built by the still → four views → mesh pipeline and stands that style's host and creature beside it, inside today's kingdom,
+       under its own light and camera, so the looks can be judged where they will live. Models: shared/models/style_<name>.js
+       (window.KQ_STYLE = { tower, host, creature } as base64 GLB). Without the parameter nothing here runs. ---------- */
+    const STYLE_TEST = (() => { try { const v = new URLSearchParams(location.search).get('style') || ''; return /^(plush|voxel|nature|today)$/.test(v) ? v : null; } catch (e) { return null; } })();   /* 'today' = no models, only the camera hook, for side-by-side shots */
+    if (STYLE_TEST && isMeadow) (async () => {
+      window.__styleFly = id => flyTo(id, () => {});   /* staging screenshots: fly the camera to a place and stay */
+      if (STYLE_TEST === 'today') { window.__styleTest = { style: 'today', placed: [] }; return; }
+      const need = src => new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = src; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
+      try { if (!T.GLTFLoader) await need(K3D_BASE + 'vendor-gltf.js?v=1'); await need(K3D_BASE + 'models/style_' + STYLE_TEST + '.js?v=1'); } catch (e) { console.error('style test: models did not load', e); return; }
+      const loader = new T.GLTFLoader(), an = renderer.capabilities.getMaxAnisotropy();
+      const parse = async b64 => { const bin = atob(b64), buf = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i); return (await new Promise((ok, no) => loader.parse(buf.buffer, '', ok, no))).scene; };
+      const fit = (m, width, rot) => { m.rotation.y = rot || 0; m.updateMatrixWorld(true); let bb = new T.Box3().setFromObject(m); const sz = bb.getSize(new T.Vector3()); m.scale.multiplyScalar(width / Math.max(sz.x, sz.z)); m.updateMatrixWorld(true); bb = new T.Box3().setFromObject(m); const c = bb.getCenter(new T.Vector3()); m.position.set(-c.x, -bb.min.y - 0.05, -c.z);
+        m.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; for (const mt of [].concat(o.material)) if (mt.map) { mt.map.anisotropy = an; mt.map.needsUpdate = true; } } }); const w = new T.Group(); w.add(m); w.userData.noMerge = true; w.userData.h = bb.max.y - bb.min.y; return w; };
+      const keep = (o, root) => { for (let q = o; q && q !== root; q = q.parent) { const u = q.userData || {}; if (u.baseY !== undefined || u.orbit != null || u.spin || u.smoke != null || u.flame != null) return true; } return false; };
+      const D = window.KQ_STYLE || {}, placed = [];
+      const SPOTS = { tower: { id: 'math', width: 7.5 }, host: { x: -13.5, z: -7.5, width: 3.4, rot: 0.5 }, creature: { x: -26, z: -17, width: 3.0, rot: -0.4 } };   /* beside Math Tower (-20, -12) */
+      for (const k of Object.keys(SPOTS)) { const b64 = D[k]; if (!b64) continue; const S = SPOTS[k]; let w; try { w = fit(await parse(b64), S.width, S.rot); } catch (e) { console.error('style test', k, e); continue; }
+        if (S.id) { const a = anchors.find(x => x.id === S.id); if (!a) continue; a.g.traverse(o => { if (o.isMesh && !keep(o, a.g)) o.visible = false; }); w.traverse(o => { if (o.isMesh) { o.userData.plot = a.g; pickables.push(o); } }); a.g.add(w); a.h = Math.max(a.h, w.userData.h + 1.2); }
+        else { const g = plotAt('st_' + k, S.x, S.z, () => {}, {}); g.add(w); }
+        placed.push(k); }
+      window.__styleTest = { style: STYLE_TEST, placed };
+    })();
     const HOME = RICH && LANDMARK_MODELS ? [0, 3, 7] : [0, 3, 2];   /* the new look: a little nearer the front, so Story Forge and Spelling Bee are not cut by the screen's bottom edge */
     const target = new T.Vector3(...HOME), VIEW = { on: false, home: new T.Vector3(...HOME), to: new T.Vector3(...HOME) }, LIM = { pMin: 0.55, pMax: 1.35, rMin: 26, rMax: 105 * SPR }, orbit = { theta: 0.3, phi: 0.98, radius: 76 * CAMR, tTheta: 0.3, tPhi: 0.98, tRadius: 76 * CAMR }; let focused = false;
     let arr = null, drawn = 0;   /* arr: the arrival glide (arrive); drawn: frames drawn so far, for opts.onReady */   // wide view: the whole valley, room between the worlds
