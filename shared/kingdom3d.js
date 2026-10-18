@@ -1789,7 +1789,7 @@ function updateDiorama(tm, camPos, motesGroup, pixelRatio, pointMats) {
       const D = window.KQ_STYLE || {}, placed = [];
       const SPOTS = { tower: { id: 'math', width: 4.6 }, host: { x: -16.3, z: -15.6, width: 2.6, rot: 0.7 }, creature: { x: -24.4, z: -9.6, width: 2.2, rot: -0.6 } };   /* beside Math Tower (-20, -12), on its camera side */
       for (const k of Object.keys(SPOTS)) { const b64 = D[k]; if (!b64) continue; const S = SPOTS[k]; let w; try { w = fit(await parse(b64), S.width, S.rot); } catch (e) { console.error('style test', k, e); continue; }
-        if (S.id) { const a = anchors.find(x => x.id === S.id); if (!a) continue; a.g.traverse(o => { if (o.isMesh && !keep(o, a.g)) o.visible = false; if (SCENE_ON && o.isMesh && o.userData.orbit != null) o.visible = false; }); w.traverse(o => { if (o.isMesh) { o.userData.plot = a.g; pickables.push(o); } }); a.g.add(w); a.h = Math.max(a.h, w.userData.h + 1.2); }
+        if (S.id) { const a = anchors.find(x => x.id === S.id); if (!a) continue; a.g.traverse(o => { if (o.isMesh && !keep(o, a.g)) o.visible = false; if (SCENE_ON && o.isMesh) { let ch = false; for (let q = o; q && q !== a.g; q = q.parent) if (q.userData && q.userData.baseY !== undefined) ch = true; if (!ch) o.visible = false; } }); w.traverse(o => { if (o.isMesh) { o.userData.plot = a.g; pickables.push(o); } }); a.g.add(w); a.h = Math.max(a.h, w.userData.h + 1.2); }
         else { const g = plotAt('st_' + k, S.x, S.z, () => {}, {}); g.add(w); }
         placed.push(k); }
       /* ---------- the WHOLE LOOK (&scene=1): the kingdom itself in the style, not only three objects — camera nearer and lower, day light,
@@ -1799,6 +1799,8 @@ function updateDiorama(tm, camPos, motesGroup, pixelRatio, pointMats) {
         const C = new T.Vector3(-20, 0, -12);   /* Math Tower */
         orbit.tRadius = 34 * CAMR; orbit.tPhi = 0.92; LIM.rMin = 16; VIEW.home.set(C.x, 2.5, C.z); VIEW.to.copy(VIEW.home);
         scene.traverse(o => { if (o.isInstancedMesh) o.visible = false; });   /* today's forest, grass blades, flowers, reeds */
+        for (const o of scene.children.slice()) { if (o.isMesh && o.geometry && o.geometry.type === 'DodecahedronGeometry' && Math.hypot(o.position.x - C.x, o.position.z - C.z) < 40) o.visible = false; }   /* today's boulders */
+        try { riverDeco.visible = false; } catch (e) {}
         for (const a of anchors) { if (a.id === 'math' || /^st_/.test(a.id)) continue; const d = Math.hypot(a.g.position.x - C.x, a.g.position.z - C.z); if (d < 34) a.g.visible = false; }   /* today's neighbours */
         const tl = new T.TextureLoader(); const tex = (u, cb) => tl.load(u, t => { t.colorSpace = T.SRGBColorSpace; t.anisotropy = an; cb(t); });
         if (D.ground) tex(D.ground, t => { t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(28, 28); const m = ground.material; m.map = t; m.vertexColors = false; m.color.set(0xffffff); m.needsUpdate = true; });
