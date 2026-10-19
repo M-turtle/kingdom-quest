@@ -226,9 +226,10 @@
     await new Promise(res => drag(comp, 'table', p => { ring.remove(); qx = p.x; qy = p.y + 6; comp.setAttribute('transform', 'translate(' + qx + ' ' + qy + ')'); }, () => { if (Math.hypot(qx - cx, qy - cy) < 4.5) { comp.remove(); res(); } else say(t('pinNo'), 'bad'); })); nogeo();
     table.appendChild(sv('circle', { cx, cy, r: 0.9, fill: '#3a3a4a' })); }
   /* the ruler slides in with its red 0 on the pin */
-  async function rulerFromPin(lenCm) { const g = sv('g', { class: 'slide' }); table.appendChild(g); const h = Math.max(3.4, CIR.pxcm * 1.6); const R = mkRuler(g, CIR.cx, CIR.cy + 0.8, lenCm, CIR.pxcm, h); CIR.R = R; await slideIn(g, 30, 0); return R; }
+  async function rulerFromPin(lenCm) { const g = sv('g', { class: 'slide' }); table.appendChild(g); const h = Math.max(3.4, CIR.pxcm * 1.6); const R = mkRuler(g, CIR.cx, CIR.cy + 0.8, lenCm, CIR.pxcm, h); CIR.R = R; CIR.Rg = g; await slideIn(g, 30, 0); return R; }
+  const rulerFront = () => { if (CIR.Rg && CIR.Rg.parentNode) CIR.Rg.parentNode.appendChild(CIR.Rg); };
   /* open the compass along the ruler (the knob carries no number), take a close look and set it exactly, then it swings round and draws */
-  async function openAndDraw(target, msg) { const R = CIR.R, py = CIR.cy; say(msg); const legs = sv('path', { fill: 'none', stroke: '#3a3a4a', 'stroke-width': 0.9, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); table.appendChild(legs);
+  async function openAndDraw(target, msg) { rulerFront(); const R = CIR.R, py = CIR.cy; say(msg); const legs = sv('path', { fill: 'none', stroke: '#3a3a4a', 'stroke-width': 0.9, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); table.appendChild(legs);
     const mark = sv('line', { x1: R.X(1), y1: py - 1, x2: R.X(1), y2: R.y + R.h * 0.5, stroke: '#ff3a8a', 'stroke-width': 0.25 }); table.appendChild(mark); const knob = sv('circle', { cx: R.X(1), cy: py - 2.2, r: 1.8, fill: 'rgba(255,106,168,.85)', stroke: '#fff', 'stroke-width': 0.4, style: 'cursor:grab' }); table.appendChild(knob); const ring = pulseT(R.X(1), py - 2.2, 1.8);
     let open = 1, k = 1; const set = v => { open = clamp(snap(v), PREC[S.tier], R.len); const x = R.X(open); knob.setAttribute('cx', x); mark.setAttribute('x1', x); mark.setAttribute('x2', x); legs.setAttribute('d', 'M' + CIR.cx + ' ' + py + ' L' + ((CIR.cx + x) / 2) + ' ' + (py - 8 * k) + ' L' + x + ' ' + py); }; set(1);
     window.__target = target; geo({ kind: 'drag', from: t2s(R.X(1), py - 2.2), to: t2s(R.X(target), py - 2.2), compass: true });
