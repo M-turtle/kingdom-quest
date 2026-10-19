@@ -1,0 +1,3 @@
+const { chromium } = require('/Users/yonieyal/TML-APP/mobile-tests/node_modules/playwright-core');
+(async () => { const b = await chromium.launch();
+  for (const [n, w, h] of [['d', 1440, 900], ['p', 390, 844]]) { const p = await b.newPage({ viewport: { width: w, height: h } }); const errs = []; p.on('pageerror', e => errs.push(String(e))); await p.goto('file://' + process.cwd() + '/index.html'); await p.waitForTimeout(800); const sw = await p.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth); const imgs = await p.$$eval('img', is => is.map(i => i.naturalWidth > 0)); console.log(n, { horizontalScroll: sw, imgsLoaded: imgs.filter(Boolean).length + '/' + imgs.length, errs }); await p.close(); } await b.close(); })();

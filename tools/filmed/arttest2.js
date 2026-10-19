@@ -1,0 +1,19 @@
+const { chromium } = require('/Users/yonieyal/TML-APP/mobile-tests/node_modules/playwright-core');
+const http = require('http'), fs = require('fs'), path = require('path'); const root = '/Users/yonieyal/kingdom-quest';
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.webp': 'image/webp', '.mp3': 'audio/mpeg' };
+const srv = http.createServer((q, r) => { const p = decodeURIComponent(q.url.split('?')[0]); fs.readFile(path.join(root, p === '/' ? '/index.html' : p), (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': types[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); }).listen(4406);
+(async () => { const b = await chromium.launch({ args: ['--use-angle=metal'] }); const pg = await b.newPage({ viewport: { width: 1100, height: 1000 }, locale: 'en-US' }); const errs = []; pg.on('pageerror', e => errs.push(e.message)); pg.on('console', m => { if (m.type() === 'error' && !/supabase|relay|fetch/i.test(m.text())) errs.push(m.text().slice(0, 160)); });
+  await pg.goto('http://localhost:4406/index.html', { waitUntil: 'domcontentloaded', timeout: 90000 }); await pg.waitForFunction(() => window.KQ && document.getElementById('langRow'), null, { timeout: 60000 }); await pg.waitForTimeout(2500);
+  await pg.waitForFunction(() => [...document.querySelectorAll('#profiles *')].some(x => /add a player|הוספ|להוסיף/i.test(x.textContent)), null, { timeout: 30000 }); await pg.evaluate(() => { [...document.querySelectorAll('#profiles *')].find(x => x.children.length < 3 && /add a player|הוספ|להוסיף/i.test(x.textContent)).click(); }); await pg.waitForTimeout(400);
+  await pg.fill('#pname', 'Noa E'); await pg.click('#ageRow button:nth-child(3)'); await pg.click('#picGrid button:nth-child(2)'); await pg.click('#btnWizNext'); await pg.waitForTimeout(300);
+  await pg.click('#wtabs button[data-tab="mix"]'); await pg.waitForTimeout(200);
+  console.log('mxA tiles:', await pg.$$eval('#mxA .mxa', a => a.length), '| mxB tiles:', await pg.$$eval('#mxB .mxa', a => a.length), '| tile size:', await pg.$eval('#mxA .mxa', e => e.getBoundingClientRect().width), '| bg set:', await pg.$eval('#mxA .mxa', e => e.style.backgroundImage.slice(0, 30)));
+  await pg.click('#mxA button:nth-child(5)'); await pg.click('#mxB button:nth-child(6)'); await pg.waitForTimeout(500); console.log('mix:', await pg.$eval('#mixName', e => e.textContent), '| key:', await pg.evaluate(() => document.querySelector('#wizPreview .av') && document.querySelector('#wizPreview .av').dataset.key));
+  await pg.screenshot({ path: 'art_mix.png', clip: { x: 150, y: 80, width: 800, height: 760 } });
+  await pg.click('#btnSave'); await pg.waitForTimeout(500); await pg.click('#btnWizDone'); await pg.waitForTimeout(300);
+  // the Avatar Lab in the player's avatar pane
+  await pg.evaluate(() => { document.getElementById('settingsOverlay').hidden = false; const t = document.querySelector('#mtabs button[data-m="avatar"]'); if (t) t.click(); }); await pg.waitForTimeout(600);
+  console.log('mAvatar children:', await pg.$eval('#mAvatar', e => e.children.length), '| visible:', await pg.$eval('#mAvatar', e => e.offsetParent !== null), '| in drawer:', await pg.$eval('#mAvatar', e => e.closest('[id]') && e.closest('[id]').id));
+  console.log('lab chips with art:', await pg.$$eval('.labitem .mxa', a => a.length), '| chips:', await pg.$$eval('.labitem', a => a.length));
+  await pg.evaluate(() => { const c = document.querySelector('.labcol'); if (c) c.scrollIntoView(); }); await pg.waitForTimeout(200); await pg.evaluate(() => { const c = document.querySelector('.labcols'); if (c) c.scrollIntoView({ block: 'center' }); }); await pg.waitForTimeout(300); const lc = await pg.$('.labcols'); if (lc) await lc.screenshot({ path: 'art_lab.png' }); else await pg.screenshot({ path: 'art_lab.png' });
+  console.log('ERRS', errs.slice(0, 5)); await b.close(); srv.close(); })();

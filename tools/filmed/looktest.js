@@ -1,0 +1,11 @@
+const { chromium } = require('/Users/yonieyal/TML-APP/mobile-tests/node_modules/playwright-core');
+const http = require('http'), fs = require('fs'), path = require('path'); const root = '/private/tmp/claude-501/-Users-yonieyal-castle-chess/d9987f28-f2c5-4381-b2fb-abb4d8144d7e/scratchpad/look/site';
+const types = { '.html': 'text/html; charset=utf-8', '.mp4': 'video/mp4', '.webp': 'image/webp', '.jpg': 'image/jpeg' };
+const srv = http.createServer((q, r) => { const p = decodeURIComponent(q.url.split('?')[0]); const f = path.join(root, p === '/' ? '/index.html' : p); fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': types[path.extname(f)] || 'application/octet-stream' }); r.end(d); }); }).listen(4407);
+(async () => { const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 1200, height: 900 } }); const errs = []; pg.on('pageerror', e => errs.push(e.message));
+  await pg.goto('http://localhost:4407/', { waitUntil: 'load', timeout: 60000 }); await pg.waitForTimeout(5000);
+  console.log(JSON.stringify(await pg.evaluate(() => [...document.querySelectorAll('video')].map(v => ({ src: v.getAttribute('src'), ready: v.readyState, t: +v.currentTime.toFixed(1), w: v.videoWidth, paused: v.paused })))));
+  await pg.screenshot({ path: 'look_hub.png', clip: { x: 0, y: 0, width: 1200, height: 760 } });
+  await pg.click('#s1 .spot'); await pg.waitForTimeout(900); await pg.click('#pad button:nth-child(4)'); await pg.click('#pad button.go'); await pg.waitForTimeout(400);
+  const s2 = await pg.$('#s2'); await s2.screenshot({ path: 'look_tower.png' }); console.log('say:', await pg.$eval('#say', e => e.textContent), '| score:', await pg.$eval('#score', e => e.textContent), '| hero frame:', await pg.$eval('#hero', e => e.style.backgroundPosition));
+  console.log('ERRS', errs); await b.close(); srv.close(); })();

@@ -1,0 +1,8 @@
+const { chromium } = require('/Users/yonieyal/TML-APP/mobile-tests/node_modules/playwright-core');
+(async () => { const b = await chromium.launch({ channel: 'chrome', args: ['--autoplay-policy=no-user-gesture-required'] }); const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  const ev = []; p.on('request', r => { if (r.url().includes('kq-relay')) ev.push('req'); }); p.on('response', r => { if (r.url().includes('kq-relay')) ev.push([r.status(), r.headers()['content-type']]); }); p.on('pageerror', e => ev.push('ERR ' + e)); p.on('console', m => ev.push('con ' + m.text().slice(0, 100)));
+  await p.goto(process.argv[2]); await p.evaluate(() => { localStorage.clear(); localStorage.setItem('kq_atelier_v5', JSON.stringify({ lang: 'he', name: 'Bot', age: 5, coins: 10, rep: 0, day: 1, wardrobe: [], seen: 0, taught: {} })); }); await p.reload(); await p.waitForTimeout(900);
+  await p.click('.sheet .row button:text-is("5")'); await p.click('.sheet .btn'); await p.waitForTimeout(1500); await p.click('.actions .btn'); await p.waitForTimeout(2500);
+  const under = await p.evaluate(() => { const s = document.querySelector('.bubble .spk'); const r = s.getBoundingClientRect(); const e = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return [e && e.tagName, e && e.className]; });
+  await p.click('.bubble .spk'); let talk = false; for (let i = 0; i < 24; i++) { await p.waitForTimeout(250); if (await p.$('.dock .bear.talk')) { talk = true; break; } }
+  await p.screenshot({ path: process.argv[3] }); const pos = await p.$eval('.dock .bearimg', e => e.style.backgroundPosition); console.log({ under, talk, pos, ev }); await b.close(); })();

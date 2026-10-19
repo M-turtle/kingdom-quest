@@ -8,3 +8,7 @@ tts-worker/
 
 # the Atelier ships its filmed assets (Yoni 2026-10-19)
 !atelier/assets/
+
+!tools/
+tools/*
+!tools/filmed/

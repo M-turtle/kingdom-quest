@@ -1,0 +1,17 @@
+const { chromium } = require('/Users/yonieyal/TML-APP/mobile-tests/node_modules/playwright-core');
+const http = require('http'), fs = require('fs'), path = require('path'); const root = '/Users/yonieyal/kingdom-quest';
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.webp': 'image/webp', '.mp3': 'audio/mpeg' };
+const srv = http.createServer((q, r) => { const p = decodeURIComponent(q.url.split('?')[0]); fs.readFile(path.join(root, p === '/' ? '/index.html' : p), (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': types[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); }).listen(4406);
+(async () => { const b = await chromium.launch({ args: ['--use-angle=metal'] }); const pg = await b.newPage({ viewport: { width: 1100, height: 1000 }, locale: 'en-US' }); const errs = []; pg.on('pageerror', e => errs.push(e.message)); pg.on('console', m => { if (m.type() === 'error' && !/supabase|relay|fetch/i.test(m.text())) errs.push(m.text().slice(0, 160)); });
+  await pg.goto('http://localhost:4406/index.html', { waitUntil: 'domcontentloaded', timeout: 90000 }); await pg.waitForFunction(() => window.KQ && document.getElementById('langRow'), null, { timeout: 60000 }); await pg.waitForTimeout(2500);
+  await pg.waitForFunction(() => [...document.querySelectorAll('#profiles *')].some(x => /add a player|הוספ|להוסיף/i.test(x.textContent)), null, { timeout: 30000 }); await pg.evaluate(() => { [...document.querySelectorAll('#profiles *')].find(x => x.children.length < 3 && /add a player|הוספ|להוסיף/i.test(x.textContent)).click(); }); await pg.waitForTimeout(400);
+  await pg.fill('#pname', 'Noa E'); await pg.click('#ageRow button:nth-child(3)'); await pg.click('#picGrid button:nth-child(2)'); await pg.click('#btnWizNext'); await pg.waitForTimeout(300);
+  await pg.click('#wizHeroes .avpick:nth-child(2)'); await pg.waitForTimeout(300); await pg.click('#btnSave'); await pg.waitForTimeout(500); await pg.click('#btnWizDone'); await pg.waitForTimeout(900);
+  console.log('drawer open:', await pg.$eval('#drawer', e => e.classList.contains('open')), '| intro flag:', await pg.evaluate(() => document.body.dataset.intro || null));
+  await pg.waitForTimeout(1000); await pg.screenshot({ path: 'intro_1.png' }); await pg.waitForTimeout(2600); await pg.screenshot({ path: 'intro_2.png' }); await pg.waitForTimeout(1800); await pg.screenshot({ path: 'intro_3.png' });
+  const t0 = Date.now(); await pg.waitForFunction(() => !document.body.dataset.intro, null, { timeout: 30000 }); console.log('intro ended after ~', Math.round((Date.now() - t0) / 100) / 10 + 5.9, 's | flag:', await pg.evaluate(() => document.body.dataset.intro || null));
+  // cold open with a player: the flight plays again, the drawer stays closed
+  await pg.goto('http://localhost:4406/index.html', { waitUntil: 'domcontentloaded', timeout: 90000 }); await pg.waitForFunction(() => window.KQ && document.body.dataset.intro === '1', null, { timeout: 60000 }).then(() => console.log('cold open: intro started')).catch(() => console.log('cold open: NO intro'));
+  await pg.waitForTimeout(1500); console.log('cold open drawer open:', await pg.$eval('#drawer', e => e.classList.contains('open'))); await pg.screenshot({ path: 'intro_cold.png' });
+  await pg.mouse.click(700, 500); await pg.waitForTimeout(300); console.log('after tap, intro flag:', await pg.evaluate(() => document.body.dataset.intro || null));
+  console.log('ERRS', errs.slice(0, 6)); await b.close(); srv.close(); })();

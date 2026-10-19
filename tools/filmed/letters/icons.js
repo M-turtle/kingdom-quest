@@ -1,0 +1,111 @@
+/* Kingdom Quest — the icon library. No emoji is ever shown: every pictograph the games use is swapped for a 3D-rendered
+   game icon from the atlas (shared/icons/iconsN.webp, 128px cells, 8×4 per sheet), and interface glyphs (arrows, ticks,
+   stars, chess pieces, the speaker) for hand-drawn vector icons. The original character stays in the DOM, visually hidden,
+   so `textContent` comparisons in the games keep working and screen readers still read it.
+   API: KQ.icon(keyOrEmoji, cls) → element · KQ.iconCanvas(key, px) → Promise<canvas> · KQ.iconTexture(key) → THREE.CanvasTexture
+        KQ.deEmoji(root) → runs the swap on a subtree (a MutationObserver runs it everywhere automatically). */
+(function () {
+  const DATA = {"index":{"abacus":[0,0],"alien":[0,1],"amulet":[0,2],"anchor":[0,3],"apple":[0,4],"arena":[0,5],"badge":[0,6],"baguette":[0,7],"balloon":[0,8],"banana":[0,9],"barchart":[0,10],"bat":[0,11],"bear":[0,12],"bed":[0,13],"bee":[0,14],"bell":[0,15],"bike":[0,16],"bird":[0,17],"blossom":[0,18],"blowfish":[0,19],"blueberries":[0,20],"bluebook":[0,21],"bluecircle":[0,22],"bluediamond":[0,23],"blueheart":[0,24],"bluesquare":[0,25],"bone":[0,26],"book":[0,27],"books":[0,28],"boom":[0,29],"bow":[0,30],"brain":[0,31],"bread":[1,0],"brick":[1,1],"bridge":[1,2],"bubbles":[1,3],"bucket":[1,4],"bulb":[1,5],"bus":[1,6],"butterfly":[1,7],"cactus":[1,8],"cake":[1,9],"cakeslice":[1,10],"calendar":[1,11],"candle":[1,12],"candy":[1,13],"cannon":[1,14],"cap":[1,15],"car":[1,16],"cart":[1,17],"castle":[1,18],"cat":[1,19],"cauldron":[1,20],"chart":[1,21],"chat":[1,22],"cheese":[1,23],"chest":[1,24],"chick":[1,25],"chocolate":[1,26],"clock":[1,27],"cloud":[1,28],"clover":[1,29],"coffee":[1,30],"coffin":[1,31],"coin":[2,0],"comet":[2,1],"compass":[2,2],"cookie":[2,3],"corn":[2,4],"cottage":[2,5],"cow":[2,6],"crab":[2,7],"crocodile":[2,8],"croissant":[2,9],"crown":[2,10],"crystalball":[2,11],"cupcake":[2,12],"dagger":[2,13],"daisy":[2,14],"dash":[2,15],"desert":[2,16],"detective":[2,17],"devil":[2,18],"dice":[2,19],"dinosaur":[2,20],"divide":[2,21],"dizzy":[2,22],"dog":[2,23],"dolphin":[2,24],"door":[2,25],"dove":[2,26],"dragon":[2,27],"droplet":[2,28],"drum":[2,29],"duck":[2,30],"eagle":[2,31],"ear":[3,0],"egg":[3,1],"elephant":[3,2],"equals":[3,3],"exclaim":[3,4],"fairy":[3,5],"fallenleaf":[3,6],"feather":[3,7],"fire":[3,8],"fish":[3,9],"fishing":[3,10],"flag":[3,11],"flower":[3,12],"fog":[3,13],"forge":[3,14],"fox":[3,15],"frame":[3,16],"frog":[3,17],"gear":[3,18],"gem":[3,19],"ghost":[3,20],"gift":[3,21],"giraffe":[3,22],"globe":[3,23],"gloves":[3,24],"glowstar":[3,25],"goblet":[3,26],"gradcap":[3,27],"grapes":[3,28],"greencircle":[3,29],"greenheart":[3,30],"greensquare":[3,31],"guitar":[4,0],"hammer":[4,1],"hand":[4,2],"handshake":[4,3],"heart":[4,4],"helmet":[4,5],"herb":[4,6],"hibiscus":[4,7],"honey":[4,8],"horn":[4,9],"horse":[4,10],"hourglass":[4,11],"house":[4,12],"hundred":[4,13],"icecream":[4,14],"icecube":[4,15],"island":[4,16],"jcastle":[4,17],"jeans":[4,18],"joker":[4,19],"juice":[4,20],"kangaroo":[4,21],"key":[4,22],"keyboard":[4,23],"kite":[4,24],"koala":[4,25],"ladder":[4,26],"lantern":[4,27],"laptop":[4,28],"leaves":[4,29],"letterA":[4,30],"letters":[4,31],"lightning":[5,0],"link":[5,1],"lion":[5,2],"lock":[5,3],"log":[5,4],"lotus":[5,5],"magnifier":[5,6],"map":[5,7],"meat":[5,8],"medal":[5,9],"memo":[5,10],"milk":[5,11],"minecart":[5,12],"minus":[5,13],"moai":[5,14],"moneybag":[5,15],"monkey":[5,16],"moon":[5,17],"mountain":[5,18],"mouse":[5,19],"mushroom":[5,20],"numbers":[5,21],"octopus":[5,22],"oldkey":[5,23],"orange":[5,24],"orangediamond":[5,25],"owl":[5,26],"p_balloon":[5,27],"p_bear":[5,28],"p_caravan":[5,29],"p_crystal":[5,30],"p_door":[5,31],"p_fairy":[6,0],"p_fire":[6,1],"p_fisher":[6,2],"p_frog":[6,3],"p_garden":[6,4],"p_gnome":[6,5],"p_hive":[6,6],"p_mill":[6,7],"p_nest":[6,8],"p_owl":[6,9],"p_pirate":[6,10],"p_ruins":[6,11],"p_scarecrow":[6,12],"p_smith":[6,13],"p_stones":[6,14],"p_tower":[6,15],"p_tree":[6,16],"p_troll":[6,17],"package":[6,18],"panda":[6,19],"parrot":[6,20],"party":[6,21],"pear":[6,22],"penguin":[6,23],"people":[6,24],"person":[6,25],"pickaxe":[6,26],"pig":[6,27],"pill":[6,28],"pine":[6,29],"pirateflag":[6,30],"pizza":[6,31],"plane":[7,0],"plus":[7,1],"potion":[7,2],"potion_blue":[7,3],"potion_gold":[7,4],"potion_green":[7,5],"potion_purple":[7,6],"potion_red":[7,7],"princess":[7,8],"pumpkin":[7,9],"purpleheart":[7,10],"purse":[7,11],"puzzle":[7,12],"question":[7,13],"r_fashion":[11,13],"r_sports":[11,14],"basketball":[11,15],"baseball":[11,16],"football":[11,17],"volleyball":[11,18],"tennisball":[11,19],"r_cloud":[7,14],"r_meadow":[7,15],"r_ocean":[7,16],"r_pirate":[7,17],"r_skull":[7,18],"r_sky":[7,19],"rabbit":[7,20],"rain":[7,21],"rainbow":[7,22],"receipt":[7,23],"redcircle":[7,24],"redsquare":[7,25],"refresh":[7,26],"ring":[7,27],"robot":[7,28],"rock":[7,29],"rocket":[7,30],"rose":[7,31],"ruler":[8,0],"sailboat":[8,1],"sandwich":[8,2],"saw":[8,3],"scale":[8,4],"school":[8,5],"scissors":[8,6],"screwdriver":[8,7],"scroll":[8,8],"seed":[8,9],"seedling":[8,10],"shark":[8,11],"shell":[8,12],"shield":[8,13],"shipwheel":[8,14],"shirt":[8,15],"shuffle":[8,16],"shush":[8,17],"skull":[8,18],"sleepy":[8,19],"slot":[8,20],"sneaker":[8,21],"snowflake":[8,22],"soccer":[8,23],"socks":[8,24],"sparkles":[8,25],"speech":[8,26],"spider":[8,27],"splash":[8,28],"squirrel":[8,29],"stage_camp":[8,30],"stage_castle":[8,31],"stage_house":[9,0],"stage_hut":[9,1],"stage_palace":[9,2],"stage_tower":[9,3],"star":[9,4],"stopwatch":[9,5],"storm":[9,6],"strawberry":[9,7],"sun":[9,8],"suncloud":[9,9],"sunflower":[9,10],"swirl":[9,11],"swords":[9,12],"t_players":[9,13],"t_progress":[9,14],"t_settings":[9,15],"t_treasure":[9,16],"tag":[9,17],"target":[9,18],"teddy":[9,19],"telescope":[9,20],"temple":[9,21],"ten":[9,22],"thread":[9,23],"tiger":[9,24],"times":[9,25],"tombstone":[9,26],"toolbox":[9,27],"tophat":[9,28],"tornado":[9,29],"tower":[9,30],"train":[9,31],"tree":[10,0],"trex":[10,1],"triangle":[10,2],"troll":[10,3],"trophy":[10,4],"trophy2":[10,5],"tropicalfish":[10,6],"tulip":[10,7],"turtle":[10,8],"umbrella":[10,9],"unicorn":[10,10],"victory":[10,11],"volcano":[10,12],"w_boat":[10,13],"w_chess":[10,14],"w_clock":[10,15],"w_egg":[10,16],"w_gate":[10,17],"w_glory":[10,18],"w_logic":[10,19],"w_market":[10,20],"w_math":[10,21],"w_memory":[10,22],"w_pond":[10,23],"w_reading":[10,24],"w_scrolls":[10,25],"w_spelling":[10,26],"w_story":[10,27],"w_well":[10,28],"wand":[10,29],"warning":[10,30],"wave":[10,31],"web":[11,0],"wheat":[11,1],"whiteflower":[11,2],"whitesquare":[11,3],"wilted":[11,4],"window":[11,5],"wizard":[11,6],"wolf":[11,7],"wrench":[11,8],"writing":[11,9],"yellowcircle":[11,10],"yellowheart":[11,11],"yellowsquare":[11,12]},"alias":{"🍎":"apple","🏰":"castle","👑":"crown","🛡️":"shield","🐱":"cat","🐶":"dog","⛵":"sailboat","🚂":"train","🏆":"trophy","📖":"book","🪙":"coin","💎":"gem","🥚":"egg","🍯":"honey","🌸":"blossom","🔮":"crystalball","🍌":"banana","🍇":"grapes","🍓":"strawberry","🍊":"orange","🍞":"bread","🥐":"croissant","🥖":"baguette","🧀":"cheese","🍖":"meat","🎂":"cake","🍰":"cakeslice","🍪":"cookie","🍕":"pizza","🍫":"chocolate","🍦":"icecream","🍬":"candy","🧃":"juice","🥛":"milk","☕":"coffee","🥪":"sandwich","🎃":"pumpkin","🍄":"mushroom","🧊":"icecube","💊":"pill","🌽":"corn","🫐":"blueberries","🐴":"horse","🐄":"cow","🐷":"pig","🐻":"bear","🦁":"lion","🦊":"fox","🐰":"rabbit","🐭":"mouse","🐿️":"squirrel","🐘":"elephant","🦒":"giraffe","🦘":"kangaroo","🐵":"monkey","🐨":"koala","🐼":"panda","🐯":"tiger","🐺":"wolf","🐧":"penguin","🐦":"bird","🦆":"duck","🦉":"owl","🦅":"eagle","🕊️":"dove","🐣":"chick","🐝":"bee","🦋":"butterfly","🐟":"fish","🐠":"tropicalfish","🐡":"blowfish","🦈":"shark","🐬":"dolphin","🐙":"octopus","🦀":"crab","🐚":"shell","🐉":"dragon","🐲":"dragon","🦄":"unicorn","🦖":"trex","👻":"ghost","🐸":"frog","🐊":"crocodile","🦕":"dinosaur","🌳":"tree","🌲":"pine","🌱":"seedling","🌿":"herb","🍀":"clover","🍃":"leaves","🍐":"pear","💚":"greenheart","🟢":"greencircle","🟩":"greensquare","🌵":"cactus","🪷":"lotus","🐢":"turtle","💀":"skull","😈":"devil","🤖":"robot","👾":"alien","🧙":"wizard","🧚":"fairy","👸":"princess","🧌":"troll","🕵️":"detective","✋":"hand","✌️":"victory","👂":"ear","✍️":"writing","🤝":"handshake","👥":"people","👤":"person","☀️":"sun","☁️":"cloud","🌧️":"rain","⛈️":"storm","❄️":"snowflake","🌈":"rainbow","🌙":"moon","⭐":"star","🌟":"glowstar","✨":"sparkles","☄️":"comet","⚡":"lightning","🔥":"fire","💧":"droplet","💦":"splash","🌊":"wave","🌪️":"tornado","🌫️":"fog","🌤️":"suncloud","🌋":"volcano","⛰️":"mountain","🏜️":"desert","🏝️":"island","🌍":"globe","🌀":"swirl","💨":"dash","💥":"boom","💫":"dizzy","🫧":"bubbles","🌷":"tulip","🌹":"rose","🌺":"hibiscus","🌻":"sunflower","🌼":"daisy","💮":"whiteflower","🥀":"wilted","🌾":"wheat","🍂":"fallenleaf","🏯":"jcastle","🏠":"house","🏡":"cottage","🏛️":"temple","🗼":"tower","🌉":"bridge","🏫":"school","🚪":"door","🪟":"window","🗿":"moai","⚔️":"swords","🗡️":"dagger","🏹":"bow","🏅":"medal","💰":"moneybag","💍":"ring","🔑":"key","🗝️":"oldkey","🔐":"lock","🔒":"lock","📚":"books","📘":"bluebook","📜":"scroll","📝":"memo","🗺️":"map","🧭":"compass","🔭":"telescope","🪄":"wand","🧪":"potion","🕯️":"candle","🏮":"lantern","📯":"horn","🔔":"bell","🕰️":"clock","🕛":"clock","🕧":"clock","⏳":"hourglass","⌛":"hourglass","⏱️":"stopwatch","📅":"calendar","🎁":"gift","🎈":"balloon","🪁":"kite","🧸":"teddy","🧩":"puzzle","🎲":"dice","🧮":"abacus","📏":"ruler","📐":"triangle","⚖️":"scale","🔍":"magnifier","🔎":"magnifier","💡":"bulb","🎯":"target","⚙️":"gear","🔨":"hammer","🔧":"wrench","🪚":"saw","🪛":"screwdriver","⛏️":"pickaxe","⚒️":"pickaxe","🧰":"toolbox","🪣":"bucket","🪨":"rock","🧱":"brick","🪵":"log","🪶":"feather","🧵":"thread","☂️":"umbrella","✂️":"scissors","🎩":"tophat","🧢":"cap","⛑️":"helmet","🎓":"gradcap","👕":"shirt","👖":"jeans","👟":"sneaker","🧦":"socks","🧤":"gloves","👛":"purse","🛒":"cart","📦":"package","🏷️":"tag","🧾":"receipt","💻":"laptop","⌨️":"keyboard","🎸":"guitar","🥁":"drum","⚽":"soccer","🎉":"party","🎰":"slot","🃏":"joker","🖼️":"frame","💬":"speech","🚀":"rocket","✈️":"plane","🚗":"car","🚌":"bus","🚲":"bike","🛏️":"bed","🛌":"bed","🎣":"fishing","🚩":"flag","🏴‍☠️":"pirateflag","🪬":"amulet","❤️":"heart","💛":"yellowheart","💜":"purpleheart","💙":"blueheart","⚠️":"warning","📈":"chart","📊":"barchart","🧠":"brain","🔴":"redcircle","🔵":"bluecircle","🟡":"yellowcircle","🟥":"redsquare","🟦":"bluesquare","🟨":"yellowsquare","🔲":"whitesquare","⬜":"whitesquare","🔶":"orangediamond","🔷":"bluediamond","💠":"bluediamond","➕":"plus","➖":"minus","✖️":"times","➗":"divide","🟰":"equals","❓":"question","❔":"question","❗":"exclaim","⚠":"exclaim","💯":"hundred","🔟":"ten","🔢":"numbers","🔤":"letters","🔠":"letters","🅰️":"letterA","😴":"sleepy","🤫":"shush","🔀":"shuffle","🔗":"link","🔁":"refresh","🔄":"refresh","🗨️":"chat","🪜":"ladder","💐":"flower","🫘":"seed","🧁":"cupcake","🥈":"trophy2","🦴":"bone","🦇":"bat","🕷️":"spider","🕸️":"web","⚓":"anchor","☸️":"shipwheel","🦜":"parrot","⚰️":"coffin","🪦":"tombstone","🎢":"minecart"}};
+  const INDEX = DATA.index, ALIAS = {};
+  for (const k in DATA.alias) ALIAS[k.replace(/️|︎/g, '')] = DATA.alias[k];
+  const COLS = 8, ROWS = 4;
+  const script = document.currentScript;
+  const BASE = new URL('icons/', script ? script.src : location.href).href;
+  const sheetURL = n => BASE + 'icons' + n + '.webp?v=' + (n === 11 ? 3 : 1);   /* sheet 11 gained the Fashion and Sports islands and five sports balls (2026-09-26) */
+
+  /* ---------- vector glyphs (24×24, stroke = currentColor unless filled) ---------- */
+  const P = (d, fill) => ({ d, fill: !!fill });
+  const GLYPH = {
+    next: [P('M4.5 12h14'), P('M13 6.5l5.5 5.5-5.5 5.5')],
+    prev: [P('M19.5 12h-14'), P('M11 6.5L5.5 12l5.5 5.5')],
+    lr: [P('M4 12h16'), P('M8 8l-4 4 4 4'), P('M16 8l4 4-4 4')],
+    up: [P('M12 6.5l7 10.5H5z', 1)], down: [P('M12 17.5L5 7h14z', 1)],
+    back: [P('M9 5.5h10.5a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5H9L3.5 12z'), P('M11.5 9.5l5 5M16.5 9.5l-5 5')],
+    star: [P('M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6.1L12 16.9 6.6 19.8l1.2-6.1-4.5-4.2 6.1-.7z', 1)],
+    starO: [P('M12 3.2l2.6 5.6 6.1.7-4.5 4.2 1.2 6.1L12 16.9 6.6 19.8l1.2-6.1-4.5-4.2 6.1-.7z')],
+    close: [P('M6.5 6.5l11 11M17.5 6.5l-11 11')],
+    check: [P('M5 12.8l4.4 4.4L19 7.6')],
+    checkC: [P('M12 2.8a9.2 9.2 0 1 0 0 18.4 9.2 9.2 0 0 0 0-18.4z', 1), P('M7.6 12.4l3.1 3.1 5.8-6.2')],
+    play: [P('M8 5.2l11 6.8-11 6.8z', 1)], rew: [P('M16 5.2L5 12l11 6.8z', 1)],
+    skipNext: [P('M5.5 5.8l9 6.2-9 6.2z', 1), P('M17.5 6v12')], skipPrev: [P('M18.5 5.8l-9 6.2 9 6.2z', 1), P('M6.5 6v12')],
+    undo: [P('M9 14.5L4 9.5l5-5'), P('M4.5 9.5h9.5a6 6 0 0 1 0 12H11')],
+    target: [P('M12 4.5a7.5 7.5 0 1 0 0 15 7.5 7.5 0 0 0 0-15z'), P('M12 2v5M12 17v5M2 12h5M17 12h5')],
+    menu: [P('M4 7h16M4 12h16M4 17h16')],
+    note: [P('M9 18.5a2.5 2.5 0 1 1-2.5-2.5A2.5 2.5 0 0 1 9 18.5zM9 18.5V5l10-2v12.5'), P('M19 15.5a2.5 2.5 0 1 1-2.5-2.5 2.5 2.5 0 0 1 2.5 2.5z')],
+    speaker: [P('M4 9.5h3.5L12 5.5v13l-4.5-4H4z', 1), P('M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11')],
+    /* Staunton silhouettes */
+    pawn: [P('M12 3.6a2.9 2.9 0 0 1 1.9 5.1c1.3.6 2.1 1.6 2.1 2.8h-1.6l1.3 5.6H8.3l1.3-5.6H8c0-1.2.8-2.2 2.1-2.8A2.9 2.9 0 0 1 12 3.6zM6.5 18.2h11l.8 2.4H5.7z', 1)],
+    rook: [P('M6.5 4h2.3v2h2v-2h2.4v2h2v-2h2.3v4.6l-1.6 1.4.9 7h-9.6l.9-7-1.6-1.4zM6 18.2h12l.7 2.4H5.3z', 1)],
+    knight: [P('M9.1 3.8l1.4 2c3.8-.3 6.9 2.6 7.1 7.2.1 1.8-.3 3.6-.8 5.1H8c.3-2.1 1.7-3.6 3.3-4.9.8-.7.8-1.7.1-1.8-1.1.8-2.4 1.2-3.9 1-1.3-.2-2-1.4-1.4-2.6l2.5-4.2zM6.6 18.3h11.2l.7 2.3H5.9z', 1)],
+    bishop: [P('M12 3.2c.9 0 1.4.8 1 1.5 1.9 1.3 3.2 3.4 3.2 5.4 0 1.7-1 2.9-2.4 3.4l.9 3.6H9.3l.9-3.6C8.8 13 7.8 11.8 7.8 10.1c0-2 1.3-4.1 3.2-5.4-.4-.7.1-1.5 1-1.5zM6.4 18.2h11.2l.8 2.4H5.6z', 1)],
+    queen: [P('M4.4 7.3a1.4 1.4 0 1 1 1.6 1.4l1.5 5.6 2.3-5.9a1.4 1.4 0 1 1 1.6-.1L12 8.1l.6.2a1.4 1.4 0 1 1 1.6.1l2.3 5.9 1.5-5.6a1.4 1.4 0 1 1 1.6-1.4L18.2 16.8H5.8zM5.8 18.2h12.4l.8 2.4H5z', 1)],
+    king: [P('M11.1 2.8h1.8v1.6h1.6v1.7h-1.6v1.6c2.9.4 5 2.4 4.8 5l-1.3 4.1H7.6l-1.3-4.1c-.2-2.6 1.9-4.6 4.8-5V6.1H9.5V4.4h1.6zM6.2 18.2h11.6l.8 2.4H5.4z', 1)]
+  };
+  const GLYPH_OF = { '→': 'next', '➜': 'next', '➡': 'next', '←': 'prev', '↔': 'lr', '▲': 'up', '▼': 'down', '⌫': 'back', '★': 'star', '☆': 'starO', '✕': 'close', '✖': 'close', '✓': 'check', '✔': 'check', '✅': 'checkC', '▶': 'play', '◀': 'rew', '⏭': 'skipNext', '⏮': 'skipPrev', '↶': 'undo', '⌖': 'target', '☰': 'menu', '♪': 'note', '🔊': 'speaker', '🔉': 'speaker', '🔈': 'speaker',
+    '♙': 'pawn', '♟': 'pawn', '♖': 'rook', '♜': 'rook', '♘': 'knight', '♞': 'knight', '♗': 'bishop', '♝': 'bishop', '♕': 'queen', '♛': 'queen', '♔': 'king', '♚': 'king' };
+  const WHITE_PIECE = /[♔♕♖♗♘♙]/;
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  function glyphEl(name, ch) {
+    const s = document.createElementNS(SVGNS, 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true');
+    for (const p of GLYPH[name]) { const e = document.createElementNS(SVGNS, 'path'); e.setAttribute('d', p.d); if (p.fill) { e.setAttribute('fill', 'currentColor'); e.setAttribute('stroke', 'none'); } else { e.setAttribute('fill', 'none'); e.setAttribute('stroke', 'currentColor'); e.setAttribute('stroke-width', '2'); e.setAttribute('stroke-linecap', 'round'); e.setAttribute('stroke-linejoin', 'round'); } s.appendChild(e); }
+    const w = document.createElement('span'); w.className = 'kq-g kq-g-' + name + (ch && WHITE_PIECE.test(ch) ? ' kq-g-white' : ''); w.appendChild(s);
+    return w;
+  }
+  /* ---------- atlas icons ---------- */
+  const keyOf = x => { if (!x) return null; if (INDEX[x]) return x; const n = String(x).replace(/️|︎/g, ''); return ALIAS[n] || null; };
+  function iconEl(x, cls) {
+    const k = keyOf(x); if (!k) { const g = GLYPH_OF[String(x || '').replace(/️|︎/g, '')]; return g ? glyphEl(g, x) : null; }
+    const [sh, j] = INDEX[k]; const e = document.createElement('span'); e.className = 'kq-i' + (cls ? ' ' + cls : ''); e.dataset.k = k;
+    e.style.backgroundImage = 'url("' + sheetURL(sh) + '")'; e.style.backgroundPosition = ((j % COLS) / (COLS - 1) * 100) + '% ' + (Math.floor(j / COLS) / (ROWS - 1) * 100) + '%';
+    return e;
+  }
+  const sheets = {};
+  function loadSheet(n) { return sheets[n] || (sheets[n] = new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = rej; im.src = sheetURL(n); })); }
+  async function iconCanvas(x, px) { const k = keyOf(x); px = px || 128; const c = document.createElement('canvas'); c.width = c.height = px; if (!k) return c; const [sh, j] = INDEX[k]; const im = await loadSheet(sh); c.getContext('2d').drawImage(im, (j % COLS) * 128, Math.floor(j / COLS) * 128, 128, 128, 0, 0, px, px); return c; }
+  function iconTexture(x) { const T = window.THREE; const c = document.createElement('canvas'); c.width = c.height = 128; const tx = new T.CanvasTexture(c); tx.colorSpace = T.SRGBColorSpace; const k = keyOf(x); if (k) { const [sh, j] = INDEX[k]; loadSheet(sh).then(im => { c.getContext('2d').drawImage(im, (j % COLS) * 128, Math.floor(j / COLS) * 128, 128, 128, 0, 0, 128, 128); tx.needsUpdate = true; }); } return tx; }
+  function iconImage(x) { const k = keyOf(x); if (!k) return Promise.resolve(null); const [sh, j] = INDEX[k]; return loadSheet(sh).then(im => ({ im, sx: (j % COLS) * 128, sy: Math.floor(j / COLS) * 128, s: 128 })); }
+
+  /* ---------- the swap ---------- */
+  const RX = /(?:\p{Regional_Indicator}{2})|(?:[#*0-9]️?⃣)|(?:\p{Extended_Pictographic}[️︎]?(?:‍\p{Extended_Pictographic}[️︎]?)*)|[★☆✓✔✕✖→←↔⌫▲▼➜➡▶◀⏭⏮↶⌖☰♪♔♕♖♗♘♙♚♛♜♝♞♟]/gu;
+  const HAS = new RegExp(RX.source, 'u');
+  const KEEP_TEXT = /^[©®™‼⁉ℹ〰〽]$/;   /* ©, ®, ™ … stay as ordinary text */
+  const SKIP = 'SCRIPT,STYLE,TEXTAREA,INPUT,SELECT,OPTION,CANVAS,SVG,TITLE,NOSCRIPT';
+  const missing = new Set();
+  function swapText(node) {
+    const s = node.nodeValue; if (!s || !HAS.test(s)) return;
+    const p = node.parentNode; if (!p || (p.closest && p.closest('.kq-e,.kq-keep'))) return;
+    const frag = document.createDocumentFragment(); let last = 0, changed = false;
+    for (const m of s.matchAll(RX)) { const ch = m[0]; if (KEEP_TEXT.test(ch)) continue; if (m.index > last) frag.appendChild(document.createTextNode(s.slice(last, m.index)));
+      const el = iconEl(ch); const w = el || document.createElement('span'); if (!el) { missing.add(ch); w.className = 'kq-gone'; } w.classList.add('kq-e');
+      const hid = document.createElement('i'); hid.textContent = ch; w.appendChild(hid); frag.appendChild(w); last = m.index + ch.length; changed = true; }
+    if (!changed) return; if (last < s.length) frag.appendChild(document.createTextNode(s.slice(last)));
+    p.replaceChild(frag, node); }
+  function stripOption(o) { const t = o.textContent, n = t.replace(RX, '').replace(/\s{2,}/g, ' ').trim(); if (n !== t) o.textContent = n; }
+  function walk(root) {
+    if (!root) return;
+    if (root.nodeType === 3) { const p = root.parentElement; if (!p) return; if (p.tagName === 'OPTION') { stripOption(p); return; } if (!p.closest(SKIP) && !p.closest('.kq-e')) swapText(root); return; }
+    if (root.nodeType !== 1 && root.nodeType !== 11) return;
+    if (root.nodeType === 1) { if (root.matches('option')) { stripOption(root); return; } if (root.matches('select')) { root.querySelectorAll('option').forEach(stripOption); return; } if (root.matches(SKIP) || root.classList.contains('kq-e')) return; }
+    const tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => { const p = n.parentElement; if (!p) return NodeFilter.FILTER_REJECT; if (p.closest(SKIP)) return NodeFilter.FILTER_REJECT; if (p.closest('.kq-e')) return NodeFilter.FILTER_REJECT; return NodeFilter.FILTER_ACCEPT; } });
+    const list = []; let n; while ((n = tw.nextNode())) list.push(n); for (const t of list) swapText(t);
+    if (root.querySelectorAll) { root.querySelectorAll('select option').forEach(stripOption); root.querySelectorAll('[placeholder]').forEach(e => { const v = e.getAttribute('placeholder'); const nv = v.replace(RX, '').trim(); if (nv !== v) e.setAttribute('placeholder', nv); }); }
+  }
+  let queued = new Set(), scheduled = false;
+  const flush = () => { scheduled = false; const q = queued; queued = new Set(); for (const n of q) if (n.isConnected) walk(n); };
+  const mo = new MutationObserver(ms => { for (const m of ms) { if (m.type === 'characterData') queued.add(m.target); else for (const a of m.addedNodes) queued.add(a); } if (!scheduled) { scheduled = true; queueMicrotask(flush); } });
+  function start() { walk(document.body); mo.observe(document.body, { childList: true, subtree: true, characterData: true }); document.title = document.title.replace(RX, '').trim(); }
+
+  /* ---------- styles ---------- */
+  const css = document.createElement('style'); css.id = 'kq-icons-css'; css.textContent = `
+.kq-i{display:inline-block; width:1.3em; height:1.3em; vertical-align:-.3em; background-repeat:no-repeat; background-size:800% 400%; flex:none; position:relative; filter:drop-shadow(0 .05em .08em rgba(0,0,0,.28))}
+.kq-g{display:inline-flex; width:1.05em; height:1.05em; vertical-align:-.16em; flex:none; position:relative} .kq-g svg{width:100%; height:100%; overflow:visible}
+.kq-g-star{color:#f4c64e; filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))} .kq-g-starO{color:#c9b58a}
+.kq-g-pawn,.kq-g-rook,.kq-g-knight,.kq-g-bishop,.kq-g-queen,.kq-g-king{color:#1e1a22; filter:drop-shadow(0 0 .04em rgba(255,236,190,.9)) drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.kq-g-white{color:#fbf5e6; filter:drop-shadow(0 0 .05em rgba(40,30,20,.9)) drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.kq-e > i, .kq-gone > i{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; font-size:1px; color:transparent}
+.kq-gone{display:none}`;
+  document.head.appendChild(css);
+  if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+  const api = { icon: iconEl, iconCanvas, iconTexture, iconImage, iconKey: keyOf, glyph: glyphEl, deEmoji: walk, iconMissing: () => [...missing], iconKeys: () => Object.keys(INDEX) };
+  window.KQIcons = api; if (window.KQ) Object.assign(window.KQ, api); else document.addEventListener('DOMContentLoaded', () => { if (window.KQ) Object.assign(window.KQ, api); });
+})();

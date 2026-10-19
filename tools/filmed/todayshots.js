@@ -1,0 +1,13 @@
+const { chromium } = require('/Users/yonieyal/TML-APP/mobile-tests/node_modules/playwright-core');
+const http = require('http'), fs = require('fs'), path = require('path'); const root = '/Users/yonieyal/kingdom-quest';
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.webp': 'image/webp', '.mp3': 'audio/mpeg' };
+const srv = http.createServer((q, r) => { const p = decodeURIComponent(q.url.split('?')[0]); fs.readFile(path.join(root, p === '/' ? '/index.html' : p), (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': types[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); }).listen(4406);
+(async () => { const b = await chromium.launch({ args: ['--use-angle=metal'] }); const pg = await b.newPage({ viewport: { width: 1280, height: 800 }, locale: 'he-IL' });
+  await pg.goto('http://localhost:4406/index.html', { waitUntil: 'domcontentloaded', timeout: 90000 }); await pg.waitForFunction(() => window.KQ, null, { timeout: 60000 }); await pg.waitForTimeout(2500);
+  const has = await pg.evaluate(() => !!KQ.profiles.active()); if (!has) { await pg.evaluate(() => { const p = KQ.profiles.add({ name: 'נועה א', avatar: 'h:knight', age: 7, lang: 'he' }); KQ.profiles.setActive(p.id); }); await pg.reload({ waitUntil: 'domcontentloaded' }); await pg.waitForFunction(() => window.KQ, null, { timeout: 60000 }); }
+  await pg.waitForTimeout(1500); await pg.evaluate(() => { const o = document.getElementById('filmOverlay'); if (o && !o.hidden) o.click(); }); await pg.waitForTimeout(9000); await pg.screenshot({ path: 'look/site/today_hub.jpg', type: 'jpeg', quality: 80 });
+  await pg.goto('http://localhost:4406/math/index.html', { waitUntil: 'domcontentloaded', timeout: 90000 }); await pg.waitForFunction(() => window.KQ, null, { timeout: 60000 }); await pg.waitForTimeout(2500);
+  const started = await pg.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => x.offsetParent && /start|begin|התחל|לשחק|play|go/i.test(x.textContent)); if (b) { b.click(); return b.textContent.trim(); } return null; }); await pg.waitForTimeout(2500);
+  for (let i = 0; i < 3; i++) { const more = await pg.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => x.offsetParent && /start|begin|התחל|לשחק|play|go|next|הבא/i.test(x.textContent) && !x.closest('#numpad')); if (b) { b.click(); return b.textContent.trim(); } return null; }); await pg.waitForTimeout(1500); if (!more) break; }
+  console.log('math started via', started, '| numpad shown:', await pg.$eval('#numpad', e => !e.hidden).catch(() => 'n/a'));
+  await pg.screenshot({ path: 'look/site/today_math.jpg', type: 'jpeg', quality: 80 }); await b.close(); srv.close(); })();

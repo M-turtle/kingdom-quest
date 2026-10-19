@@ -1,0 +1,10 @@
+const { chromium } = require('/Users/yonieyal/TML-APP/mobile-tests/node_modules/playwright-core');
+const http = require('http'), fs = require('fs'), path = require('path'); const root = '/Users/yonieyal/kingdom-quest';
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.webp': 'image/webp', '.mp3': 'audio/mpeg' };
+const srv = http.createServer((q, r) => { const p = decodeURIComponent(q.url.split('?')[0]); fs.readFile(path.join(root, p === '/' ? '/index.html' : p), (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': types[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); }).listen(4409);
+(async () => { const b = await chromium.launch({ args: ['--use-angle=metal'] }); const pg = await b.newPage({ locale: 'en-US' }); const errs = []; pg.on('pageerror', e => errs.push(e.message));
+  await pg.goto('http://localhost:4409/index.html', { waitUntil: 'domcontentloaded', timeout: 90000 }); await pg.waitForFunction(() => window.KQ && document.getElementById('langRow'), null, { timeout: 60000 }); await pg.waitForTimeout(2000);
+  const out = await pg.evaluate(() => { const p = KQ.profiles.add({ name: 'Lily E', avatar: 'h:wizard', age: 6, lang: 'en' }); KQ.profiles.setActive(p.id); KQ.parent.set('1234'); document.getElementById('addOverlay').hidden = true; const tab = [...document.querySelectorAll('#tabs button')].find(x => x.dataset.tab === 'parents'); if (tab) tab.click(); const bt = document.getElementById('btnParents') || [...document.querySelectorAll('button')].find(x => /parents|הורים/i.test(x.textContent) && !x.dataset.tab); if (bt) bt.click(); return { key: p.key }; });
+  await pg.waitForTimeout(800);
+  console.log('key row:', await pg.$eval('.pakey code', e => e.textContent).catch(() => 'NOT RENDERED'), '| expected', out.key, '| copy btn:', await pg.$eval('.pakey button', e => e.textContent).catch(() => '-'));
+  console.log('ERRS', errs.slice(0, 4)); await b.close(); srv.close(); })();
