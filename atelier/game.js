@@ -14,12 +14,13 @@
    Tiers: 1 (to 6) felt, whole cm · 2 (7–10) nature-tech, half cm · 3 (11+) nature-tech, mm and π. */
 (function () {
   'use strict';
-  const VERSION = 9;
+  const VERSION = 10;
   const $ = (s, r) => (r || document).querySelector(s), el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
   const NS = 'http://www.w3.org/2000/svg', sv = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a || {}) e.setAttribute(k, a[k]); return e; };
   const wait = ms => new Promise(r => setTimeout(r, ms)), clamp = (v, a, b) => Math.max(a, Math.min(b, v)), pick = a => a[Math.floor(Math.random() * a.length)];
   const stage = $('#stage'), world = $('#world'), scene = $('#scene'), overlay = $('#overlay'), table = $('#table'), ui = $('#ui'), actors = $('#actors');
-  const PREC = { 1: 1, 2: 0.5, 3: 0.1 }, TOL = { 1: 0.4, 2: 0.3, 3: 0.06 }, H = 58, IMG_CM = 30;
+  const PREC = { 1: 1, 2: 0.5, 3: 0.1 }, TOL = { 1: 0.4, 2: 0.3, 3: 0.06 }, IMG_CM = 30;
+  let H = 58;   /* a client's height on stage; each look sets its own (_look.h), so the client stands on the round stand clear of the chips at the top */
   const READZ = { 1: 2.6, 2: 3.2, 3: 4.4 }, SPAN = { 1: 8, 2: 5.5, 3: 2.6 };   /* Yoni 2026-10-19: 'relax with the zoom ... car sickness': shallow and slow, none on the felt table */
   const CLIENTS = { felt: ['girl', 'teddy', 'princess', 'fox'], nature: ['girl', 'bear', 'princess', 'fox'] };   /* felt dolls and felt animals; no boy, no grandma (Yoni 2026-10-19) */
   const COLOURS = ['#ff8fb8', '#8fd0f0', '#c0a0ff', '#ffcf6a', '#7fdcb0', '#ff9f90', '#e8545c', '#5a78c8'];
@@ -72,7 +73,7 @@
   const asset = (n, lk) => 'assets/' + (lk || S.look) + '/' + n;
   /* a picture that fails to load is tried again (three times, a short wait between), so a dropped connection never freezes the game */
   const loadImg = src => A.img[src] || (A.img[src] = new Promise((res, rej) => { let n = 0; const go = () => { const i = new Image(); i.onload = () => res(i); i.onerror = e => { if (++n < 4) setTimeout(go, 500 * n); else { delete A.img[src]; rej(e); } }; i.src = src + (n ? (src.includes('?') ? '&' : '?') + 'r=' + n : ''); }; go(); }));
-  async function loadLook() { $('#poster').src = asset('shop.webp'); $('#loop').src = asset('shop.mp4'); try { A.meta = await (await fetch(asset('meta.json'))).json(); } catch (e) { A.meta = {}; } for (const n of ['cl_disc', 'cl_strip', 'cl_sheet', 'beam', 'table.webp']) loadImg(asset(n.includes('.') ? n : n + '.webp')).catch(() => {}); }
+  async function loadLook() { $('#poster').src = asset('shop.webp'); $('#loop').src = asset('shop.mp4'); try { A.meta = await (await fetch(asset('meta.json'))).json(); } catch (e) { A.meta = {}; } H = (A.meta._look && A.meta._look.h) || 58; for (const n of ['cl_disc', 'cl_strip', 'cl_sheet', 'beam', 'table.webp']) loadImg(asset(n.includes('.') ? n : n + '.webp')).catch(() => {}); }
   function loopPlay(on) { const v = $('#loop'); if (on) { v.currentTime = 0; v.play().then(() => v.classList.add('on')).catch(() => {}); } else { v.classList.remove('on'); setTimeout(() => { if (!v.classList.contains('on')) v.pause(); }, 900); } }
   document.addEventListener('visibilitychange', () => { const v = $('#loop'); if (document.hidden) v.pause(); else if (v.classList.contains('on')) v.play().catch(() => {}); });
 
