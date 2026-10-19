@@ -12,18 +12,19 @@
    Tiers: 1 (to 6) felt, whole cm · 2 (7–10) nature-tech, half cm · 3 (11+) nature-tech, mm and π. */
 (function () {
   'use strict';
-  const VERSION = 6;
+  const VERSION = 7;
   const $ = (s, r) => (r || document).querySelector(s), el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
   const NS = 'http://www.w3.org/2000/svg', sv = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a || {}) e.setAttribute(k, a[k]); return e; };
   const wait = ms => new Promise(r => setTimeout(r, ms)), clamp = (v, a, b) => Math.max(a, Math.min(b, v)), pick = a => a[Math.floor(Math.random() * a.length)];
   const stage = $('#stage'), world = $('#world'), scene = $('#scene'), overlay = $('#overlay'), table = $('#table'), ui = $('#ui'), actors = $('#actors');
   const PREC = { 1: 1, 2: 0.5, 3: 0.1 }, TOL = { 1: 0.4, 2: 0.3, 3: 0.06 }, H = 58, IMG_CM = 30;
   const READZ = { 1: 2.6, 2: 3.2, 3: 4.4 }, SPAN = { 1: 8, 2: 5.5, 3: 2.6 };   /* Yoni 2026-10-19: 'relax with the zoom ... car sickness': shallow and slow, none on the felt table */
-  const CLIENTS = ['girl', 'boy', 'grandma', 'bear', 'fox', 'princess'];
+  const CLIENTS = { felt: ['girl', 'teddy', 'princess', 'fox'], nature: ['girl', 'bear', 'princess', 'fox'] };   /* felt dolls and felt animals; no boy, no grandma (Yoni 2026-10-19) */
   const COLOURS = ['#ff8fb8', '#8fd0f0', '#c0a0ff', '#ffcf6a', '#7fdcb0', '#ff9f90', '#e8545c', '#5a78c8'];
   const KINDS = ['plain', 'dots', 'stripes', 'gingham', 'flowers', 'hearts', 'stars', 'zigzag'];
   /* orders rotate so each client brings a different job */
-  const ORDERS = { 1: [['circleSkirt', 'belt'], ['belt', 'circleSkirt']], 2: [['circleSkirt', 'belt'], ['hat', 'belt'], ['circleSkirt', 'hat']], 3: [['circleSkirt', 'belt'], ['hat', 'belt'], ['circleSkirt', 'hat'], ['belt', 'circleSkirt', 'hat']] };
+  /* no hats, no people clients: dolls and felt animals only (Yoni 2026-10-19) */
+  const ORDERS = { 1: [['circleSkirt', 'belt'], ['belt', 'circleSkirt']], 2: [['circleSkirt', 'belt'], ['belt', 'circleSkirt']], 3: [['circleSkirt', 'belt'], ['belt', 'circleSkirt']] };
   const Z = { circleSkirt: 1, skirt: 1, belt: 2, hat: 3 };
 
   /* ---------- state ---------- */
@@ -117,12 +118,28 @@
     cv.style.transformOrigin = origin; cv.style.transform = tf.trim(); }
 
   /* ---------- words, buttons, the pad ---------- */
-  /* the notice: a felt teddy bear tailor beside a speech bubble with a speaker, placed next to what the kid is doing (Yoni 2026-10-19) */
-  let bubble = null, ANCH = null, lastSaid = '';
-  function dock() { let d = $('.dock', ui); if (!d) { d = el('div', 'dock'); const bear = el('div', 'bear'); bear.appendChild(el('div', 'bearimg')); const col = el('div', 'col'); col.appendChild(el('div', 'actions')); d.append(bear, col); ui.appendChild(d); $('.bearimg', bear).style.backgroundImage = 'url(' + asset('helper.webp', 'felt') + ')'; } return d; }
+  /* the notice: a speech bubble with a speaker, in a side lane beside the work (Yoni 2026-10-19: "Put it on the side.") — it measures what is on
+     screen (client, tape, cloth, ruler, compass, pad) and sits in the widest free lane, narrowing to fit; it never covers the work */
+  let bubble = null, ANCH = null, lastSaid = '', dockT = 0;
+  function dock() { let d = $('.dock', ui); if (!d) { d = el('div', 'dock'); const col = el('div', 'col'); col.appendChild(el('div', 'actions')); d.append(col); ui.appendChild(d); } return d; }
   function near(p) { ANCH = p; placeDock(); }
-  function placeDock() { const d = dock(); if (!ANCH) { d.classList.remove('anch'); d.style.left = ''; d.style.top = ''; return; } requestAnimationFrame(() => { const r = stage.getBoundingClientRect(), U = r.height / 100, dw = d.offsetWidth / U, dh = d.offsetHeight / U, padOn = !!$('.pad', ui), maxX = W - (padOn ? 27 : 1.5) - dw;
-      let x = ANCH.side === 'right' ? clamp(ANCH.x, 1.5, W - 1.5 - dw) : clamp(ANCH.x - dw / 2, 1.5, Math.max(1.5, maxX)), y = ANCH.side === 'right' ? ANCH.y - dh / 2 : ANCH.y > 52 ? ANCH.y - dh - 7 : ANCH.y + 7; y = clamp(y, 15, 98.5 - dh); d.classList.add('anch'); d.style.left = px(x); d.style.top = px(y); }); }
+  function workRects(sr) { const out = [], atT = stage.classList.contains('atTable'), add = e => { if (!e || !e.getBoundingClientRect) return; const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.05) return; const r = e.getBoundingClientRect();
+      const x0 = Math.max(r.left, sr.left), y0 = Math.max(r.top, sr.top), x1 = Math.min(r.right, sr.right), y1 = Math.min(r.bottom, sr.bottom); if (x1 - x0 < 2 || y1 - y0 < 2) return; if ((x1 - x0) * (y1 - y0) > sr.width * sr.height * 0.8) return; out.push({ x0, y0, x1, y1 }); };
+    if (atT) [...table.children].forEach(add); else { if (C.fig) { const fr = C.fig.getBoundingClientRect(), g = C.meta && C.meta.g && C.meta.g.belt; if (fr.width < sr.width * 0.45 || !g) add(C.fig); else { const cx = fr.left + (g.x0 + g.x1) / 2 * fr.width, hw = (g.x1 - g.x0) * fr.width * 0.75; out.push({ x0: Math.max(sr.left, cx - hw), y0: Math.max(sr.top, fr.top), x1: Math.min(sr.right, cx + hw), y1: Math.min(sr.bottom, fr.bottom) }); } } [...$('#overlay').children].forEach(add); }   /* zoomed on the body: the body's middle (waist wide) and the tools on it are the work */
+    return out; }
+  function placeDock() { clearTimeout(dockT); const d = dock(); requestAnimationFrame(() => { const sr = stage.getBoundingClientRect(), U = sr.height / 100, m = 1.5 * U, R = workRects(sr);
+      d.classList.add('anch'); let wx0 = Infinity, wx1 = -Infinity, wy0 = Infinity, wy1 = -Infinity; R.forEach(r => { wx0 = Math.min(wx0, r.x0); wx1 = Math.max(wx1, r.x1); wy0 = Math.min(wy0, r.y0); wy1 = Math.max(wy1, r.y1); });
+      const prefY = ANCH ? sr.top + ANCH.y * U : sr.top + 55 * U; let lane;
+      if (!R.length) lane = { x0: sr.left + m, x1: sr.right - m, y0: sr.top + 15 * U, y1: sr.bottom - m };
+      else { const L = { x0: sr.left + m, x1: wx0 - m, y0: sr.top + 15 * U, y1: sr.bottom - m }, Rt = { x0: wx1 + m, x1: sr.right - m, y0: sr.top + 15 * U, y1: sr.bottom - m },
+          Tp = { x0: sr.left + m, x1: sr.right - m, y0: sr.top + 15 * U, y1: wy0 - m }, Bt = { x0: sr.left + m, x1: sr.right - m, y0: wy1 + m, y1: sr.bottom - m };
+        const side = [L, Rt].filter(l => l.x1 - l.x0 >= 22 * U).sort((p, q) => (q.x1 - q.x0) - (p.x1 - p.x0))[0], band = [Tp, Bt].filter(l => l.y1 - l.y0 >= 14 * U).sort((p, q) => (q.y1 - q.y0) - (p.y1 - p.y0))[0];
+        lane = side || band || [L, Rt].sort((p, q) => (q.x1 - q.x0) - (p.x1 - p.x0))[0]; }
+      const pd = $('.pad', ui); if (pd) { const pr = pd.getBoundingClientRect(); if (lane.x1 > pr.left - m && lane.x0 < pr.left) lane.x1 = pr.left - m; else if (lane.x0 < pr.right + m && lane.x1 > pr.right) lane.x0 = pr.right + m; }
+      const lw = Math.max(lane.x1 - lane.x0, 18 * U); d.style.maxWidth = px(Math.min(lw, 34 * U) / U); d.style.width = 'max-content';
+      const dw = d.offsetWidth, dh = d.offsetHeight; let x = lane.x0 + (lane.x1 - lane.x0 - dw) / 2, y = prefY - dh / 2; y = clamp(y, lane.y0, Math.max(lane.y0, lane.y1 - dh));
+      x = clamp(x, sr.left + m, sr.right - m - dw); d.style.left = px((x - sr.left) / U); d.style.top = px((y - sr.top) / U); });
+    dockT = setTimeout(placeDock, 1300); }
   function say(txt, cls) { const d = dock(); if (!bubble) { bubble = el('div', 'bubble'); const sp = el('button', 'spk', '🔊'); sp.type = 'button'; sp.setAttribute('aria-label', t('listen')); sp.onclick = e => { e.stopPropagation(); speak(lastSaid); }; bubble.appendChild(sp); bubble.appendChild(el('span', 'txt')); $('.col', d).insertBefore(bubble, $('.actions', d)); }
     bubble.className = 'bubble' + (cls ? ' ' + cls : ''); $('.txt', bubble).textContent = txt; lastSaid = txt; if (S.autoVoice) speak(txt); placeDock(); }
   function clearSay() { if (bubble) { bubble.remove(); bubble = null; } }
@@ -135,7 +152,6 @@
     fetch(RELAY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); }).then(b => { VOICE.fails = 0; const u = URL.createObjectURL(b); VOICE.cache.set(key, u); play(u); }).catch(() => { VOICE.fails++; }); }
   /* the bear talks while the voice plays: the filmed talking clip (God Mode, keyed) stepped frame by frame; the still otherwise */
   const TALK = { meta: null, timer: null, f: 0 };
-  fetch(asset('helper_talk.json', 'felt')).then(r => r.json()).then(m => { TALK.meta = m; loadImg(asset('helper_talk.webp', 'felt')).catch(() => {}); }).catch(() => {});
   function talking(on) { const b = $('.dock .bear', ui); if (!b) return; const im = $('.bearimg', b); b.classList.toggle('talk', on); clearInterval(TALK.timer); TALK.timer = null;
     if (!on || !TALK.meta) { im.style.backgroundImage = 'url(' + asset('helper.webp', 'felt') + ')'; im.style.backgroundSize = 'contain'; im.style.backgroundPosition = 'center bottom'; return; }
     const m = TALK.meta; im.style.backgroundImage = 'url(' + asset('helper_talk.webp', 'felt') + ')'; im.style.backgroundSize = (m.cols * 100) + '% ' + (m.rows * 100) + '%'; TALK.f = 0;
@@ -323,7 +339,7 @@
       const d = res.got - res.need, st = d > TOL[S.tier] ? { big: true } : d < -TOL[S.tier] ? { small: true } : {}; await wear(kind, fab, st); burst(W / 2, 45, 30); near(w2s(b.x(g.x1), b.y((g.y0 + g.y1) / 2)));
       if (!st.big && !st.small) { STG.done = STG.keys.length; drawStages(); say(t('fit.perfect', { piece: pname(kind) }), 'ok'); await wait(1800); return; }
       say(t('fit.' + kind + (st.big ? 'Big' : 'Small'), { piece: pname(kind) }), 'bad'); await actions([[t('again'), 1]]); const cv = C.cv[kind]; if (cv) { cv.remove(); delete C.cv[kind]; } again = true; } }
-  async function serve() { const key = CLIENTS[(S.seen++) % CLIENTS.length], list = ORDERS[S.tier], kinds = list[(S.seen - 1) % list.length]; save(); clearOverlay(); tableOn(false);
+  async function serve() { const CL = CLIENTS[S.look] || CLIENTS.felt, key = CL[(S.seen++) % CL.length], list = ORDERS[S.tier], kinds = list[(S.seen - 1) % list.length]; save(); clearOverlay(); tableOn(false);
     await placeClient(key); const done = [], pieces = []; C.radius = {}; orderCard(kinds, done);
     near(null); const names = kinds.map(k => t('aPiece.' + k)); say(t('wish.' + key, { pieces: names.length > 1 ? names.slice(0, -1).join(', ') + ' ' + t('and') + names[names.length - 1] : names[0] })); await actions([[t('start'), 1]]);
     for (const kind of kinds) { const fab = await pickFabric(pname(kind)); await makeAndWear(kind, fab); pieces.push({ kind, fab }); done.push(kind); orderCard(kinds, done); clearStages(); await camTo(0, 0, 1, 500); }
