@@ -12,13 +12,13 @@
    Tiers: 1 (to 6) felt, whole cm · 2 (7–10) nature-tech, half cm · 3 (11+) nature-tech, mm and π. */
 (function () {
   'use strict';
-  const VERSION = 5;
+  const VERSION = 6;
   const $ = (s, r) => (r || document).querySelector(s), el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
   const NS = 'http://www.w3.org/2000/svg', sv = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a || {}) e.setAttribute(k, a[k]); return e; };
   const wait = ms => new Promise(r => setTimeout(r, ms)), clamp = (v, a, b) => Math.max(a, Math.min(b, v)), pick = a => a[Math.floor(Math.random() * a.length)];
   const stage = $('#stage'), world = $('#world'), scene = $('#scene'), overlay = $('#overlay'), table = $('#table'), ui = $('#ui'), actors = $('#actors');
   const PREC = { 1: 1, 2: 0.5, 3: 0.1 }, TOL = { 1: 0.4, 2: 0.3, 3: 0.06 }, H = 58, IMG_CM = 30;
-  const READZ = { 1: 4, 2: 5, 3: 8.5 }, SPAN = { 1: 5, 2: 3.5, 3: 1.6 };
+  const READZ = { 1: 2.6, 2: 3.2, 3: 4.4 }, SPAN = { 1: 8, 2: 5.5, 3: 2.6 };   /* Yoni 2026-10-19: 'relax with the zoom ... car sickness': shallow and slow, none on the felt table */
   const CLIENTS = ['girl', 'boy', 'grandma', 'bear', 'fox', 'princess'];
   const COLOURS = ['#ff8fb8', '#8fd0f0', '#c0a0ff', '#ffcf6a', '#7fdcb0', '#ff9f90', '#e8545c', '#5a78c8'];
   const KINDS = ['plain', 'dots', 'stripes', 'gingham', 'flowers', 'hearts', 'stars', 'zigzag'];
@@ -49,10 +49,11 @@
   window.addEventListener('resize', () => { measureStage(); applyCam(0); }); measureStage();
   const CAM = { z: 1, tx: 0, ty: 0 };
   function applyCam(ms) { world.style.transition = ms ? 'transform ' + ms + 'ms cubic-bezier(.4,0,.2,1)' : 'none'; world.style.transform = 'translate(' + px(CAM.tx) + ', ' + px(CAM.ty) + ') scale(' + CAM.z + ')'; scene.style.filter = CAM.z > 1.05 ? 'blur(3px) brightness(.85)' : ''; }
-  function camTo(fx, fy, z, ms) { ms = ms == null ? 750 : ms; let tx = W / 2 - fx * z, ty = 50 - fy * z; if (z <= 1) { z = 1; tx = 0; ty = 0; } tx = clamp(tx, W - W * z, 0); ty = clamp(ty, 100 - 100 * z, 0); Object.assign(CAM, { z, tx, ty }); applyCam(ms); return wait(ms + 40); }
-  function zoomVB(cx, cy, w, ms) { ms = ms == null ? 800 : ms; w = clamp(w, 3, W); const h = w * 100 / W, x = clamp(cx - w / 2, 0, W - w), y = clamp(cy - h / 2, 0, 100 - h); const from = Object.assign({}, VB), to = { x, y, w, h };
+  function camTo(fx, fy, z, ms) { ms = Math.max(1100, ms == null ? 1300 : ms * 1.6); let tx = W / 2 - fx * z, ty = 50 - fy * z; if (z <= 1) { z = 1; tx = 0; ty = 0; } tx = clamp(tx, W - W * z, 0); ty = clamp(ty, 100 - 100 * z, 0); Object.assign(CAM, { z, tx, ty }); applyCam(ms); return wait(ms + 40); }
+  function zoomVB(cx, cy, w, ms) { ms = Math.max(1200, (ms == null ? 800 : ms) * 1.6); w = clamp(w, 3, W); const h = w * 100 / W, x = clamp(cx - w / 2, 0, W - w), y = clamp(cy - h / 2, 0, 100 - h); const from = Object.assign({}, VB), to = { x, y, w, h };
     return new Promise(res => { const t0 = performance.now(); const step = now => { const k = Math.min(1, (now - t0) / ms), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; for (const q of ['x', 'y', 'w', 'h']) VB[q] = from[q] + (to[q] - from[q]) * e; setVB(); if (k < 1) requestAnimationFrame(step); else res(); }; requestAnimationFrame(step); }); }
-  const zoomOut = ms => zoomVB(W / 2, 50, W, ms);
+  const zoomOut = ms => (VB.w >= W - 0.01 ? Promise.resolve() : zoomVB(W / 2, 50, W, ms));
+  const noZoom = () => S.tier === 1;
   const w2s = (x, y) => ({ x: CAM.tx + x * CAM.z, y: CAM.ty + y * CAM.z });
   const t2s = (x, y) => ({ x: (x - VB.x) * W / VB.w, y: (y - VB.y) * 100 / VB.h });
   const spt = e => { const r = stage.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.height * 100, y: (e.clientY - r.top) / r.height * 100 }; };
@@ -62,7 +63,7 @@
     elm.addEventListener('pointerdown', e => { on = true; try { elm.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); onMove(P(e), true); });
     elm.addEventListener('pointermove', e => { if (on) onMove(P(e), false); });
     const up = e => { if (!on) return; on = false; if (onEnd) onEnd(P(e)); }; elm.addEventListener('pointerup', up); elm.addEventListener('pointercancel', up); }
-  const geo = g => { window.__geo = g; }, nogeo = () => { window.__geo = null; };
+  const geo = g => { window.__geo = g; const p = g && (g.from || g.c || g.grab); if (p) near(p); }, nogeo = () => { window.__geo = null; };
 
   /* ---------- assets ---------- */
   const A = { meta: {}, img: {} };
@@ -116,11 +117,30 @@
     cv.style.transformOrigin = origin; cv.style.transform = tf.trim(); }
 
   /* ---------- words, buttons, the pad ---------- */
-  let bubble = null;
-  function dock() { let d = $('.dock', ui); if (!d) { d = el('div', 'dock'); d.appendChild(el('div', 'actions')); ui.appendChild(d); } return d; }
-  function say(txt, cls) { if (!bubble) { bubble = el('div', 'bubble'); dock().appendChild(bubble); } bubble.className = 'bubble' + (cls ? ' ' + cls : ''); bubble.textContent = txt; }
+  /* the notice: a felt teddy bear tailor beside a speech bubble with a speaker, placed next to what the kid is doing (Yoni 2026-10-19) */
+  let bubble = null, ANCH = null, lastSaid = '';
+  function dock() { let d = $('.dock', ui); if (!d) { d = el('div', 'dock'); const bear = el('div', 'bear'); bear.appendChild(el('div', 'bearimg')); const col = el('div', 'col'); col.appendChild(el('div', 'actions')); d.append(bear, col); ui.appendChild(d); $('.bearimg', bear).style.backgroundImage = 'url(' + asset('helper.webp', 'felt') + ')'; } return d; }
+  function near(p) { ANCH = p; placeDock(); }
+  function placeDock() { const d = dock(); if (!ANCH) { d.classList.remove('anch'); d.style.left = ''; d.style.top = ''; return; } requestAnimationFrame(() => { const r = stage.getBoundingClientRect(), U = r.height / 100, dw = d.offsetWidth / U, dh = d.offsetHeight / U, padOn = !!$('.pad', ui), maxX = W - (padOn ? 27 : 1.5) - dw;
+      let x = clamp(ANCH.x - dw / 2, 1.5, Math.max(1.5, maxX)), y = ANCH.y > 52 ? ANCH.y - dh - 7 : ANCH.y + 7; y = clamp(y, 15, 98.5 - dh); d.classList.add('anch'); d.style.left = px(x); d.style.top = px(y); }); }
+  function say(txt, cls) { const d = dock(); if (!bubble) { bubble = el('div', 'bubble'); const sp = el('button', 'spk', '🔊'); sp.type = 'button'; sp.setAttribute('aria-label', t('listen')); sp.onclick = e => { e.stopPropagation(); speak(lastSaid); }; bubble.appendChild(sp); bubble.appendChild(el('span', 'txt')); $('.col', d).insertBefore(bubble, $('.actions', d)); }
+    bubble.className = 'bubble' + (cls ? ' ' + cls : ''); $('.txt', bubble).textContent = txt; lastSaid = txt; if (S.autoVoice) speak(txt); placeDock(); }
   function clearSay() { if (bubble) { bubble.remove(); bubble = null; } }
-  function actions(list) { const box = $('.actions', dock()); box.replaceChildren(); return new Promise(res => { for (const [label, val, cls] of list) { const b = el('button', 'btn' + (cls ? ' ' + cls : ''), label); b.type = 'button'; b.onclick = () => { box.replaceChildren(); res(val); }; box.appendChild(b); } }); }
+  /* the voice: ElevenLabs through the kingdom's relay (never the device voice: Yoni 2026-09-28); silent when the relay cannot answer */
+  const RELAY = 'https://elnmuuymfmlwnsynzgrh.supabase.co/functions/v1/kq-relay', VOICE = { cache: new Map(), cur: null, fails: 0, seq: 0 };
+  function speak(text) { if (!text) return; const my = ++VOICE.seq; if (VOICE.cur) { try { VOICE.cur.pause(); } catch (e) {} VOICE.cur = null; } const clean = text.replace(/[✓✂◯🔔🔊]/g, '').trim(), key = S.lang + '|' + clean;
+    const play = url => { if (my !== VOICE.seq) return; const a = new Audio(url); VOICE.cur = a; talking(true); a.onended = a.onpause = () => talking(false); a.play().catch(() => talking(false)); };
+    if (VOICE.cache.has(key)) return play(VOICE.cache.get(key)); if (VOICE.fails >= 3) return;
+    const body = S.lang === 'he' ? { text: clean, lang: 'he', persona: 'mommy' } : { text: clean, lang: S.lang };
+    fetch(RELAY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => { if (!r.ok) throw new Error(r.status); return r.blob(); }).then(b => { VOICE.fails = 0; const u = URL.createObjectURL(b); VOICE.cache.set(key, u); play(u); }).catch(() => { VOICE.fails++; }); }
+  /* the bear talks while the voice plays: the filmed talking clip (God Mode, keyed) stepped frame by frame; the still otherwise */
+  const TALK = { meta: null, timer: null, f: 0 };
+  fetch(asset('helper_talk.json', 'felt')).then(r => r.json()).then(m => { TALK.meta = m; loadImg(asset('helper_talk.webp', 'felt')).catch(() => {}); }).catch(() => {});
+  function talking(on) { const b = $('.dock .bear', ui); if (!b) return; const im = $('.bearimg', b); b.classList.toggle('talk', on); clearInterval(TALK.timer); TALK.timer = null;
+    if (!on || !TALK.meta) { im.style.backgroundImage = 'url(' + asset('helper.webp', 'felt') + ')'; im.style.backgroundSize = 'contain'; im.style.backgroundPosition = 'center bottom'; return; }
+    const m = TALK.meta; im.style.backgroundImage = 'url(' + asset('helper_talk.webp', 'felt') + ')'; im.style.backgroundSize = (m.cols * 100) + '% ' + (m.rows * 100) + '%'; TALK.f = 0;
+    const step = () => { const f = TALK.f++ % m.frames; im.style.backgroundPosition = ((f % m.cols) / (m.cols - 1) * 100) + '% ' + (Math.floor(f / m.cols) / (m.rows - 1) * 100) + '%'; }; step(); TALK.timer = setInterval(step, 1000 / 6); }
+  function actions(list) { const box = $('.actions', dock()); box.replaceChildren(); placeDock(); return new Promise(res => { for (const [label, val, cls] of list) { const b = el('button', 'btn' + (cls ? ' ' + cls : ''), label); b.type = 'button'; b.onclick = () => { box.replaceChildren(); res(val); }; box.appendChild(b); } }); }
   const teach = (txt, ms) => { say(txt, 'teach'); return wait(ms || 2600); };   /* a caption that moves on by itself */
   function pad(decimals) { return new Promise(res => { let p = $('.pad', ui); if (p) p.remove(); p = el('div', 'pad'); const val = el('div', 'val'); const u = el('small', null, t('unitCm')); let s = ''; const show = () => val.replaceChildren(document.createTextNode(s || '0'), u); show(); p.appendChild(val);
     const keys = el('div', 'keys'); const add = (lbl, f, cls) => { const b = el('button', cls || '', lbl); b.type = 'button'; b.onclick = f; keys.appendChild(b); };
@@ -134,7 +154,7 @@
   const STG = { keys: [], done: 0 };
   function stages(keys) { STG.keys = keys; STG.done = 0; drawStages(); }
   function drawStages() { let s = $('.stages', ui); if (!s) { s = el('div', 'stages'); ui.appendChild(s); } s.replaceChildren(); STG.keys.forEach((k, i) => s.appendChild(el('span', 'stg' + (i < STG.done ? ' done' : i === STG.done ? ' now' : ''), (i < STG.done ? '✓ ' : '') + t('stage.' + k)))); }
-  async function stageDone(msg) { STG.done++; drawStages(); const all = $('.stages', ui) ? [...$('.stages', ui).children] : [], c = all[STG.done - 1], s = stage.getBoundingClientRect(); if (c) { const r = c.getBoundingClientRect(); burst((r.left + r.width / 2 - s.left) / s.height * 100, (r.top + r.height / 2 - s.top) / s.height * 100, 14); } say(msg, 'ok'); await wait(1300); }
+  async function stageDone(msg) { if (msg) {}  STG.done++; drawStages(); const all = $('.stages', ui) ? [...$('.stages', ui).children] : [], c = all[STG.done - 1], s = stage.getBoundingClientRect(); if (c) { const r = c.getBoundingClientRect(); burst((r.left + r.width / 2 - s.left) / s.height * 100, (r.top + r.height / 2 - s.top) / s.height * 100, 14); } say(msg, 'ok'); await wait(1300); }
   const clearStages = () => { const s = $('.stages', ui); if (s) s.remove(); };
 
   /* ---------- rulers, drawn exactly, red 0 ---------- */
@@ -155,12 +175,12 @@
 
   /* ---------- reading: zoom into the very ruler on screen; hints, never the answer ---------- */
   async function readTable(R, value, prompt, topY) { const top = topY != null ? topY : R.y - 2, cy = (top + R.y + R.h) / 2 + (R.y + R.h - top) * 0.12, w = Math.max(SPAN[S.tier] * R.pxcm, (R.y + R.h - top + 4) * W / 100);
-    await zoomVB(R.X(value), cy, w, 900); say(prompt); let miss = 0;
+    near(t2s(R.X(value), top)); if (!noZoom()) await zoomVB(R.X(value), cy, w, 900); say(prompt); let miss = 0;
     for (;;) { window.__answer = value; const v = await pad(S.tier > 1); if (same(v, value)) { say(t('readYes', { n: fmt(value) }), 'ok'); await wait(900); await zoomOut(700); return; }
-      miss++; badPad(); if (miss === 1) say(t('readNo', { v: fmt(v) }) + ' ' + t('hint1'), 'bad'); else { await zoomVB(R.X(value), cy, w * 0.6, 600); say(t('readNo', { v: fmt(v) }) + ' ' + t('hint2'), 'bad'); } } }
-  async function readBody(x, y, value, prompt) { await camTo(x, y, READZ[S.tier], 900); say(prompt); let miss = 0;
+      miss++; badPad(); say(t('readNo', { v: fmt(v) }) + ' ' + t(miss === 1 ? 'hint1' : 'hint2'), 'bad'); } }
+  async function readBody(x, y, value, prompt) { await camTo(x, y, READZ[S.tier], 900); near(w2s(x, y - 4)); say(prompt); let miss = 0;
     for (;;) { window.__answer = value; const v = await pad(S.tier > 1); if (same(v, value)) { say(t('readYes', { n: fmt(value) }), 'ok'); await wait(900); return; }
-      miss++; badPad(); if (miss === 1) say(t('readNo', { v: fmt(v) }) + ' ' + t('hint1'), 'bad'); else { await camTo(x, y, READZ[S.tier] * 1.6, 600); say(t('readNo', { v: fmt(v) }) + ' ' + t('hint2'), 'bad'); } } }
+      miss++; badPad(); say(t('readNo', { v: fmt(v) }) + ' ' + t(miss === 1 ? 'hint1' : 'hint2'), 'bad'); } }
   /* a worked number: the kid types it; hints point at what is on screen; the working is never typed for them */
   async function askCalc(prompt, value, hints, tol) { say(prompt); let miss = 0;
     for (;;) { window.__answer = value; const v = await pad(S.tier > 1); if (same(v, value, tol)) { say(t('calcYes', { n: fmt(value) }), 'ok'); await wait(1100); return; }
@@ -179,7 +199,7 @@
     await new Promise(res => drag(handle, 'world', (p, first) => { if (closed) return; const deg = (Math.atan2((p.y - yc) / ry, (p.x - cx) / rx) * 180 / Math.PI + 360) % 360; if (last != null && !first) { let d = deg - last; if (d < -180) d += 360; if (d > 180) d -= 360; sum = clamp(sum + d, -360, 360); } last = deg;
         path.setAttribute('d', arcD(sum)); ticks.setAttribute('d', arcD(sum)); const th = Math.PI + sum * Math.PI / 180; handle.setAttribute('cx', cx + rx * Math.cos(th)); handle.setAttribute('cy', yc + ry * Math.sin(th)); ring.remove();
         if (Math.abs(sum) >= 345) { closed = true; path.setAttribute('d', arcD(360)); handle.setAttribute('cx', start.x); handle.setAttribute('cy', start.y); setTimeout(res, 400); } }, () => { if (!closed) say(t('tapeOpen'), 'bad'); }));
-    nogeo(); say(t('tapeDone'), 'ok'); await wait(1200); clearOverlay(); await camTo(0, 0, 1, 500); }
+    nogeo(); near(w2s(cx, yc - 4)); say(t('tapeDone'), 'ok'); await wait(1200); clearOverlay(); await camTo(0, 0, 1, 500); }
   /* a ruler across the waist or the head: drag its red 0 onto the red line, read the blue line up close */
   async function acrossOnBody(which) { const b = figBox(), m = C.meta, head = which === 'head', gg = head ? m.g.hat : m.g.belt, pxcm = C.body.pxcm;
     const yc = head ? b.y(gg.y0 + (gg.y1 - gg.y0) * 0.75) : b.y(gg.y0 + (gg.y1 - gg.y0) / 2), value = head ? C.body.headAcross : C.body.across, half = value * pxcm / 2, cx = b.x((gg.x0 + gg.x1) / 2);
@@ -208,7 +228,7 @@
   async function setOnRuler(R, start, target, label, btn, onSet, grabY) { let at = start; const handle = sv('g', { style: 'cursor:grab' }); const draw = () => onSet(at, handle); table.appendChild(handle); draw();
     const ring = pulseT(R.X(at), grabY, 3);
     window.__target = target; geo({ kind: 'drag', from: t2s(R.X(at), grabY), to: t2s(R.X(target), grabY), mark: true, pxcm: R.pxcm * W / VB.w });
-    let moved = false, zoomed = false, locked = false; drag(handle, 'table', p => { if (locked) return; moved = true; ring.remove(); at = clamp(snap((p.x - R.x0) / R.pxcm), PREC[S.tier], R.len); draw(); }, async () => { if (locked) return; if (!zoomed && moved) { zoomed = true; await zoomVB(R.X(at), R.y + R.h * 0.3, Math.max(SPAN[S.tier] * R.pxcm * 1.5, (R.h + 8) * W / 100), 700); draw(); say(label); geo({ kind: 'press', fine: true }); } });
+    let moved = false, zoomed = false, locked = false; drag(handle, 'table', p => { if (locked) return; moved = true; ring.remove(); at = clamp(snap((p.x - R.x0) / R.pxcm), PREC[S.tier], R.len); draw(); }, async () => { if (locked) return; if (!zoomed && moved) { zoomed = true; if (!noZoom()) await zoomVB(R.X(at), R.y + R.h * 0.3, Math.max(SPAN[S.tier] * R.pxcm * 1.5, (R.h + 8) * W / 100), 700); draw(); near(t2s(R.X(at), grabY - 6)); say(label); geo({ kind: 'press', fine: true }); } });
     await new Promise(res => { const iv = setInterval(() => { if (zoomed) { clearInterval(iv); res(); } }, 120); });
     await actions([[btn, 1]]); locked = true; nogeo(); await zoomOut(600); draw(); return { at, handle }; }
 
@@ -300,12 +320,12 @@
   async function makeAndWear(kind, fab) { let again = false;
     for (;;) { const res = kind === 'belt' ? await beltPiece(fab, again) : await circlePiece(kind, fab, again); await leaveTable(); clearOverlay();
       const b = figBox(), g = gOf(kind); say(t('done', { piece: pname(kind) }), 'ok'); await camTo(b.cx, b.y((g.y0 + g.y1) / 2), kind === 'hat' ? 1.7 : 1.3, 700); await wait(300);
-      const d = res.got - res.need, st = d > TOL[S.tier] ? { big: true } : d < -TOL[S.tier] ? { small: true } : {}; await wear(kind, fab, st); burst(W / 2, 45, 30);
+      const d = res.got - res.need, st = d > TOL[S.tier] ? { big: true } : d < -TOL[S.tier] ? { small: true } : {}; await wear(kind, fab, st); burst(W / 2, 45, 30); near(w2s(b.x(g.x1), b.y((g.y0 + g.y1) / 2)));
       if (!st.big && !st.small) { STG.done = STG.keys.length; drawStages(); say(t('fit.perfect', { piece: pname(kind) }), 'ok'); await wait(1800); return; }
       say(t('fit.' + kind + (st.big ? 'Big' : 'Small'), { piece: pname(kind) }), 'bad'); await actions([[t('again'), 1]]); const cv = C.cv[kind]; if (cv) { cv.remove(); delete C.cv[kind]; } again = true; } }
   async function serve() { const key = CLIENTS[(S.seen++) % CLIENTS.length], list = ORDERS[S.tier], kinds = list[(S.seen - 1) % list.length]; save(); clearOverlay(); tableOn(false);
     await placeClient(key); const done = [], pieces = []; C.radius = {}; orderCard(kinds, done);
-    const names = kinds.map(k => t('aPiece.' + k)); say(t('wish.' + key, { pieces: names.length > 1 ? names.slice(0, -1).join(', ') + ' ' + t('and') + names[names.length - 1] : names[0] })); await actions([[t('start'), 1]]);
+    near(null); const names = kinds.map(k => t('aPiece.' + k)); say(t('wish.' + key, { pieces: names.length > 1 ? names.slice(0, -1).join(', ') + ' ' + t('and') + names[names.length - 1] : names[0] })); await actions([[t('start'), 1]]);
     for (const kind of kinds) { const fab = await pickFabric(pname(kind)); await makeAndWear(kind, fab); pieces.push({ kind, fab }); done.push(kind); orderCard(kinds, done); clearStages(); await camTo(0, 0, 1, 500); }
     const pay = kinds.length * 3; S.coins += pay; S.rep++; hud(); const b = figBox(); await camTo(b.cx, b.top + H * 0.5, 1.15, 600); burst(W / 2, 35, 30);
     say(t('paid', { name: cname(), c: pay }) + ' ' + t('star'), 'ok'); S.wardrobe.push({ client: key, look: S.look, day: S.day, pieces }); S.day++; save();
@@ -319,7 +339,7 @@
     const go = el('button', 'btn big', t('open')); go.type = 'button'; go.onclick = () => { S.name = name.value.trim() || S.name || '?'; S.age = age; S.tier = age <= 6 ? 1 : age <= 10 ? 2 : 3; S.look = age <= 6 ? 'felt' : 'nature'; save(); sh.remove(); res(); }; card.appendChild(go); sh.appendChild(card); ui.appendChild(sh); }); }
   async function main() { load(); $('#ver').textContent = 'v' + VERSION; document.documentElement.lang = S.lang; document.documentElement.dir = T().dir; document.title = t('title') + ' · Kingdom Quest';
     await startSheet(); await loadLook(); hud();
-    for (;;) { loopPlay(true); say(t('waiting')); await actions([[t('ring'), 1, 'big']]); loopPlay(false); clearSay(); await serve(); } }
+    for (;;) { loopPlay(true); near(null); say(t('waiting')); await actions([[t('ring'), 1, 'big']]); loopPlay(false); clearSay(); await serve(); } }
   window.AT = { S, t, get W() { return W; }, get cam() { return CAM; }, get C() { return C; }, get VB() { return VB; } };
   main();
 })();

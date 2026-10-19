@@ -5,7 +5,7 @@ window.AT_STR = {
   he: {
     dir: 'rtl',
     title: 'סדנת אומן', subtitle: 'סדנת התפירה שלך', yourName: 'השם שלך', howOld: 'בן/בת כמה?',
-    open: 'פותחים את הסדנה', ring: 'צלצלו בפעמון 🔔', waiting: 'הסדנה פתוחה. מי יבוא היום?', start: 'מתחילים!', nextClient: 'הלקוח הבא', wardrobe: 'ארון הבגדים', back: 'חזרה', cut: 'לגזור ✂', swing: 'לסובב ◯', thisOne: 'את זה!', again: 'עוד ניסיון', lang: 'English', unitCm: 'ס״מ',
+    open: 'פותחים את הסדנה', ring: 'צלצלו בפעמון 🔔', waiting: 'הסדנה פתוחה. מי יבוא היום?', start: 'מתחילים!', nextClient: 'הלקוח הבא', wardrobe: 'ארון הבגדים', back: 'חזרה', cut: 'לגזור ✂', swing: 'לסובב ◯', thisOne: 'את זה!', again: 'עוד ניסיון', lang: 'English', unitCm: 'ס״מ', listen: 'להקשיב',
     client: { girl: 'נועה', boy: 'דן', grandma: 'סבתא רות', bear: 'דובי', fox: 'שועלי', princess: 'הנסיכה לילי' },
     piece: { circleSkirt: 'חצאית מעגל', belt: 'חגורה', hat: 'כומתה' }, aPiece: { circleSkirt: 'חצאית מעגל', belt: 'חגורה', hat: 'כומתה' }, and: 'ו',
     wish: { girl: 'יש לי מסיבה הערב! תתפרו לי {pieces}?', boy: 'יש לי הצגה בבית הספר. אני צריך {pieces}.', grandma: 'הנכדה שלי מתחתנת. {pieces}, בבקשה.', bear: 'קר לי בחורף. תתפרו לי {pieces}?', fox: 'אני הולך לנשף. {pieces}, מהר!', princess: 'הנסיכה מבקשת {pieces}. שיהיה מושלם.' },
@@ -29,7 +29,7 @@ window.AT_STR = {
   en: {
     dir: 'ltr',
     title: 'The Atelier', subtitle: 'Your own tailor shop', yourName: 'Your name', howOld: 'How old are you?',
-    open: 'Open the shop', ring: 'Ring the bell 🔔', waiting: 'The shop is open. Who will come in today?', start: 'Let\'s go!', nextClient: 'Next client', wardrobe: 'Wardrobe', back: 'Back', cut: 'Cut ✂', swing: 'Swing ◯', thisOne: 'This one!', again: 'Try again', lang: 'עברית', unitCm: 'cm',
+    open: 'Open the shop', ring: 'Ring the bell 🔔', waiting: 'The shop is open. Who will come in today?', start: 'Let\'s go!', nextClient: 'Next client', wardrobe: 'Wardrobe', back: 'Back', cut: 'Cut ✂', swing: 'Swing ◯', thisOne: 'This one!', again: 'Try again', lang: 'עברית', unitCm: 'cm', listen: 'Listen',
     client: { girl: 'Noa', boy: 'Dan', grandma: 'Grandma Ruth', bear: 'Teddy', fox: 'Foxy', princess: 'Princess Lily' },
     piece: { circleSkirt: 'Circle skirt', belt: 'Belt', hat: 'Beret' }, aPiece: { circleSkirt: 'a circle skirt', belt: 'a belt', hat: 'a beret' }, and: 'and ',
     wish: { girl: 'I have a party tonight! Can you make me {pieces}?', boy: 'I have a school play. I need {pieces}.', grandma: 'My granddaughter is getting married. {pieces}, please.', bear: 'Winter is cold. Could you make me {pieces}?', fox: 'I am off to the ball. {pieces}, quick!', princess: 'The princess requires {pieces}. It must be perfect.' },
