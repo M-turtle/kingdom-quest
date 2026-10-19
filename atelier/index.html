@@ -22,7 +22,7 @@ html,body{height:100%} body{margin:0; background:var(--bg); color:var(--ink); fo
 .chip{display:inline-flex; align-items:center; gap:.35em; background:var(--panel); border:.1em solid var(--edge); border-radius:999px; padding:.3em .8em; font-weight:800; font-size:1em; color:var(--gold-2); backdrop-filter:blur(6px)} .chip img{height:1.3em; width:1.3em; object-fit:contain}
 .btn{border:0; border-radius:999px; background:linear-gradient(180deg,#ffe08a,#f2b84a); color:#3a1a44; font:800 1.15em var(--body); padding:.5em 1.3em; cursor:pointer; box-shadow:0 .22em 0 #b8862a, 0 .5em 1em rgba(0,0,0,.35)} .btn:active{transform:translateY(.12em); box-shadow:0 .1em 0 #b8862a} .btn.ghost{background:var(--panel); color:var(--gold-2); border:.1em solid var(--edge); box-shadow:none} .btn.big{font-size:1.5em; padding:.6em 1.6em}
 .dock{position:absolute; left:50%; bottom:.7em; transform:translateX(-50%); width:min(78%, 34em); display:flex; flex-direction:column; align-items:center; gap:.5em; pointer-events:none} .dock > *{pointer-events:auto}
-.bubble{position:relative; max-width:100%; background:var(--panel); border:.12em solid var(--edge); border-radius:1em; padding:.6em 1em; font-weight:700; font-size:1.25em; line-height:1.3; backdrop-filter:blur(8px); box-shadow:0 .6em 1.6em rgba(0,0,0,.45); text-align:center} .bubble .who{display:block; font-size:.75em; color:var(--muted); margin-bottom:.1em} .bubble.ok{border-color:var(--ok)} .bubble.bad{border-color:var(--bad)}
+.bubble{position:relative; max-width:100%; background:var(--panel); border:.12em solid var(--edge); border-radius:1em; padding:.6em 1em; font-weight:700; font-size:1.25em; line-height:1.3; backdrop-filter:blur(8px); box-shadow:0 .6em 1.6em rgba(0,0,0,.45); text-align:center} .bubble .who{display:block; font-size:.75em; color:var(--muted); margin-bottom:.1em} .bubble.teach{border-color:#8fd0f0} .bubble.ok{border-color:var(--ok)} .bubble.bad{border-color:var(--bad)}
 .actions{display:flex; justify-content:center; gap:.6em; flex-wrap:wrap} .actions:empty{display:none}
 .pad{position:absolute; inset-inline-end:.6em; bottom:.6em; width:11.5em; background:var(--panel); border:.12em solid var(--edge); border-radius:1em; padding:.5em; backdrop-filter:blur(8px); box-shadow:0 .6em 1.6em rgba(0,0,0,.45); direction:ltr} .pad .val{height:1.8em; display:flex; align-items:center; justify-content:flex-end; gap:.3em; font:800 1.6em var(--body); color:var(--gold-2); padding:0 .4em; background:rgba(0,0,0,.35); border-radius:.4em; margin-bottom:.35em} .pad .val small{font-size:.5em; color:var(--muted)} .pad .keys{display:grid; grid-template-columns:repeat(3,1fr); gap:.3em} .pad .keys button{height:2.1em; border:0; border-radius:.5em; background:rgba(255,255,255,.14); color:var(--ink); font:800 1.35em var(--body); cursor:pointer} .pad .keys button:active{background:rgba(255,255,255,.28)} .pad .keys .go{grid-column:span 3; background:linear-gradient(180deg,#ffe08a,#f2b84a); color:#3a1a44} .pad.bad .val{outline:.15em solid var(--bad)}
 .readout{position:absolute; left:50%; top:3.2em; transform:translateX(-50%); background:#f7f0dc; border:.22em solid #d8b04a; border-radius:.5em; padding:.25em .3em; box-shadow:0 .5em 1.4em rgba(0,0,0,.45); direction:ltr} .readout canvas{display:block; width:24em; height:5em; border-radius:.25em}
@@ -64,7 +64,7 @@ html,body{height:100%} body{margin:0; background:var(--bg); color:var(--ink); fo
   <div class="burst" id="burst"></div>
   <span class="ver" id="ver"></span>
 </div></div>
-<script src="strings.js?v=6"></script>
-<script src="game.js?v=17"></script>
+<script src="strings.js?v=7"></script>
+<script src="game.js?v=23"></script>
 </body>
 </html>
