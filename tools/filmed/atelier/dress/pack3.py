@@ -1,16 +1,8 @@
 # v3 pack: client (keyed) + its garment layers on one shared crop, so a layer drawn over the client lands exactly; garment boxes go to meta
 import sys, json, numpy as np, subprocess, os
 from PIL import Image
-sys.path.insert(0, '/private/tmp/claude-501/-Users-yonieyal-castle-chess/d9987f28-f2c5-4381-b2fb-abb4d8144d7e/scratchpad/atelier/assets')
-import importlib.util
-spec = importlib.util.spec_from_file_location('pk', '/private/tmp/claude-501/-Users-yonieyal-castle-chess/d9987f28-f2c5-4381-b2fb-abb4d8144d7e/scratchpad/atelier/assets/pack.py')
-src = open(spec.origin).read().split("import sys\nfor look in")[0]; ns = {}; exec(src, ns); key_rgba = ns['key_rgba']
-from layer import layer
-SRC = '/private/tmp/claude-501/-Users-yonieyal-castle-chess/d9987f28-f2c5-4381-b2fb-abb4d8144d7e/scratchpad/atelier/assets'
-OUT = '/Users/yonieyal/kingdom-quest/atelier/assets'
+from pack3_core import key_rgba, layer, SRC, OUT, bbox, ns
 GS = {'felt': ['skirt', 'belt'], 'nature': ['circleSkirt', 'belt', 'hat']}
-def bbox(a, thr=20):
-    ys, xs = np.where(a > thr); return [xs.min(), ys.min(), xs.max() + 1, ys.max() + 1]
 # usage: pack3.py                         every client, then the props
 #        pack3.py <look> <client,...> <garment,...>   only those clients (e.g. felt fox,teddy skirt,belt,pants,shirt), no props
 ONLY = sys.argv[1:4] if len(sys.argv) >= 4 else None

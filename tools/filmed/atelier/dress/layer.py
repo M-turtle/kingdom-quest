@@ -4,6 +4,8 @@ from PIL import Image
 from scipy import ndimage
 SRC = '/private/tmp/claude-501/-Users-yonieyal-castle-chess/d9987f28-f2c5-4381-b2fb-abb4d8144d7e/scratchpad/atelier/assets'
 def layer(look, client, garment):
+    import os
+    if os.path.exists(f'{look}_{client}_{garment}Blue.png'): return layer_blue(look, client, garment)
     a = np.asarray(Image.open(f'{SRC}/{look}_{client}.png').convert('RGB')).astype(np.float32) / 255
     b = np.asarray(Image.open(f'{look}_{client}_{garment}.png').convert('RGB').resize((a.shape[1], a.shape[0]), Image.LANCZOS)).astype(np.float32) / 255
     # best small shift of b onto a (the edit can nudge the figure a few pixels)
@@ -32,5 +34,15 @@ def layer(look, client, garment):
     rgba = np.dstack([shade, shade, shade, alpha]); out = Image.fromarray((rgba * 255).astype(np.uint8), 'RGBA')
     ys, xs = np.where(alpha > 0.05); box = (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1)
     return out, box, best[1:], a.shape
+def layer_blue(look, client, garment):   # a garment drawn pure blue: cut by colour (no fur or cloth on any client is that blue), shading = its brightness
+    a = np.asarray(Image.open(f'{SRC}/{look}_{client}.png').convert('RGB')).astype(np.float32) / 255
+    b = np.asarray(Image.open(f'{look}_{client}_{garment}Blue.png').convert('RGB').resize((a.shape[1], a.shape[0]), Image.LANCZOS)).astype(np.float32) / 255
+    blue = (b[..., 2] > 0.3) & (b[..., 2] - np.maximum(b[..., 0], b[..., 1]) > 0.12)
+    m = ndimage.binary_opening(blue, iterations=1); m = ndimage.binary_closing(m, structure=np.ones((3, 9)), iterations=3)
+    lab, n = ndimage.label(m); sizes = ndimage.sum(m, lab, range(1, n + 1)); m = np.isin(lab, [i + 1 for i, s in enumerate(sizes) if s > sizes.max() * 0.05]); m = ndimage.binary_fill_holes(m)
+    alpha = ndimage.gaussian_filter(m.astype(np.float32), 1.0); alpha = np.clip((alpha - 0.15) / 0.7, 0, 1)
+    shade = b.max(2); shade = np.clip(shade / np.percentile(shade[m], 96), 0, 1)
+    rgba = np.dstack([shade, shade, shade, alpha]); out = Image.fromarray((rgba * 255).astype(np.uint8))
+    ys, xs = np.where(alpha > 0.05); return out, (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1), (0, 0), a.shape
 if __name__ == '__main__':
     look, client, garment = sys.argv[1:4]; out, box, shift, shp = layer(look, client, garment); out.save(f'L_{look}_{client}_{garment}.png'); print(look, client, garment, 'box', box, 'shift', shift)

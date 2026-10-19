@@ -10,15 +10,17 @@ G = {
  'belt': 'a plain pure-white fabric belt with a small gold buckle, worn snugly round her waist over her clothes',
  'hat': 'a plain pure-white fabric beret hat sitting on top of the head',
  'pants': 'a pair of plain pure-white fabric long trousers, from the waist down to just above the feet, both legs covered, with a neat waistband at the waist, worn like a boy wears trousers (the feet, arms, chest and tail stay uncovered)',
+ 'beltBlue': 'a plain pure-blue (#0000FF) fabric belt with a small buckle made of the same blue fabric, worn snugly round the waist on top of the trousers waistband, the whole belt the same flat bright blue',
  'shirt': 'a plain pure-white fabric short-sleeved shirt with a round neck, covering the chest and tummy down to the waist, worn like a boy wears a T-shirt (the arms below the short sleeves, the legs and the tail stay uncovered; any scarf stays on top)',
 }
 LOOK = {'felt': 'made of the same soft felt and stitching as the character', 'nature': 'made of soft cotton in the same clean 3D animated-film render as the character'}
 def run(look, client, garment):
     out = pathlib.Path(f'{look}_{client}_{garment}.png')
     if out.exists(): return 'cached'
-    img = (SRC / f'{look}_{client}.png').read_bytes()
+    # a *Blue garment is drawn in pure blue on the client already wearing its pants (from this folder), so layer.py can cut it out by colour
+    img = (pathlib.Path(f'{look}_{client}_pants.png') if garment.endswith('Blue') else SRC / f'{look}_{client}.png').read_bytes()
     who = 'character'
-    prompt = (f'Edit this image: dress the {who} in {G[garment]}, {LOOK[look]}. The new garment is pure white with soft shading and folds, no pattern, no colour. '
+    prompt = (f'Edit this image: dress the {who} in {G[garment]}, {LOOK[look]}. The new garment is ' + ('pure bright blue' if garment.endswith('Blue') else 'pure white, no colour') + ' with soft shading and folds, no pattern. '
               'Keep everything else exactly the same: the same character, face, hair, pose, arms, proportions, colours and lighting, the same framing and size in the frame, '
               'and the same completely flat pure green background. Change nothing except adding the garment. No text.')
     client_ = genai.Client()

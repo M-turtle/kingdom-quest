@@ -14,7 +14,7 @@
    Tiers: 1 (to 6) felt, whole cm · 2 (7–10) nature-tech, half cm · 3 (11+) nature-tech, mm and π. */
 (function () {
   'use strict';
-  const VERSION = 10;
+  const VERSION = 11;
   const $ = (s, r) => (r || document).querySelector(s), el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
   const NS = 'http://www.w3.org/2000/svg', sv = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a || {}) e.setAttribute(k, a[k]); return e; };
   const wait = ms => new Promise(r => setTimeout(r, ms)), clamp = (v, a, b) => Math.max(a, Math.min(b, v)), pick = a => a[Math.floor(Math.random() * a.length)];
