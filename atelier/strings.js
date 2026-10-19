@@ -3,7 +3,7 @@
 window.AT_STR = {
   he: {
     dir: 'rtl', font: 'Assistant',
-    title: 'האטלייה', subtitle: 'חנות התפירה שלך',
+    title: 'סדנת אומן', subtitle: 'חנות התפירה שלך',
     open: 'פותחים את החנות', ring: 'צלצלו בפעמון', nextClient: 'הלקוח הבא', coins: 'מטבעות', rep: 'כוכבים', day: 'יום', wardrobe: 'ארון הבגדים', back: 'חזרה', done: 'סיימתי', next: 'הלאה', fix: 'לתקן', again: 'עוד פעם', pay: 'לשלם', tryOn: 'למדוד', cut: 'לגזור', turn: 'להפוך את הבד', buy: 'לקנות', leave: 'לצאת',
     client: { girl: 'נועה', boy: 'דן', grandma: 'סבתא רות', bear: 'דובי', fox: 'שועלי', princess: 'הנסיכה לילי' },
     piece: { skirt: 'חצאית', belt: 'חגורה', bow: 'פפיון', circleSkirt: 'חצאית מעגל', hat: 'כובע', top: 'חולצה' },
