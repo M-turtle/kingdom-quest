@@ -21,6 +21,12 @@ def layer(look, client, garment):
     if n == 0: raise SystemExit('no garment found')
     sizes = ndimage.sum(cand, lab, range(1, n + 1)); keep = [i + 1 for i, s in enumerate(sizes) if s > sizes.max() * 0.08]
     m = np.isin(lab, keep); m = ndimage.binary_fill_holes(m)
+    if garment == 'shirt':   # white fur under a white shirt does not change: take every near-white pixel of the edit joined to the shirt, below its top
+        wh = (sat < 0.16) & (mx > 0.5) & (gr < 0.2); wh[:np.where(m.any(1))[0].min()] = False
+        lab2, _ = ndimage.label(wh | m); ids = np.unique(lab2[m]); m = np.isin(lab2, ids[ids > 0]); m = ndimage.binary_opening(m, iterations=2); m = ndimage.binary_fill_holes(m)
+    if garment == 'pants':   # pure white cloth over cream fur barely changes: take every near-white pixel of the edit joined to the pants, below their top
+        wh = ((sat < 0.2) & (mx > 0.55) & (gr < 0.2)) | ((gr > 0.05) & (gr < 0.45) & (mx > 0.35)); ry, rx = np.where(m.any(1))[0], np.where(m.any(0))[0]; box = np.zeros_like(wh); box[ry.min():ry.max() + 6, max(0, rx.min() - 6):rx.max() + 6] = True; wh &= box   # folds tinted by the green screen are still cloth; the screen itself is far greener
+        lab2, _ = ndimage.label(wh | m); ids = np.unique(lab2[m]); m = np.isin(lab2, ids[ids > 0]); m = ndimage.binary_opening(m, iterations=2); m = ndimage.binary_fill_holes(m)
     alpha = ndimage.gaussian_filter(m.astype(np.float32), 1.2); alpha = np.clip((alpha - 0.15) / 0.7, 0, 1)
     shade = b.mean(2); shade = np.clip(shade / np.percentile(shade[m], 96), 0, 1)   # white = 1, folds darker
     rgba = np.dstack([shade, shade, shade, alpha]); out = Image.fromarray((rgba * 255).astype(np.uint8), 'RGBA')

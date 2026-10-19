@@ -9,6 +9,8 @@ G = {
  'circleSkirt': 'a plain pure-white fabric circle skirt, knee length, very full and twirly with soft folds all round, worn at her waist over her clothes',
  'belt': 'a plain pure-white fabric belt with a small gold buckle, worn snugly round her waist over her clothes',
  'hat': 'a plain pure-white fabric beret hat sitting on top of the head',
+ 'pants': 'a pair of plain pure-white fabric long trousers, from the waist down to just above the feet, both legs covered, with a neat waistband at the waist, worn like a boy wears trousers (the feet, arms, chest and tail stay uncovered)',
+ 'shirt': 'a plain pure-white fabric short-sleeved shirt with a round neck, covering the chest and tummy down to the waist, worn like a boy wears a T-shirt (the arms below the short sleeves, the legs and the tail stay uncovered; any scarf stays on top)',
 }
 LOOK = {'felt': 'made of the same soft felt and stitching as the character', 'nature': 'made of soft cotton in the same clean 3D animated-film render as the character'}
 def run(look, client, garment):
@@ -20,17 +22,22 @@ def run(look, client, garment):
               'Keep everything else exactly the same: the same character, face, hair, pose, arms, proportions, colours and lighting, the same framing and size in the frame, '
               'and the same completely flat pure green background. Change nothing except adding the garment. No text.')
     client_ = genai.Client()
-    for attempt in range(3):
-        try:
-            r = client_.models.generate_content(model='gemini-3.1-flash-image', contents=[types.Part.from_bytes(data=img, mime_type='image/png'), prompt],
-                config=types.GenerateContentConfig(response_modalities=['IMAGE'], image_config=types.ImageConfig(aspect_ratio='9:16')))
-            for c in r.candidates or []:
-                for p in (getattr(c.content, 'parts', None) or []):
-                    if getattr(p, 'inline_data', None) and p.inline_data.data:
-                        Image.open(io.BytesIO(p.inline_data.data)).convert('RGB').save(out); return 'ok'
-            return 'no image'
-        except Exception as e:
-            print('retry', type(e).__name__, str(e)[:120], flush=True); time.sleep(20)
+    # gemini-3.1-flash-image refuses some harmless edits (PROHIBITED_CONTENT, e.g. trousers on the felt teddy); gemini-2.5-flash-image then draws them.
+    # 2.5 may return a slightly different frame height: layer.py's alignment needs the same size, so pad it back to the source size, centred.
+    for model, cfg in (('gemini-3.1-flash-image', {'aspect_ratio': '9:16'}), ('gemini-2.5-flash-image', None)):
+        for attempt in range(3):
+            try:
+                r = client_.models.generate_content(model=model, contents=[types.Part.from_bytes(data=img, mime_type='image/png'), prompt],
+                    config=types.GenerateContentConfig(response_modalities=['IMAGE'], image_config=types.ImageConfig(**cfg) if cfg else None))
+                for c in r.candidates or []:
+                    for p in (getattr(c.content, 'parts', None) or []):
+                        if getattr(p, 'inline_data', None) and p.inline_data.data:
+                            im = Image.open(io.BytesIO(p.inline_data.data)).convert('RGB'); src = Image.open(io.BytesIO(img))
+                            if im.size != src.size and im.width == src.width: pad = Image.new('RGB', src.size, (0, 255, 0)); pad.paste(im, (0, (src.height - im.height) // 2)); im = pad
+                            im.save(out); return 'ok ' + model
+                print(model, 'no image', [str(c.finish_reason) for c in r.candidates or []], flush=True); break
+            except Exception as e:
+                print('retry', type(e).__name__, str(e)[:120], flush=True); time.sleep(20)
     return 'fail'
 look, client = sys.argv[1], sys.argv[2]
 for g in sys.argv[3:]: print(look, client, g, run(look, client, g), flush=True)

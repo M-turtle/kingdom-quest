@@ -8,11 +8,13 @@
        belt   · to 10: tape round the waist, read it, chalk where the tape ends · 11+: width across, then 3.14 × width = the way round
        circle · to 10: width across, fold it in half = the radius · 11+: tape round, ÷ 6.28 = the radius · then set the compass, swing it
    · A piece goes on the client only when it is made; the body judges the fit; a fix redoes only the step that was wrong.
-   · Clients bring different orders, so it is not the same measuring each time.
+   · v8 (Yoni 2026-10-19: "a fox ... wear a dress ... makes no sense" · "the belt ... obviously comes after either pants or dress" · fox: "pants, shirt,
+     belt", teddy: "Boy: pants like the fox"): the girl and the princess order a circle skirt, then a belt; the fox and the teddy order pants (a ruler
+     down the leg), a shirt (a ruler across the chest), then a belt (the tape round the waist). The belt is always last.
    Tiers: 1 (to 6) felt, whole cm · 2 (7–10) nature-tech, half cm · 3 (11+) nature-tech, mm and π. */
 (function () {
   'use strict';
-  const VERSION = 7;
+  const VERSION = 8;
   const $ = (s, r) => (r || document).querySelector(s), el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
   const NS = 'http://www.w3.org/2000/svg', sv = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a || {}) e.setAttribute(k, a[k]); return e; };
   const wait = ms => new Promise(r => setTimeout(r, ms)), clamp = (v, a, b) => Math.max(a, Math.min(b, v)), pick = a => a[Math.floor(Math.random() * a.length)];
@@ -22,10 +24,9 @@
   const CLIENTS = { felt: ['girl', 'teddy', 'princess', 'fox'], nature: ['girl', 'bear', 'princess', 'fox'] };   /* felt dolls and felt animals; no boy, no grandma (Yoni 2026-10-19) */
   const COLOURS = ['#ff8fb8', '#8fd0f0', '#c0a0ff', '#ffcf6a', '#7fdcb0', '#ff9f90', '#e8545c', '#5a78c8'];
   const KINDS = ['plain', 'dots', 'stripes', 'gingham', 'flowers', 'hearts', 'stars', 'zigzag'];
-  /* orders rotate so each client brings a different job */
-  /* no hats, no people clients: dolls and felt animals only (Yoni 2026-10-19) */
-  const ORDERS = { 1: [['circleSkirt', 'belt'], ['belt', 'circleSkirt']], 2: [['circleSkirt', 'belt'], ['belt', 'circleSkirt']], 3: [['circleSkirt', 'belt'], ['belt', 'circleSkirt']] };
-  const Z = { circleSkirt: 1, skirt: 1, belt: 2, hat: 3 };
+  /* no hats, no people clients: dolls and felt animals only (Yoni 2026-10-19); girls wear the skirt, boys the pants and shirt; the belt comes last */
+  const BOY = { fox: 1, teddy: 1, bear: 1 }, ORDER = key => BOY[key] ? ['pants', 'shirt', 'belt'] : ['circleSkirt', 'belt'];
+  const Z = { shirt: 1, circleSkirt: 1, skirt: 1, pants: 2, belt: 3, hat: 4 };   /* the shirt is tucked into the pants; the belt sits on top */
 
   /* ---------- state ---------- */
   const S = { lang: 'he', look: 'felt', tier: 1, name: '', age: 6, coins: 10, rep: 0, day: 1, wardrobe: [], seen: 0, taught: {} };
@@ -69,7 +70,8 @@
   /* ---------- assets ---------- */
   const A = { meta: {}, img: {} };
   const asset = (n, lk) => 'assets/' + (lk || S.look) + '/' + n;
-  const loadImg = src => A.img[src] || (A.img[src] = new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }));
+  /* a picture that fails to load is tried again (three times, a short wait between), so a dropped connection never freezes the game */
+  const loadImg = src => A.img[src] || (A.img[src] = new Promise((res, rej) => { let n = 0; const go = () => { const i = new Image(); i.onload = () => res(i); i.onerror = e => { if (++n < 4) setTimeout(go, 500 * n); else { delete A.img[src]; rej(e); } }; i.src = src + (n ? (src.includes('?') ? '&' : '?') + 'r=' + n : ''); }; go(); }));
   async function loadLook() { $('#poster').src = asset('shop.webp'); $('#loop').src = asset('shop.mp4'); try { A.meta = await (await fetch(asset('meta.json'))).json(); } catch (e) { A.meta = {}; } for (const n of ['cl_disc', 'cl_strip', 'cl_sheet', 'beam', 'table.webp']) loadImg(asset(n.includes('.') ? n : n + '.webp')).catch(() => {}); }
   function loopPlay(on) { const v = $('#loop'); if (on) { v.currentTime = 0; v.play().then(() => v.classList.add('on')).catch(() => {}); } else { v.classList.remove('on'); setTimeout(() => { if (!v.classList.contains('on')) v.pause(); }, 900); } }
   document.addEventListener('visibilitychange', () => { const v = $('#loop'); if (document.hidden) v.pause(); else if (v.classList.contains('on')) v.play().catch(() => {}); });
@@ -101,7 +103,8 @@
   function bodyOf(m) { const g = m.g, wU = H * m.aspect, bw = (g.belt.x1 - g.belt.x0) * wU, raw = clamp(bw / (H / IMG_CM), 5, 9);
     const across = S.tier === 1 ? 2 * Math.round(raw / 2) : S.tier === 2 ? Math.round(raw) : snapTo(raw, 0.2), pxcm = bw / across;
     const headAcross = g.hat ? (S.tier === 3 ? snapTo(clamp((g.hat.x1 - g.hat.x0) * wU * 0.8 / pxcm, 4, 8), 0.2) : Math.round(clamp((g.hat.x1 - g.hat.x0) * wU * 0.8 / pxcm, 4, 8))) : 0;
-    return { across, round: snap(Math.PI * across), headAcross, pxcm }; }
+    const leg = g.pants ? snap(clamp((g.pants.y1 - g.pants.y0) * H / pxcm, 3, 20)) : 0, chest = g.shirt ? snap(clamp((g.shirt.chestX1 - g.shirt.chestX0) * wU / pxcm, 3, 14)) : 0;
+    return { across, round: snap(Math.PI * across), headAcross, pxcm, leg, chest }; }
   async function placeClient(key) { C.key = key; C.meta = A.meta[key]; C.body = bodyOf(C.meta); C.cv = {}; const b = figBox();
     const fig = el('div', 'figure'); fig.style.left = px(b.left); fig.style.top = px(b.top); fig.style.width = px(b.w); fig.style.height = px(H);
     const img = el('img', 'client'); img.src = asset(key + '.webp'); img.alt = ''; fig.appendChild(img); actors.appendChild(fig); C.fig = fig;
@@ -114,6 +117,8 @@
     const gap = h => { const x = (g.x0 + g.x1) / 2 * 100, y0 = g.y0 * 100, y1 = (g.y0 + (g.y1 - g.y0) * h) * 100; cv.style.clipPath = 'polygon(0 0, ' + (x - 0.2) + '% 0, ' + (x - 0.2) + '% ' + y0 + '%, ' + (x - 3.2) + '% ' + y0 + '%, ' + x + '% ' + y1 + '%, ' + (x + 3.2) + '% ' + y0 + '%, ' + (x + 0.2) + '% ' + y0 + '%, ' + (x + 0.2) + '% 0, 100% 0, 100% 100%, 0 100%)'; };
     if (kind === 'circleSkirt') { if (st.big) tf = ' translateY(7%)'; if (st.small) { tf = ' translateY(-4%) scaleX(.88)'; gap(0.45); } }
     if (kind === 'belt') { if (st.big) tf = ' translateY(2.5%) rotate(5deg)'; if (st.small) gap(1); }
+    if (kind === 'pants') { if (st.big) tf = ' scaleY(1.12)'; if (st.small) tf = ' scaleY(.8)'; }
+    if (kind === 'shirt') { if (st.big) tf = ' scale(1.1)'; if (st.small) tf = ' scaleX(.86)'; }
     if (kind === 'hat') { origin = cx + ' ' + mid; if (st.small) tf = ' translateY(-5%) scale(.72)'; if (st.big) tf = ' translateY(6%) scale(1.28)'; }
     cv.style.transformOrigin = origin; cv.style.transform = tf.trim(); }
 
@@ -140,7 +145,9 @@
       const dw = d.offsetWidth, dh = d.offsetHeight; let x = lane.x0 + (lane.x1 - lane.x0 - dw) / 2, y = prefY - dh / 2; y = clamp(y, lane.y0, Math.max(lane.y0, lane.y1 - dh));
       x = clamp(x, sr.left + m, sr.right - m - dw); d.style.left = px((x - sr.left) / U); d.style.top = px((y - sr.top) / U); });
     dockT = setTimeout(placeDock, 1300); }
-  function say(txt, cls) { const d = dock(); if (!bubble) { bubble = el('div', 'bubble'); const sp = el('button', 'spk', '🔊'); sp.type = 'button'; sp.setAttribute('aria-label', t('listen')); sp.onclick = e => { e.stopPropagation(); speak(lastSaid); }; bubble.appendChild(sp); bubble.appendChild(el('span', 'txt')); $('.col', d).insertBefore(bubble, $('.actions', d)); }
+  /* the speaker is drawn, not an emoji (no emoji icons: Yoni's kids' rules) */
+  function spkIcon() { const s = sv('svg', { viewBox: '0 0 24 24', width: '1.2em', height: '1.2em', 'aria-hidden': 'true' }); s.appendChild(sv('path', { d: 'M3 9h4l5-4v14l-5-4H3z', fill: 'currentColor' })); s.appendChild(sv('path', { d: 'M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12', fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-linecap': 'round' })); return s; }
+  function say(txt, cls) { const d = dock(); if (!bubble) { bubble = el('div', 'bubble'); const sp = el('button', 'spk'); sp.type = 'button'; sp.appendChild(spkIcon()); sp.setAttribute('aria-label', t('listen')); sp.onclick = e => { e.stopPropagation(); speak(lastSaid); }; bubble.appendChild(sp); bubble.appendChild(el('span', 'txt')); $('.col', d).insertBefore(bubble, $('.actions', d)); }
     bubble.className = 'bubble' + (cls ? ' ' + cls : ''); $('.txt', bubble).textContent = txt; lastSaid = txt; if (S.autoVoice) speak(txt); placeDock(); }
   function clearSay() { if (bubble) { bubble.remove(); bubble = null; } }
   /* the voice: ElevenLabs through the kingdom's relay (never the device voice: Yoni 2026-09-28); silent when the relay cannot answer */
@@ -217,15 +224,25 @@
         if (Math.abs(sum) >= 345) { closed = true; path.setAttribute('d', arcD(360)); handle.setAttribute('cx', start.x); handle.setAttribute('cy', start.y); setTimeout(res, 400); } }, () => { if (!closed) say(t('tapeOpen'), 'bad'); }));
     nogeo(); near(w2s(cx, yc - 4)); say(t('tapeDone'), 'ok'); await wait(1200); clearOverlay(); await camTo(0, 0, 1, 500); }
   /* a ruler across the waist or the head: drag its red 0 onto the red line, read the blue line up close */
-  async function acrossOnBody(which) { const b = figBox(), m = C.meta, head = which === 'head', gg = head ? m.g.hat : m.g.belt, pxcm = C.body.pxcm;
-    const yc = head ? b.y(gg.y0 + (gg.y1 - gg.y0) * 0.75) : b.y(gg.y0 + (gg.y1 - gg.y0) / 2), value = head ? C.body.headAcross : C.body.across, half = value * pxcm / 2, cx = b.x((gg.x0 + gg.x1) / 2);
+  async function acrossOnBody(which) { const b = figBox(), m = C.meta, head = which === 'head', chest = which === 'chest', gg = head ? m.g.hat : chest ? m.g.shirt : m.g.belt, pxcm = C.body.pxcm;
+    const yc = head ? b.y(gg.y0 + (gg.y1 - gg.y0) * 0.75) : chest ? b.y(gg.chestY) : b.y(gg.y0 + (gg.y1 - gg.y0) / 2), value = head ? C.body.headAcross : chest ? C.body.chest : C.body.across, half = value * pxcm / 2, cx = chest ? b.x((gg.chestX0 + gg.chestX1) / 2) : b.x((gg.x0 + gg.x1) / 2);
     await camTo(cx, yc + 3, 2.1); dashed(overlay, cx - half, yc - 5, cx - half, yc + 7, '#e8343a'); const endLine = dashed(overlay, cx + half, yc - 5, cx + half, yc + 7, '#3a7aff'); endLine.setAttribute('opacity', 0);
-    say(t(head ? 'rulerHead' : 'rulerAcross', { name: cname() })); const a = { x: cx - half, y: yc + 1.5 }, off0 = -8, start = { x: a.x + off0, y: a.y };
+    say(t(head ? 'rulerHead' : chest ? 'rulerChest' : 'rulerAcross', { name: cname() })); const a = { x: cx - half, y: yc + 1.5 }, off0 = -8, start = { x: a.x + off0, y: a.y };
     const gr = bodyRuler(overlay, start.x, start.y, 11, pxcm); const grab = { x: start.x + 3, y: start.y + 2.2 }; const ring = pulse(overlay, grab.x, grab.y, 2.6);
     geo({ kind: 'drag', from: w2s(grab.x, grab.y), to: w2s(grab.x - off0, grab.y) });
     let pos = 0, offset = 0, ok = false; const set = v => { pos = v; gr.setAttribute('transform', 'translate(' + v.toFixed(3) + ' 0)'); };
     await new Promise(res => drag(gr, 'world', (p, first) => { if (ok) return; ring.remove(); if (first) offset = p.x - pos; set(clamp(p.x - offset, -14, 22)); }, () => { if (ok) return; if (Math.abs(pos + off0) <= 0.45 * pxcm) { ok = true; set(-off0); say(t('zeroOk'), 'ok'); setTimeout(res, 700); } else say(t('zeroNo'), 'bad'); }));
     nogeo(); endLine.setAttribute('opacity', 1); await wait(400); await readBody(cx + half, yc + 3.7, value, t('readBlue')); await camTo(0, 0, 1, 600); clearOverlay(); return value; }
+
+  /* a ruler down the leg, beside the pants (the side away from a tail): drag its red 0 onto the red line at the waist, read the blue line at the ankle */
+  async function lengthOnBody() { const b = figBox(), g = C.meta.g.pants, pxcm = C.body.pxcm, value = C.body.leg, x = b.x(g.x0) - 0.8, y0 = b.y(g.y0), y1 = y0 + value * pxcm;
+    await camTo(x, (y0 + y1) / 2, 1.9); dashed(overlay, x - 7, y0, x + 5, y0, '#e8343a'); const endLine = dashed(overlay, x - 7, y1, x + 5, y1, '#3a7aff'); endLine.setAttribute('opacity', 0);
+    say(t('rulerLeg', { name: cname() })); const off0 = -8, outer = sv('g', { style: 'cursor:grab' }), inner = sv('g', { transform: 'rotate(90)' }); outer.appendChild(inner); overlay.appendChild(outer);
+    bodyRuler(inner, 0, 0, Math.ceil(value + 3), pxcm); inner.querySelectorAll('text').forEach(tx => tx.setAttribute('transform', 'rotate(-90 ' + tx.getAttribute('x') + ' ' + (+tx.getAttribute('y') - 0.5) + ')'));   /* digits upright on the standing ruler */
+    const set = v => outer.setAttribute('transform', 'translate(' + x.toFixed(3) + ' ' + (y0 + v).toFixed(3) + ')'); let pos = off0; set(pos);
+    const grab = { x: x - 2.2, y: y0 + off0 + 3 }, ring = pulse(overlay, grab.x, grab.y, 2.6); geo({ kind: 'drag', from: w2s(grab.x, grab.y), to: w2s(grab.x, grab.y - off0) });
+    let offset = 0, ok = false; await new Promise(res => drag(outer, 'world', (p, first) => { if (ok) return; ring.remove(); if (first) offset = p.y - pos; pos = clamp(p.y - offset, -16, 14); set(pos); }, () => { if (ok) return; if (Math.abs(pos) <= 0.45 * pxcm) { ok = true; pos = 0; set(0); say(t('zeroOk'), 'ok'); setTimeout(res, 700); } else say(t('zeroNo'), 'bad'); }));
+    nogeo(); endLine.setAttribute('opacity', 1); await wait(400); await readBody(x - 2.2, y1, value, t('readBlue')); await camTo(0, 0, 1, 600); clearOverlay(); return value; }
 
   /* ---------- the table ---------- */
   function tableOn(on) { stage.classList.toggle('atTable', on); if (!on) { table.replaceChildren(); VB.x = 0; VB.y = 0; VB.w = W; VB.h = 100; setVB(); } }
@@ -261,11 +278,23 @@
       if (!S.taught.pi) { S.taught.pi = true; save(); } await askCalc(t('calcRound', { d: fmt(D) }), need, [t('hintPi', { d: fmt(D) }), t('hintPi2', { d: fmt(D) })], 0.12); }
     await stageDone(t('ok.measure'));
     /* chalk where it ends, cut */
-    const line = sv('line', { x1: R.X(1), y1: 35, x2: R.X(1), y2: 51, stroke: '#fff', 'stroke-width': 0.6, 'stroke-dasharray': '1.1 0.7' });
+    const line = sv('line', { x1: R.X(1), y1: 35, x2: R.X(1), y2: 51, stroke: '#fff', 'stroke-width': 0.6, 'stroke-dasharray': '1.1 0.7', style: 'pointer-events:none' });
     const { at } = await setOnRuler(R, 1, need, t('fineChalk'), t('cut'), (cm, h) => { h.replaceChildren(); line.setAttribute('x1', R.X(cm)); line.setAttribute('x2', R.X(cm)); if (!line.parentNode) table.appendChild(line); const k = VB.w / W; h.appendChild(sv('image', { class: 'grip', href: asset('chalk.webp'), x: R.X(cm) - 4.5 * k, y: 35 - 9 * k, width: 9 * k, height: 9 * k })); h.appendChild(sv('rect', { x: R.X(cm) - 4.5 * k, y: 35 - 9 * k, width: 9 * k, height: 26 + 9 * k, fill: 'transparent' })); }, 40);
     say(t('snip')); await snip(R.X(at), 35, 51); stripImg.setAttribute('width', R.X(at) - R.X(0)); line.remove(); await stageDone(t('ok.cut')); await flyAway(stripImg);
     return { got: at, need }; }
   async function snip(x, y0, y1) { const sc = sv('image', { href: asset('scissors.webp'), x: x - 6, y: y0 - 12, width: 12, height: 12 }); table.appendChild(sc); for (let i = 0; i <= 10; i++) { sc.setAttribute('y', y0 - 12 + (y1 - y0 + 6) * i / 10); await wait(40); } sc.remove(); }
+
+  /* ---------- pants and shirt: measure on the body, mark it on the cloth with the chalk, cut ---------- */
+  async function straightPiece(kind, fab, again) { const pants = kind === 'pants', need = pants ? C.body.leg : C.body.chest; stages(['measure', 'cut', 'wear']);
+    if (!again) { const tk = pants ? 'leg' : 'chest'; if (!S.taught[tk]) { await teach(t(pants ? 'teachLeg' : 'teachChest'), 2600); S.taught[tk] = true; save(); }
+      if (pants) await lengthOnBody(); else await acrossOnBody('chest'); await stageDone(t('ok.measure')); }
+    await toTable(fab); const R = mkRuler(table, 14, 62, Math.ceil(need + 3), (W - 28) / Math.ceil(need + 3), 9), ch = pants ? 14 : 22, cy = 50 - ch;
+    const cloth = sv('image', { href: await clothURL(pants ? 'cl_strip' : 'cl_sheet', fab, pants ? 2.2 : 4), x: R.X(0), y: cy, width: R.X(need + 2.5) - R.X(0), height: ch, preserveAspectRatio: 'none', class: 'slide' }); table.insertBefore(cloth, R.g); await slideIn(cloth, 30, 0, 700);
+    say(t('markIt', { n: fmt(need) })); await wait(1400);
+    const line = sv('line', { x1: R.X(1), y1: cy - 1, x2: R.X(1), y2: R.y + 1.5, stroke: '#fff', 'stroke-width': 0.6, 'stroke-dasharray': '1.1 0.7', style: 'pointer-events:none' });   /* down to the ruler, so the mark reads on it */
+    const { at } = await setOnRuler(R, 1, need, t('fineChalkN', { n: fmt(need) }), t('cut'), (cm, h) => { h.replaceChildren(); line.setAttribute('x1', R.X(cm)); line.setAttribute('x2', R.X(cm)); if (!line.parentNode) table.appendChild(line); const k = VB.w / W; h.appendChild(sv('image', { class: 'grip', href: asset('chalk.webp'), x: R.X(cm) - 4.5 * k, y: cy - 1 - 9 * k, width: 9 * k, height: 9 * k })); h.appendChild(sv('rect', { x: R.X(cm) - 4.5 * k, y: cy - 1 - 9 * k, width: 9 * k, height: ch + 2 + 9 * k, fill: 'transparent' })); }, cy + ch / 2);
+    say(t('snip')); await snip(R.X(at), cy - 1, 51); cloth.setAttribute('width', R.X(at) - R.X(0)); line.remove(); await stageDone(t('ok.cut')); await flyAway(cloth);
+    return { got: at, need }; }
 
   /* ---------- circles: the radius, then the straight compass on the cloth ---------- */
   async function circlePiece(kind, fab, again) { const B = C.body, hat = kind === 'hat'; let r;
@@ -334,17 +363,17 @@
 
   /* ---------- one client ---------- */
   async function makeAndWear(kind, fab) { let again = false;
-    for (;;) { const res = kind === 'belt' ? await beltPiece(fab, again) : await circlePiece(kind, fab, again); await leaveTable(); clearOverlay();
-      const b = figBox(), g = gOf(kind); say(t('done', { piece: pname(kind) }), 'ok'); await camTo(b.cx, b.y((g.y0 + g.y1) / 2), kind === 'hat' ? 1.7 : 1.3, 700); await wait(300);
+    for (;;) { const res = kind === 'belt' ? await beltPiece(fab, again) : (kind === 'pants' || kind === 'shirt') ? await straightPiece(kind, fab, again) : await circlePiece(kind, fab, again); await leaveTable(); clearOverlay();
+      const b = figBox(), g = gOf(kind); say(t('done.' + kind), 'ok'); await camTo(b.cx, b.y((g.y0 + g.y1) / 2), kind === 'hat' ? 1.7 : 1.3, 700); await wait(300);
       const d = res.got - res.need, st = d > TOL[S.tier] ? { big: true } : d < -TOL[S.tier] ? { small: true } : {}; await wear(kind, fab, st); burst(W / 2, 45, 30); near(w2s(b.x(g.x1), b.y((g.y0 + g.y1) / 2)));
       if (!st.big && !st.small) { STG.done = STG.keys.length; drawStages(); say(t('fit.perfect', { piece: pname(kind) }), 'ok'); await wait(1800); return; }
       say(t('fit.' + kind + (st.big ? 'Big' : 'Small'), { piece: pname(kind) }), 'bad'); await actions([[t('again'), 1]]); const cv = C.cv[kind]; if (cv) { cv.remove(); delete C.cv[kind]; } again = true; } }
-  async function serve() { const CL = CLIENTS[S.look] || CLIENTS.felt, key = CL[(S.seen++) % CL.length], list = ORDERS[S.tier], kinds = list[(S.seen - 1) % list.length]; save(); clearOverlay(); tableOn(false);
+  async function serve() { const CL = CLIENTS[S.look] || CLIENTS.felt, key = CL[(S.seen++) % CL.length], kinds = ORDER(key); save(); clearOverlay(); tableOn(false);
     await placeClient(key); const done = [], pieces = []; C.radius = {}; orderCard(kinds, done);
     near(null); const names = kinds.map(k => t('aPiece.' + k)); say(t('wish.' + key, { pieces: names.length > 1 ? names.slice(0, -1).join(', ') + ' ' + t('and') + names[names.length - 1] : names[0] })); await actions([[t('start'), 1]]);
     for (const kind of kinds) { const fab = await pickFabric(pname(kind)); await makeAndWear(kind, fab); pieces.push({ kind, fab }); done.push(kind); orderCard(kinds, done); clearStages(); await camTo(0, 0, 1, 500); }
     const pay = kinds.length * 3; S.coins += pay; S.rep++; hud(); const b = figBox(); await camTo(b.cx, b.top + H * 0.5, 1.15, 600); burst(W / 2, 35, 30);
-    say(t('paid', { name: cname(), c: pay }) + ' ' + t('star'), 'ok'); S.wardrobe.push({ client: key, look: S.look, day: S.day, pieces }); S.day++; save();
+    say(t('paid.' + (BOY[key] ? 'm' : 'f'), { name: cname(), c: pay }) + ' ' + t('star'), 'ok'); S.wardrobe.push({ client: key, look: S.look, day: S.day, pieces }); S.day++; save();
     await actions([[t('nextClient'), 1]]); say(t('happy')); await camTo(0, 0, 1); clientLeave(); clearOrder(); await wait(1200); clearSay(); }
 
   /* ---------- start ---------- */
