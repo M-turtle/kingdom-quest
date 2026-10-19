@@ -63,7 +63,7 @@
     elm.addEventListener('pointerdown', e => { on = true; try { elm.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); onMove(P(e), true); });
     elm.addEventListener('pointermove', e => { if (on) onMove(P(e), false); });
     const up = e => { if (!on) return; on = false; if (onEnd) onEnd(P(e)); }; elm.addEventListener('pointerup', up); elm.addEventListener('pointercancel', up); }
-  const geo = g => { window.__geo = g; const p = g && (g.from || g.c || g.grab); if (p) near(p); }, nogeo = () => { window.__geo = null; };
+  const geo = g => { window.__geo = g; const p = g && (g.kind === 'round' && g.edge ? { x: g.edge.x + 2, y: g.c.y, side: 'right' } : (g.from || g.c || g.grab)); if (p) near(p); }, nogeo = () => { window.__geo = null; };
 
   /* ---------- assets ---------- */
   const A = { meta: {}, img: {} };
@@ -122,7 +122,7 @@
   function dock() { let d = $('.dock', ui); if (!d) { d = el('div', 'dock'); const bear = el('div', 'bear'); bear.appendChild(el('div', 'bearimg')); const col = el('div', 'col'); col.appendChild(el('div', 'actions')); d.append(bear, col); ui.appendChild(d); $('.bearimg', bear).style.backgroundImage = 'url(' + asset('helper.webp', 'felt') + ')'; } return d; }
   function near(p) { ANCH = p; placeDock(); }
   function placeDock() { const d = dock(); if (!ANCH) { d.classList.remove('anch'); d.style.left = ''; d.style.top = ''; return; } requestAnimationFrame(() => { const r = stage.getBoundingClientRect(), U = r.height / 100, dw = d.offsetWidth / U, dh = d.offsetHeight / U, padOn = !!$('.pad', ui), maxX = W - (padOn ? 27 : 1.5) - dw;
-      let x = clamp(ANCH.x - dw / 2, 1.5, Math.max(1.5, maxX)), y = ANCH.y > 52 ? ANCH.y - dh - 7 : ANCH.y + 7; y = clamp(y, 15, 98.5 - dh); d.classList.add('anch'); d.style.left = px(x); d.style.top = px(y); }); }
+      let x = ANCH.side === 'right' ? clamp(ANCH.x, 1.5, W - 1.5 - dw) : clamp(ANCH.x - dw / 2, 1.5, Math.max(1.5, maxX)), y = ANCH.side === 'right' ? ANCH.y - dh / 2 : ANCH.y > 52 ? ANCH.y - dh - 7 : ANCH.y + 7; y = clamp(y, 15, 98.5 - dh); d.classList.add('anch'); d.style.left = px(x); d.style.top = px(y); }); }
   function say(txt, cls) { const d = dock(); if (!bubble) { bubble = el('div', 'bubble'); const sp = el('button', 'spk', '🔊'); sp.type = 'button'; sp.setAttribute('aria-label', t('listen')); sp.onclick = e => { e.stopPropagation(); speak(lastSaid); }; bubble.appendChild(sp); bubble.appendChild(el('span', 'txt')); $('.col', d).insertBefore(bubble, $('.actions', d)); }
     bubble.className = 'bubble' + (cls ? ' ' + cls : ''); $('.txt', bubble).textContent = txt; lastSaid = txt; if (S.autoVoice) speak(txt); placeDock(); }
   function clearSay() { if (bubble) { bubble.remove(); bubble = null; } }
@@ -280,7 +280,7 @@
     /* swing: the kid drags the chalk all the way round; the straight bar turns with it */
     R.g.style.transition = 'opacity .4s'; R.g.style.opacity = '0'; const rr = at * pxcm, circle = sv('path', { d: '', fill: 'none', stroke: '#fff', 'stroke-width': 0.6 }); table.appendChild(circle); table.appendChild(handle);
     handle.querySelectorAll('line').forEach(l => l.remove()); handle.style.transformBox = 'view-box'; handle.style.transformOrigin = '0 0'; say(t(S.taught.swing ? 'swingIt' : 'swingTeach', { n: fmt(at) })); S.taught.swing = true; save(); const ring2 = pulseT(cx + rr, cy, 3);
-    geo({ kind: 'round', c: t2s(cx, cy), R: rr * W / VB.w });
+    geo({ kind: 'round', c: t2s(cx, cy), R: rr * W / VB.w, edge: t2s(cx + s / 2, cy) });
     await new Promise(res => { let cov = 0, lastA = null, done = false, a0 = 0; drag(handle, 'table', (p, first) => { if (done) return; ring2.remove(); const a = Math.atan2(p.y - cy, p.x - cx); if (lastA != null && !first) { let d = a - lastA; if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; cov += d; } lastA = a;
         const deg = a * 180 / Math.PI; beam.setAttribute('transform', 'rotate(' + deg.toFixed(2) + ' ' + cx + ' ' + cy + ')'); handle.setAttribute('transform', 'rotate(' + deg.toFixed(2) + ' ' + cx + ' ' + cy + ')');
         const n = Math.max(2, Math.round(Math.abs(cov) / 0.08)); let d = ''; for (let i = 0; i <= n; i++) { const th = a - cov * (1 - i / n); d += (i ? 'L' : 'M') + (cx + Math.cos(th) * rr).toFixed(2) + ' ' + (cy + Math.sin(th) * rr).toFixed(2) + ' '; } circle.setAttribute('d', d);
