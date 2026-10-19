@@ -14,7 +14,7 @@
    Tiers: 1 (to 6) felt, whole cm · 2 (7–10) nature-tech, half cm · 3 (11+) nature-tech, mm and π. */
 (function () {
   'use strict';
-  const VERSION = 8;
+  const VERSION = 9;
   const $ = (s, r) => (r || document).querySelector(s), el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
   const NS = 'http://www.w3.org/2000/svg', sv = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a || {}) e.setAttribute(k, a[k]); return e; };
   const wait = ms => new Promise(r => setTimeout(r, ms)), clamp = (v, a, b) => Math.max(a, Math.min(b, v)), pick = a => a[Math.floor(Math.random() * a.length)];
@@ -55,7 +55,7 @@
   function zoomVB(cx, cy, w, ms) { ms = Math.max(1200, (ms == null ? 800 : ms) * 1.6); w = clamp(w, 3, W); const h = w * 100 / W, x = clamp(cx - w / 2, 0, W - w), y = clamp(cy - h / 2, 0, 100 - h); const from = Object.assign({}, VB), to = { x, y, w, h };
     return new Promise(res => { const t0 = performance.now(); const step = now => { const k = Math.min(1, (now - t0) / ms), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; for (const q of ['x', 'y', 'w', 'h']) VB[q] = from[q] + (to[q] - from[q]) * e; setVB(); if (k < 1) requestAnimationFrame(step); else res(); }; requestAnimationFrame(step); }); }
   const zoomOut = ms => (VB.w >= W - 0.01 ? Promise.resolve() : zoomVB(W / 2, 50, W, ms));
-  const noZoom = () => S.tier === 1;
+  const noZoom = () => true;   /* no zoom on the cloth table at any age (Yoni 2026-10-19: 'The back and forth of the Zoom ... is useless') */
   const w2s = (x, y) => ({ x: CAM.tx + x * CAM.z, y: CAM.ty + y * CAM.z });
   const t2s = (x, y) => ({ x: (x - VB.x) * W / VB.w, y: (y - VB.y) * 100 / VB.h });
   const spt = e => { const r = stage.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.height * 100, y: (e.clientY - r.top) / r.height * 100 }; };
@@ -130,7 +130,7 @@
   function near(p) { ANCH = p; placeDock(); }
   function workRects(sr) { const out = [], atT = stage.classList.contains('atTable'), add = e => { if (!e || !e.getBoundingClientRect) return; const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity < 0.05) return; const r = e.getBoundingClientRect();
       const x0 = Math.max(r.left, sr.left), y0 = Math.max(r.top, sr.top), x1 = Math.min(r.right, sr.right), y1 = Math.min(r.bottom, sr.bottom); if (x1 - x0 < 2 || y1 - y0 < 2) return; if ((x1 - x0) * (y1 - y0) > sr.width * sr.height * 0.8) return; out.push({ x0, y0, x1, y1 }); };
-    if (atT) [...table.children].forEach(add); else { if (C.fig) { const fr = C.fig.getBoundingClientRect(), g = C.meta && C.meta.g && C.meta.g.belt; if (fr.width < sr.width * 0.45 || !g) add(C.fig); else { const cx = fr.left + (g.x0 + g.x1) / 2 * fr.width, hw = (g.x1 - g.x0) * fr.width * 0.75; out.push({ x0: Math.max(sr.left, cx - hw), y0: Math.max(sr.top, fr.top), x1: Math.min(sr.right, cx + hw), y1: Math.min(sr.bottom, fr.bottom) }); } } [...$('#overlay').children].forEach(add); }   /* zoomed on the body: the body's middle (waist wide) and the tools on it are the work */
+    add($('.notes', ui)); if (atT) [...table.children].forEach(add); else { if (C.fig) { const fr = C.fig.getBoundingClientRect(), g = C.meta && C.meta.g && C.meta.g.belt; if (fr.width < sr.width * 0.45 || !g) add(C.fig); else { const cx = fr.left + (g.x0 + g.x1) / 2 * fr.width, hw = (g.x1 - g.x0) * fr.width * 0.75; out.push({ x0: Math.max(sr.left, cx - hw), y0: Math.max(sr.top, fr.top), x1: Math.min(sr.right, cx + hw), y1: Math.min(sr.bottom, fr.bottom) }); } } [...$('#overlay').children].forEach(add); }   /* zoomed on the body: the body's middle (waist wide) and the tools on it are the work */
     return out; }
   function placeDock() { clearTimeout(dockT); const d = dock(); requestAnimationFrame(() => { const sr = stage.getBoundingClientRect(), U = sr.height / 100, m = 1.5 * U, R = workRects(sr);
       d.classList.add('anch'); let wx0 = Infinity, wx1 = -Infinity, wy0 = Infinity, wy1 = -Infinity; R.forEach(r => { wx0 = Math.min(wx0, r.x0); wx1 = Math.max(wx1, r.x1); wy0 = Math.min(wy0, r.y0); wy1 = Math.max(wy1, r.y1); });
@@ -172,6 +172,12 @@
     add('✓', () => { if (!s || s === '.') return; p.remove(); res(parseFloat(s)); }, 'go'); p.appendChild(keys); ui.appendChild(p); }); }
   const badPad = () => { const p = $('.pad', ui); if (p) { p.classList.add('bad'); setTimeout(() => p.classList.remove('bad'), 700); } };
   function burst(x, y, n) { const box = $('#burst'); for (let i = 0; i < (n || 20); i++) { const s = el('i'); const a = Math.random() * Math.PI * 2, d = 6 + Math.random() * 16; s.style.left = px(x); s.style.top = px(y); s.style.setProperty('--dx', px(Math.cos(a) * d)); s.style.setProperty('--dy', px(Math.sin(a) * d - 6)); s.style.background = ['#ffe7a8', '#f2c14e', '#ff9fd0', '#8fd3ff', '#9df09d'][i % 5]; box.appendChild(s); setTimeout(() => s.remove(), 1200); } }
+
+  /* ---------- what the kid measured stays on the right, until the client leaves (Yoni 2026-10-19: 'that number needs to stay on the right hand side') ---------- */
+  function note(key, v) { C.notes = (C.notes || []).filter(n => n[0] !== key); C.notes.push([key, v]); let n = $('.notes', ui); if (!n) { n = el('div', 'notes'); ui.appendChild(n); }
+    n.replaceChildren(el('div', 'nt', t('notes.title'))); for (const [k, val] of C.notes) { const r = el('div', 'nr'); r.append(el('span', 'nk', t('notes.' + k)), el('b', 'nv', fmt(val) + ' ' + t('unitCm'))); n.appendChild(r); }
+    n.classList.remove('pop'); void n.offsetWidth; n.classList.add('pop'); placeDock(); }
+  const clearNotes = () => { C.notes = []; const n = $('.notes', ui); if (n) n.remove(); };
 
   /* ---------- stages: a few chips, each one done is a success ---------- */
   const STG = { keys: [], done: 0 };
@@ -232,7 +238,7 @@
     geo({ kind: 'drag', from: w2s(grab.x, grab.y), to: w2s(grab.x - off0, grab.y) });
     let pos = 0, offset = 0, ok = false; const set = v => { pos = v; gr.setAttribute('transform', 'translate(' + v.toFixed(3) + ' 0)'); };
     await new Promise(res => drag(gr, 'world', (p, first) => { if (ok) return; ring.remove(); if (first) offset = p.x - pos; set(clamp(p.x - offset, -14, 22)); }, () => { if (ok) return; if (Math.abs(pos + off0) <= 0.45 * pxcm) { ok = true; set(-off0); say(t('zeroOk'), 'ok'); setTimeout(res, 700); } else say(t('zeroNo'), 'bad'); }));
-    nogeo(); endLine.setAttribute('opacity', 1); await wait(400); await readBody(cx + half, yc + 3.7, value, t('readBlue')); await camTo(0, 0, 1, 600); clearOverlay(); return value; }
+    nogeo(); endLine.setAttribute('opacity', 1); await wait(400); await readBody(cx + half, yc + 3.7, value, t('readBlue')); note(head ? 'head' : chest ? 'chest' : 'waist', value); await camTo(0, 0, 1, 600); clearOverlay(); return value; }
 
   /* a ruler down the leg, beside the pants (the side away from a tail): drag its red 0 onto the red line at the waist, read the blue line at the ankle */
   async function lengthOnBody() { const b = figBox(), g = C.meta.g.pants, pxcm = C.body.pxcm, value = C.body.leg, x = b.x(g.x0) - 0.8, y0 = b.y(g.y0), y1 = y0 + value * pxcm;
@@ -242,7 +248,7 @@
     const set = v => outer.setAttribute('transform', 'translate(' + x.toFixed(3) + ' ' + (y0 + v).toFixed(3) + ')'); let pos = off0; set(pos);
     const grab = { x: x - 2.2, y: y0 + off0 + 3 }, ring = pulse(overlay, grab.x, grab.y, 2.6); geo({ kind: 'drag', from: w2s(grab.x, grab.y), to: w2s(grab.x, grab.y - off0) });
     let offset = 0, ok = false; await new Promise(res => drag(outer, 'world', (p, first) => { if (ok) return; ring.remove(); if (first) offset = p.y - pos; pos = clamp(p.y - offset, -16, 14); set(pos); }, () => { if (ok) return; if (Math.abs(pos) <= 0.45 * pxcm) { ok = true; pos = 0; set(0); say(t('zeroOk'), 'ok'); setTimeout(res, 700); } else say(t('zeroNo'), 'bad'); }));
-    nogeo(); endLine.setAttribute('opacity', 1); await wait(400); await readBody(x - 2.2, y1, value, t('readBlue')); await camTo(0, 0, 1, 600); clearOverlay(); return value; }
+    nogeo(); endLine.setAttribute('opacity', 1); await wait(400); await readBody(x - 2.2, y1, value, t('readBlue')); note('leg', value); await camTo(0, 0, 1, 600); clearOverlay(); return value; }
 
   /* ---------- the table ---------- */
   function tableOn(on) { stage.classList.toggle('atTable', on); if (!on) { table.replaceChildren(); VB.x = 0; VB.y = 0; VB.w = W; VB.h = 100; setVB(); } }
@@ -271,11 +277,11 @@
     else if (!again) { /* 11+: across, then 3.14 × across */ await acrossOnBody('waist'); }
     await toTable(fab); const R = mkRuler(table, 14, 62, Math.ceil(need + 3), (W - 28) / Math.ceil(need + 3), 9);
     const stripImg = sv('image', { href: await clothURL('cl_strip', fab, 2.2), x: R.X(0), y: 36, width: R.X(need + 2.5) - R.X(0), height: 14, preserveAspectRatio: 'none', class: 'slide' }); table.insertBefore(stripImg, R.g); await slideIn(stripImg, 30, 0, 700);
-    if (S.tier < 3) { const tape = tapeStrip(R, 0, need, 54.5, 3.4); if (!again) { say(t('layTape')); await slideIn(tape, -20, -20); await readTable(R, need, t('readTape'), 52); } }
+    if (S.tier < 3) { const tape = tapeStrip(R, 0, need, 54.5, 3.4); if (!again) { say(t('layTape')); await slideIn(tape, -20, -20); await readTable(R, need, t('readTape'), 52); note('round', need); } }
     else if (!again) { /* the way round is 3.14 times across: the width laid three times and a bit */ const D = B.across; say(t('piRods', { d: fmt(D) }));
       for (let i = 0; i < 3; i++) { const rod = sv('rect', { x: R.X(i * D), y: 54.5, width: D * R.pxcm, height: 3.4, fill: i % 2 ? '#7fb8ff' : '#3a7aff', stroke: '#1a3a8a', 'stroke-width': 0.2 }); table.appendChild(rod); await slideIn(rod, 0, -14, 600); }
       const bit = sv('rect', { x: R.X(3 * D), y: 54.5, width: 0.14 * D * R.pxcm, height: 3.4, fill: '#ffcf6a', stroke: '#8a6a10', 'stroke-width': 0.2 }); table.appendChild(bit); await slideIn(bit, 0, -14, 600); await teach(t('piSays'), 3000);
-      if (!S.taught.pi) { S.taught.pi = true; save(); } await askCalc(t('calcRound', { d: fmt(D) }), need, [t('hintPi', { d: fmt(D) }), t('hintPi2', { d: fmt(D) })], 0.12); }
+      if (!S.taught.pi) { S.taught.pi = true; save(); } await askCalc(t('calcRound', { d: fmt(D) }), need, [t('hintPi', { d: fmt(D) }), t('hintPi2', { d: fmt(D) })], 0.12); note('round', need); }
     await stageDone(t('ok.measure'));
     /* chalk where it ends, cut */
     const line = sv('line', { x1: R.X(1), y1: 35, x2: R.X(1), y2: 51, stroke: '#fff', 'stroke-width': 0.6, 'stroke-dasharray': '1.1 0.7', style: 'pointer-events:none' });
@@ -306,10 +312,10 @@
         say(t(S.taught.half ? 'foldIt' : 'foldTeach')); S.taught.half = true; save(); const end = sv('circle', { cx: R.X(D), cy: y, r: 2.4, fill: '#3a7aff', stroke: '#fff', 'stroke-width': 0.4, style: 'cursor:grab' }); table.appendChild(end); const ring = pulseT(R.X(D), y, 2.4);
         geo({ kind: 'drag', from: t2s(R.X(D), y), to: t2s(R.X(0), y), steps: 12 });
         await new Promise(res => { let done = false; drag(end, 'table', p => { if (done) return; ring.remove(); const cm = clamp((p.x - R.x0) / R.pxcm, 0, D); end.setAttribute('cx', R.X(cm)); wl.setAttribute('x2', R.X((D + cm) / 2)); if (cm <= 0.6) { done = true; res(); } }, () => { if (!done) { end.setAttribute('cx', R.X(D)); wl.setAttribute('x2', R.X(D)); } }); });
-        nogeo(); end.remove(); wl.setAttribute('x2', R.X(r)); table.appendChild(sv('path', { d: 'M' + R.X(r) + ' ' + (y - 1.1) + ' l -1 -2 h 2 z', fill: '#3a7aff' })); await readTable(R, r, t('readFold'), y - 4);
-      } else { /* 11+: the tape round the waist; radius = round ÷ 6.28 */ await tapeRound(); await toTable(fab); const Cr = B.round, R = mkRuler(table, 14, 62, Math.ceil(Cr + 3), (W - 28) / Math.ceil(Cr + 3), 9); const tape = tapeStrip(R, 0, Cr, 54.5, 3.4); await slideIn(tape, -20, -20); await readTable(R, Cr, t('readTape'), 52); await stageDone(t('ok.measure'));
+        nogeo(); end.remove(); wl.setAttribute('x2', R.X(r)); table.appendChild(sv('path', { d: 'M' + R.X(r) + ' ' + (y - 1.1) + ' l -1 -2 h 2 z', fill: '#3a7aff' })); await readTable(R, r, t('readFold'), y - 4); note('radius', r);
+      } else { /* 11+: the tape round the waist; radius = round ÷ 6.28 */ await tapeRound(); await toTable(fab); const Cr = B.round, R = mkRuler(table, 14, 62, Math.ceil(Cr + 3), (W - 28) / Math.ceil(Cr + 3), 9); const tape = tapeStrip(R, 0, Cr, 54.5, 3.4); await slideIn(tape, -20, -20); await readTable(R, Cr, t('readTape'), 52); note('round', Cr); await stageDone(t('ok.measure'));
         r = Math.round(Cr / 6.28 * 10) / 10; const D = Cr / Math.PI; say(t('piBack')); for (let i = 0; i < 3; i++) { const rod = sv('rect', { x: R.X(i * D), y: 49.5, width: D * R.pxcm, height: 3.4, fill: i % 2 ? '#7fb8ff' : '#3a7aff', stroke: '#1a3a8a', 'stroke-width': 0.2 }); table.appendChild(rod); await slideIn(rod, 0, -12, 500); }
-        await teach(t('piBack2'), 2600); await askCalc(t('calcRadius', { c: fmt(Cr) }), r, [t('hintR1', { c: fmt(Cr) }), t('hintR2', { c: fmt(Cr) })], 0.1); }
+        await teach(t('piBack2'), 2600); await askCalc(t('calcRadius', { c: fmt(Cr) }), r, [t('hintR1', { c: fmt(Cr) }), t('hintR2', { c: fmt(Cr) })], 0.1); note('radius', r); }
       C.radius = C.radius || {}; C.radius[kind] = r; await stageDone(t('ok.radius'));
     } else r = C.radius[kind];
     /* the compass: cloth on the table, the pin in its centre, the chalk slid along the straight bar to the radius, then swung round */
@@ -369,12 +375,12 @@
       if (!st.big && !st.small) { STG.done = STG.keys.length; drawStages(); say(t('fit.perfect', { piece: pname(kind) }), 'ok'); await wait(1800); return; }
       say(t('fit.' + kind + (st.big ? 'Big' : 'Small'), { piece: pname(kind) }), 'bad'); await actions([[t('again'), 1]]); const cv = C.cv[kind]; if (cv) { cv.remove(); delete C.cv[kind]; } again = true; } }
   async function serve() { const CL = CLIENTS[S.look] || CLIENTS.felt, key = CL[(S.seen++) % CL.length], kinds = ORDER(key); save(); clearOverlay(); tableOn(false);
-    await placeClient(key); const done = [], pieces = []; C.radius = {}; orderCard(kinds, done);
+    clearNotes(); await placeClient(key); const done = [], pieces = []; C.radius = {}; orderCard(kinds, done);
     near(null); const names = kinds.map(k => t('aPiece.' + k)); say(t('wish.' + key, { pieces: names.length > 1 ? names.slice(0, -1).join(', ') + ' ' + t('and') + names[names.length - 1] : names[0] })); await actions([[t('start'), 1]]);
     for (const kind of kinds) { const fab = await pickFabric(pname(kind)); await makeAndWear(kind, fab); pieces.push({ kind, fab }); done.push(kind); orderCard(kinds, done); clearStages(); await camTo(0, 0, 1, 500); }
     const pay = kinds.length * 3; S.coins += pay; S.rep++; hud(); const b = figBox(); await camTo(b.cx, b.top + H * 0.5, 1.15, 600); burst(W / 2, 35, 30);
     say(t('paid.' + (BOY[key] ? 'm' : 'f'), { name: cname(), c: pay }) + ' ' + t('star'), 'ok'); S.wardrobe.push({ client: key, look: S.look, day: S.day, pieces }); S.day++; save();
-    await actions([[t('nextClient'), 1]]); say(t('happy')); await camTo(0, 0, 1); clientLeave(); clearOrder(); await wait(1200); clearSay(); }
+    await actions([[t('nextClient'), 1]]); say(t('happy')); await camTo(0, 0, 1); clientLeave(); clearOrder(); clearNotes(); await wait(1200); clearSay(); }
 
   /* ---------- start ---------- */
   function startSheet() { return new Promise(res => { const sh = el('div', 'sheet'); const card = el('div', 'card'); card.appendChild(el('h1', null, t('title'))); card.appendChild(el('p', null, t('subtitle')));
