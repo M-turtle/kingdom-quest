@@ -41,6 +41,8 @@ html,body{height:100%} body{margin:0; background:var(--bg); color:var(--ink); fo
 .order{position:absolute; top:.5em; left:50%; transform:translateX(-50%); display:flex; gap:.5em; pointer-events:none} .order .item{background:var(--panel); border:.1em solid var(--edge); border-radius:.9em; padding:.2em .7em .2em .3em; display:flex; align-items:center; gap:.45em; font-weight:800; font-size:1.05em; color:var(--gold-2)} .order .ico{width:2.6em; height:2.6em; background-repeat:no-repeat; border-radius:.5em; background-color:rgba(255,255,255,.08)} .order .done{border-color:var(--ok); color:#c8f7c8}
 .picker .row.cols button{width:2.6em; height:2.6em; border-radius:50%} .picker .sw{width:100%; height:100%; background-size:1.6em 1.6em} .picker .preview .sw{background-size:2.6em 2.6em}
 .readout.side{left:1em; top:50%; transform:translateY(-50%)} .readout.side canvas{width:21em !important; height:5em !important}
+.stages{position:absolute; top:4.2em; left:50%; transform:translateX(-50%); display:flex; gap:.3em; flex-wrap:wrap; justify-content:center; max-width:90%; pointer-events:none} .stg{background:var(--panel); border:.08em solid rgba(255,255,255,.15); border-radius:999px; padding:.15em .6em; font-weight:800; font-size:.82em; color:var(--muted)} .stg.now{border-color:var(--gold); color:var(--gold-2)} .stg.done{border-color:var(--ok); color:#c8f7c8}
+#stage.atTable #tableBg{opacity:0}
 .closet .item canvas{width:100%; height:9em; object-fit:contain}
 
 @keyframes blink{50%{opacity:.2; background:#ffe08a}}
@@ -62,7 +64,7 @@ html,body{height:100%} body{margin:0; background:var(--bg); color:var(--ink); fo
   <div class="burst" id="burst"></div>
   <span class="ver" id="ver"></span>
 </div></div>
-<script src="strings.js?v=5"></script>
-<script src="game.js?v=10"></script>
+<script src="strings.js?v=6"></script>
+<script src="game.js?v=16"></script>
 </body>
 </html>
