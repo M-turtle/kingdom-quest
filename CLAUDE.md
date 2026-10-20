@@ -22,7 +22,7 @@ messages, 345 Aether findings, 79 memory files). Evidence and his quotes:
 CLAUDE.md overlap, this text wins.
 
 **Proof it was read:** the first reply of every chat (and the first after a resume or compaction) opens with one
-line, `Bible 2026-10-18 r2 loaded.`, then the answer. A chat that cannot show that line has not loaded this file.
+line, `Bible 2026-10-20 r3 loaded.`, then the answer. A chat that cannot show that line has not loaded this file.
 
 Owner: Yoni (Yehonatan Eyal), solo founder, based in Israel since 2026-07-31; his tenants and
 notices run on US Eastern time. Ventures: The Mindful Landlord (TML), Toledo SFR portfolio
@@ -182,6 +182,10 @@ third-party call has an alerting failure path and never flips a status to "sent"
 anything a customer tries to submit becomes a record plus an alert even when the AI or the form
 fails. Customer-facing changes ship with a cross-account isolation check (sign in as A, see no B).
 Read handlers never write. Users see plain words; raw provider errors go to the operator.
+**Server sessions and production keys:** a server (cloud) session whose environment holds a
+project's production keys uses them to read, verify and move work forward. Every write to a live
+financial system still follows the Financial Operations Protocol (dry-run → independent re-verify →
+Yoni's greenlight in chat). Anything the environment does not provide stops and is listed in the PR.
 **Children:** in any product kids use (Kingdom Quest, Letter Mountain, the games), nothing new
 reaches the device or URL the kids open — text, voice, images, mechanics, difficulty — until Yoni
 has reviewed it himself; development runs on a separate build or URL the kids never open.
