@@ -22,7 +22,7 @@ messages, 345 Aether findings, 79 memory files). Evidence and his quotes:
 CLAUDE.md overlap, this text wins.
 
 **Proof it was read:** the first reply of every chat (and the first after a resume or compaction) opens with one
-line, `Bible 2026-10-20 r3 loaded.`, then the answer. A chat that cannot show that line has not loaded this file.
+line, `Bible 2026-10-20 r4 loaded.`, then the answer. A chat that cannot show that line has not loaded this file.
 
 Owner: Yoni (Yehonatan Eyal), solo founder, based in Israel since 2026-07-31; his tenants and
 notices run on US Eastern time. Ventures: The Mindful Landlord (TML), Toledo SFR portfolio
@@ -214,6 +214,9 @@ placement. When a reference is supplied (an image, a URL, code he gave), put the
 and list what is still below it. No screen is built from a prose description, and no partial set
 of screens is ever handed over as the design. (Yoni, 2026-10-18: the old "two or three" wording
 made every chat stop at three; "I'm getting limited design options." Removed.)
+How, step by step, from spread to handoff: `DESIGN.md` in the bible repo, copied into every repo as
+`docs/design/MECHANISM.md` with the `design-mechanism` skill in `.claude/skills/`, which loads it in every design
+chat, Mac or cloud (Yoni, 2026-10-20: "make sure that all future design chats are running on the same mechanism").
 
 ## F. Cost
 
