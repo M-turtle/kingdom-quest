@@ -1,0 +1,345 @@
+<title>Kingdom Quest Game Engine</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Rubik:wght@400;500;700&display=swap">
+<style>
+/* Layout: one reading column on the kingdom's parchment; the ten actions as a card grid; summary and picks before the detail. */
+:root {
+  --bg: #efe2c6; --paper: #f9f1df; --ink: #2b1c10; --muted: #6b5643; --line: #d9c7a3;
+  --accent: #8e1f2f; --forest: #2f7a3f; --math: #2b5fa8; --gold: #9a6b12; --pick: #f3dfa6;
+  --display: "Cinzel", Georgia, serif; --body: "Rubik", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #17120d; --paper: #211a13; --ink: #f1e6d2; --muted: #bba78c; --line: #3d3125;
+  --accent: #e58a95; --forest: #86c793; --math: #93b6ef; --gold: #e3b65a; --pick: #3a2c12; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #17120d; --paper: #211a13; --ink: #f1e6d2; --muted: #bba78c; --line: #3d3125;
+  --accent: #e58a95; --forest: #86c793; --math: #93b6ef; --gold: #e3b65a; --pick: #3a2c12; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--body); }
+.wrap { max-width: 900px; margin: 0 auto; padding-block: 40px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 48px; }
+h1, h2 { font-family: var(--display); font-weight: 800; text-wrap: balance; letter-spacing: .02em; margin: 0; }
+h1 { font-size: clamp(30px, 6vw, 46px); line-height: 1.1; }
+h2 { font-size: clamp(22px, 4vw, 28px); line-height: 1.2; }
+h3 { font-size: 17px; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--math); }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+section { display: grid; gap: 18px; }
+.head { display: grid; gap: 14px; }
+.status { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; font-weight: 500; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); width: fit-content; }
+.status i { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); display: inline-block; }
+blockquote { margin: 0; padding: 14px 18px; border-left: 3px solid var(--accent); background: var(--paper); border-radius: 0 10px 10px 0; font-size: 15px; color: var(--muted); }
+blockquote b { color: var(--ink); font-weight: 500; }
+.short { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+.short li { padding-left: 22px; position: relative; max-width: 72ch; }
+.short li::before { content: ""; position: absolute; left: 4px; top: .62em; width: 8px; height: 8px; border-radius: 2px; background: var(--forest); }
+.picks { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 14px; }
+.picks ol { margin: 0; padding-left: 22px; display: grid; gap: 12px; }
+.picks li { max-width: 72ch; }
+.picks .mine { display: block; font-size: 14px; color: var(--muted); }
+.picks .mine b { color: var(--gold); font-weight: 700; }
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; min-width: 620px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.recipe { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.part { flex: 1 1 140px; min-width: 0; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 4px; }
+.part b { font-family: var(--display); font-size: 15px; }
+.part span { font-size: 13.5px; color: var(--muted); }
+.part.code { border-top: 3px solid var(--accent); }
+.part.data { border-top: 3px solid var(--forest); }
+.op { align-self: center; font-weight: 700; color: var(--muted); font-size: 20px; }
+pre { margin: 0; overflow-x: auto; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; font: 13.5px/1.55 ui-monospace, "SF Mono", Menlo, monospace; }
+.round { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap: 8px; counter-reset: r; }
+.round li { counter-increment: r; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 14px; display: grid; gap: 4px; align-content: start; }
+.round li::before { content: counter(r); font-family: var(--display); font-weight: 800; color: var(--accent); font-size: 18px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 14px; }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.card.pick { border: 2px solid var(--gold); background: linear-gradient(var(--pick), var(--paper) 90px); }
+.card h3 { font-family: var(--display); font-size: 19px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.card h3 small { font-family: var(--body); font-size: 13px; font-weight: 500; color: var(--muted); }
+.card p { font-size: 14.5px; }
+.card ul { margin: 0; padding-left: 18px; font-size: 14.5px; display: grid; gap: 4px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.tag.fast { color: var(--math); border-color: currentColor; }
+.tag.slow { color: var(--forest); border-color: currentColor; }
+.tag.mine { color: var(--gold); border-color: currentColor; font-weight: 700; }
+figure { margin: 0; display: grid; gap: 8px; }
+figure img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); display: block; }
+figcaption { font-size: 13px; color: var(--muted); }
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+.flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-family: var(--display); font-weight: 800; font-size: 18px; }
+.flow span { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; }
+.flow em { font-style: normal; color: var(--muted); }
+.note { font-size: 14px; color: var(--muted); }
+.src { font-size: 13.5px; display: grid; gap: 4px; padding-left: 18px; margin: 0; }
+@media (prefers-reduced-motion: no-preference) { .card { transition: transform .15s ease; } .card:hover { transform: translateY(-2px); } }
+</style>
+
+<div class="wrap">
+
+<header class="head">
+  <div class="eyebrow">Kingdom Quest · branch game-engine · 21 October 2026</div>
+  <h1>The Game Engine</h1>
+  <p>What makes the top apps stick, one engine that turns any game idea into a game, and a map with a clear order. The 3D kingdom stays.</p>
+  <div class="status"><i></i>Research and blueprint. Nothing is built yet; the kids' URL is untouched.</div>
+  <blockquote>Your words, 21 October: <b>"any idea for a game is just pushed into the engine. It creates the game in the same, let's say, concept of the other games, but let's say different designs, different animals, and different tasks, and it grows as we want it."</b></blockquote>
+</header>
+
+<section>
+  <h2>In short</h2>
+  <ul class="short">
+    <li><b>What the top apps do:</b> you get the rules in seconds, you see yourself grow, every touch does something, rounds are short, and failing is funny. The learning games that work put the lesson inside that action instead of in a question box.</li>
+    <li><b>The engine:</b> a game is a recipe of four parts: an action, a skill, a place and a ladder. The action is code, built once. The other three are data, so a new game is one new line, not a new build.</li>
+    <li><b>The map:</b> every pin is a place, every place opens the same way (a row of games), and nothing opens a game inside another game. All the variety stays.</li>
+  </ul>
+</section>
+
+<section class="picks" aria-labelledby="picks-h">
+  <h2 id="picks-h">Your picks</h2>
+  <ol>
+    <li>Which actions go into the engine first? <span class="mine"><b>My pick: Swallow &amp; grow and Program the robot.</b> One fast, one slow, as different as two games can be. If both run on one engine, any idea will. Program the robot already exists as Robot Diver.</span></li>
+    <li>Rivals like Hole.io's other holes: characters only (a greedy goat, a pirate whirlpool), never other children, no leaderboards? <span class="mine"><b>My pick: yes.</b> It keeps your rule "Don't compare it to other kids."</span></li>
+    <li>The map shows places, and subjects show only in the parents' view? <span class="mine"><b>My pick: yes.</b> Kids choose where to go; the engine makes sure the skills get mixed in.</span></li>
+    <li>When an engine game covers a skill, does the old drill card for that skill go? <span class="mine"><b>My pick: hide it, don't delete it,</b> and only after you have played the new one. The kids' URL changes only after your review.</span></li>
+    <li>Which ages does the first build aim at? <span class="mine"><b>My pick: 5 to 9.</b> Tell me if your kids are outside that.</span></li>
+  </ol>
+</section>
+
+<section>
+  <h2>What the top apps do</h2>
+  <p>Kids' most-played game is Roblox: 139 minutes a day on average in 2024, according to Qustodio's data. The casual hits like Hole.io are built on a handful of rules that also show up in the learning games that work.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>What they do</th><th>Seen in</th><th>What it means for us</th></tr></thead>
+    <tbody>
+      <tr><td>Rules in seconds, no tutorial</td><td>Voodoo's own five rules: short sessions, rules you get in seconds, action that looks good on video, forgiving, gameplay before visuals</td><td>Every game starts with a picture and a spoken goal. A 5-year-old plays level 1 with the sound off and no reading.</td></tr>
+      <tr><td>You see yourself grow</td><td>Hole.io: eat objects, the hole grows, now it can eat bigger things. Two-minute rounds. Top free game on both stores, 10M+ installs on Google Play</td><td>Getting it right makes you visibly bigger, faster or stronger inside the round. Never only a number.</td></tr>
+      <tr><td>Every touch does something</td><td>"Juice it or lose it" (GDC 2012): the same game with flash, shake, sound and particles felt far more fun</td><td>Your rule: "FUN means something happens after every choice." The engine gives every action its bounce, sound and pop once, for all games.</td></tr>
+      <tr><td>Failing is funny, not punished</td><td>Voodoo's "forgiving"; Toca Boca has no wrong-move sound and no score</td><td>A wrong pick bounces off or makes the hole burp. No red X, no lost lives.</td></tr>
+      <tr><td>Same rules, a new twist each level</td><td>Candy Crush keeps one match-3 rule and adds goals and blockers over time; Lightbot has 50 levels, one idea at a time</td><td>The ladder changes one thing per level. That is how one action turns into hundreds of games.</td></tr>
+      <tr><td>What you make stays yours</td><td>Toca Boca leaves room for the kid; Roblox is built on making things</td><td>Each round leaves something in the kingdom instead of coins.</td></tr>
+      <tr><td>The lesson is the action</td><td>Habgood &amp; Ainsworth 2011: with the maths inside the fight, kids learned more and chose to play it 7 times longer</td><td>No question boxes. The skill decides what you swallow, where you aim, what you build.</td></tr>
+      <tr><td>Kids try harder for someone else</td><td>The protégé effect (Chase et al. 2009): students put in more effort when teaching their own agent, most of all weaker students</td><td>One action is "teach your pet": the kid's dragon learns because the kid taught it.</td></tr>
+      <tr><td>Mixed practice beats blocks</td><td>Rohrer &amp; Taylor 2007: shuffled maths practice beat practice grouped by type on a test a week later</td><td>The engine mixes skills the kid has already met into new rounds, on its own.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Kept out on purpose: ads and paywalls aimed at kids (the 2021 FTC complaint against Prodigy), prizes as the reason to play (Deci, Koestner &amp; Ryan 1999; disputed but in line with your 18 September rule), and any comparison between children.</p>
+</section>
+
+<section>
+  <h2>The engine</h2>
+  <p>A game is a recipe. The action is the only part that is code. Skills, places and ladders are data, so one action plus a new line of data makes a new game.</p>
+  <div class="recipe" role="group" aria-label="A game recipe">
+    <div class="part code"><b>Action</b><span>What the hands do: swallow, run, merge, aim, program… Code, built once.</span></div>
+    <div class="op">+</div>
+    <div class="part data"><b>Skill</b><span>What decides right and wrong: make 10, the 8 times table, starts with ש.</span></div>
+    <div class="op">+</div>
+    <div class="part data"><b>Place</b><span>Where and who: the farm and a mole, the sky ocean and a whale.</span></div>
+    <div class="op">+</div>
+    <div class="part data"><b>Ladder</b><span>What changes each level, up and down: bigger numbers, faster, a new blocker.</span></div>
+  </div>
+<pre>{ action: "swallow", place: "farm", hero: "mole", skill: "make-10",
+  ladder: "to 10 → to 20 → to 100", leaves: "the barn grows a floor" }</pre>
+
+  <h3>Every round has the same shape</h3>
+  <ol class="round">
+    <li>The goal as a picture and a voice, in three seconds.</li>
+    <li>Play 1 to 2 minutes. The skill is inside the action.</li>
+    <li>Right: you grow. Wrong: a funny bounce.</li>
+    <li>A twist halfway: a new rule or bigger things.</li>
+    <li>The end shows what you made. No ranking.</li>
+    <li>It goes home: the kingdom shows it.</li>
+  </ol>
+  <p>The same controls everywhere (drag to move, tap to act), the speaker button in the same place, the way out in the same place.</p>
+  <p><b>Your 23 September rule still holds:</b> "every world needs its own specific games … it can't be the same thing, otherwise it's boring." Places get different actions and their own look. Only the round's shape and the plumbing are shared, and kids never see those.</p>
+  <p class="note">What the engine reuses from today's code: the question makers of the 17 worlds and <code>shared/curriculum.js</code> become the skills; <code>KQ.ladder</code> (levels that move both ways) becomes the ladder; the 3D halls, the cast, the realms' looks and the ElevenLabs voice stay.</p>
+</section>
+
+<section>
+  <h2>Ten actions to pick from</h2>
+  <p>Each card is one action the engine can learn. <b>Fast</b> actions drill facts the kid already understands. <b>Slow</b> actions build the understanding itself. A good kingdom needs both. Ask for more and there will be more.</p>
+  <div class="cards">
+
+    <article class="card pick">
+      <h3>Swallow &amp; grow <small>like Hole.io</small></h3>
+      <p>Drag a hole around a busy place. It swallows only what fits the rule and grows with every right swallow, until it can swallow houses.</p>
+      <ul>
+        <li>A mole on the farm swallows hay bales whose numbers add up to 10.</li>
+        <li>A whale in the Sky Ocean swallows fish from the 8 times table.</li>
+        <li>A whirlpool in Pirate Cove swallows treasure whose name starts with ש.</li>
+      </ul>
+      <div class="tags"><span class="tag mine">My pick</span><span class="tag fast">Fast</span><span class="tag">New</span></div>
+    </article>
+
+    <article class="card pick">
+      <h3>Program the robot <small>like CodeMonkey, Lightbot</small></h3>
+      <p>Put moves in a row, press go, and watch it follow your plan exactly. If it bumps into something, find the mistake and fix it.</p>
+      <ul>
+        <li>Robot Diver collects pearls on the seabed. It's in the game today.</li>
+        <li>A mole digs tunnels to the carrots, using loops.</li>
+        <li>A dragon flies a route round the castle: 3 times "4 steps and a turn".</li>
+      </ul>
+      <div class="tags"><span class="tag mine">My pick</span><span class="tag slow">Slow</span><span class="tag">Exists</span></div>
+    </article>
+
+    <article class="card">
+      <h3>Run the gates <small>like Subway Surfers</small></h3>
+      <p>Steer a runner into the gate with the right answer. Every right gate makes you faster.</p>
+      <ul>
+        <li>A knight's horse through the meadow, with gates from the 8 times table.</li>
+        <li>A sled in the Cloud Kingdom: which word is spelled right?</li>
+        <li>A rocket through space: which clock says half past three?</li>
+      </ul>
+      <div class="tags"><span class="tag fast">Fast</span><span class="tag">New</span></div>
+    </article>
+
+    <article class="card">
+      <h3>Merge &amp; build up <small>like 2048</small></h3>
+      <p>Slide pieces together. Two that match become one bigger piece.</p>
+      <ul>
+        <li>Eggs merge into dragons: doubling.</li>
+        <li>Stones merge into towers of ten and of a hundred: place value.</li>
+        <li>A letter and its vowel merge into a syllable, and syllables into a word: Hebrew reading.</li>
+      </ul>
+      <div class="tags"><span class="tag fast">Fast</span><span class="tag">New</span></div>
+    </article>
+
+    <article class="card">
+      <h3>Aim &amp; launch <small>like Angry Birds</small></h3>
+      <p>Choose the angle and the power, let go, and see where it lands.</p>
+      <ul>
+        <li>Cannon Cove. It's in the game today.</li>
+        <li>A penalty kick into the top three-quarters of the goal: fractions.</li>
+        <li>A catapult to the tower's window at height 60: estimating.</li>
+      </ul>
+      <div class="tags"><span class="tag slow">Slow</span><span class="tag">Exists in part</span></div>
+    </article>
+
+    <article class="card">
+      <h3>Build to measure <small>like Bridge Builders</small></h3>
+      <p>Place pieces to reach a length, a height or a shape, then test it: the cart crosses or falls.</p>
+      <ul>
+        <li>The bridge over the river. It's in the game today.</li>
+        <li>A tower up to the eagle's nest, exactly 12 high.</li>
+        <li>A fence round the farm's pen: perimeter.</li>
+      </ul>
+      <div class="tags"><span class="tag slow">Slow</span><span class="tag">Exists</span></div>
+    </article>
+
+    <article class="card">
+      <h3>Measure &amp; cut <small>like Slice Fractions</small></h3>
+      <p>Measure, fold and cut. The thing you made is tried on or tried out, and it fits or it doesn't.</p>
+      <ul>
+        <li>The Atelier: skirts and belts for felt dolls. It's on staging.</li>
+        <li>Slice the ice so the mammoth can pass: halves and quarters.</li>
+        <li>Cut the giants' pizza into fair shares.</li>
+      </ul>
+      <div class="tags"><span class="tag slow">Slow</span><span class="tag">Exists</span></div>
+    </article>
+
+    <article class="card">
+      <h3>Teach your pet <small>like Teach Your Monster to Read</small></h3>
+      <p>Your pet asks for something. Give it the right thing, it learns and grows up, and it remembers what you taught it.</p>
+      <ul>
+        <li>The baby dragon from the egg nest learns its letters.</li>
+        <li>A parrot in Pirate Cove learns new words.</li>
+        <li>A little robot learns to count to 100.</li>
+      </ul>
+      <div class="tags"><span class="tag fast">Fast</span><span class="tag slow">Slow</span><span class="tag">New</span></div>
+    </article>
+
+    <article class="card">
+      <h3>Find it <small>like hidden-object games</small></h3>
+      <p>Search a busy 3D scene for everything that matches. The camera flies to each one you find.</p>
+      <ul>
+        <li>Every triangle in the castle.</li>
+        <li>Every animal on the nature trail that lives in water.</li>
+        <li>Japan on the globe in the Explorers' house.</li>
+      </ul>
+      <div class="tags"><span class="tag fast">Fast</span><span class="tag">Exists in part</span></div>
+    </article>
+
+    <article class="card">
+      <h3>Run the shop <small>like the Bakery, the Market</small></h3>
+      <p>Customers ask; you serve, take the money and give the change.</p>
+      <ul>
+        <li>The Potion Bakery. It's in the game today.</li>
+        <li>The Coin Market, with change from 20.</li>
+        <li>The dragons' pet shop: half a bag, a quarter of a cake.</li>
+      </ul>
+      <div class="tags"><span class="tag fast">Fast</span><span class="tag slow">Slow</span><span class="tag">Exists</span></div>
+    </article>
+
+  </div>
+</section>
+
+<section>
+  <h2>The map</h2>
+  <p>Today the meadow has 50 pins, and 28 of them are on the first screen for a 6-year-old. Seven kinds of thing sit side by side, and several open a game inside a game.</p>
+  <figure>
+    <img src="img/hub.webp" width="960" height="600" alt="The live kingdom map with many round pins over the 3D meadow" loading="lazy">
+    <figcaption>The live map (v181), after signing up as a 6-year-old.</figcaption>
+  </figure>
+  <div class="shots">
+    <figure><img src="img/menu.webp" width="640" height="400" alt="A world's menu panel: level 1 of 10 and drill tiles" loading="lazy"><figcaption>Every world opens this same menu of drills.</figcaption></figure>
+    <figure><img src="img/robot.webp" width="640" height="400" alt="Robot Diver: a grid on the seabed and a row of move tiles" loading="lazy"><figcaption>A real game, hidden as one Arcade card.</figcaption></figure>
+    <figure><img src="img/atelier.webp" width="640" height="400" alt="The felt Atelier: a ruler on a doll's waist and a keypad" loading="lazy"><figcaption>The Atelier: read the ruler, type the number.</figcaption></figure>
+  </div>
+  <div class="flow" aria-label="Proposed flow"><span>Kingdom</span><em>→</em><span>Place</span><em>→</em><span>Game</span></div>
+  <p>Every pin is a place. Every place opens the same way: a row of its games, all made by the engine, plus one big button that plays the kid's next game, picked by the ladder. Nothing inside a game opens another game. Every one of today's 50 pins has a home:</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Today</th><th class="num">Pins</th><th>New home</th></tr></thead>
+    <tbody>
+      <tr><td>Learning worlds: Math Tower, Word Garden, Spelling Hive, Letter Mountain, Clock Tower, Coin Market, Memory Cave, Logic Gate, Story Forge, Scroll Library, Heart Garden, World Explorers, Time Machine, Nature Trail, Art Studio, Music Hall, Castle Chess</td><td class="num">17</td><td>Each stays as a place. Its question makers become engine skills. Chess, the Art Studio and the Music Hall keep their own tools.</td></tr>
+      <tr><td>The Arcade: Doll Studio, Cannon Cove, Bridge Builders, Penalty Kick, Robot Diver, Spell Duel, Potion Bakery, Detective's Case, Physics Lab (8 experiments inside)</td><td class="num">1</td><td>Each game becomes an engine action and moves to a place that suits it (Cannon Cove to the Pirate Cove). The Arcade pin goes.</td></tr>
+      <tr><td>Mystery spots: the well, the round door, the hive, the fairy ring, the troll and 17 more, each a small room of questions</td><td class="num">22</td><td>Surprises inside places: an egg, a secret, a hidden game. No longer separate question rooms.</td></tr>
+      <tr><td>Travel: the Kingdom Gate (to the 8 realms), the rocket, the eagle's nest, the balloon, the river boat</td><td class="num">5</td><td>The ways to move between places. The rides stay. The 8 realms (Cloud, Fashion, Ocean, Pirate, Skull, Sky, Space, Sports) stay as places with their own looks.</td></tr>
+      <tr><td>Your things: player details, Mount Glory, the dragon's egg nest, the quiet clearing</td><td class="num">4</td><td>One home corner: your castle with everything you made. The quiet clearing stays a calm place.</td></tr>
+      <tr><td>The developer lock</td><td class="num">1</td><td>Stays hidden from kids.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">This mapping is my proposal. Nothing moves until you've seen the new map as a picture.</p>
+</section>
+
+<section>
+  <h2>Cost and build order</h2>
+  <ul class="short">
+    <li><b>Money:</b> no new monthly cost. The site stays on GitHub Pages (1 GB site limit, 100 GB a month of traffic, soft). The 3D art comes from the kits already in the game plus free CC0 models, like the Quaternius pirate ships. Spoken goals go through the existing ElevenLabs account and relay, with no extra credits (your 3 October rule). Voice batches stop when the credits run out.</li>
+    <li><b>First build, on staging only:</b> the engine core, your two picked actions, and three recipes for each in different places with different animals. Then you play it.</li>
+    <li><b>Then:</b> one action at a time. After that, a new game is a recipe line and usually needs no new code.</li>
+    <li><b>Effort (my estimate):</b> the first build is one long working session, roughly 400 to 700 thousand tokens. Each new action after that is about half a session.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Not covered or not verified</h2>
+  <ul class="short">
+    <li>I played as a 6-year-old with the voice blocked, so I haven't heard the narration.</li>
+    <li>The Candy Crush level design comes from loose sources, not from King. The Hole.io facts come from Wikipedia and one industry blog.</li>
+    <li>The rewards research (Deci 1999) is disputed in the field. The DragonBox and Slice Fractions evidence from the first review is mixed or comes from a single study.</li>
+    <li>The game counts for the worlds come from the 18 October inventory in DECISIONS.md, not a new count.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Sources</h2>
+  <ul class="src">
+    <li><a href="https://www.qustodio.com/en/the-digital-dilemma/gaming/" target="_blank" rel="noopener">Qustodio: kids' gaming, 2024 data</a></li>
+    <li><a href="https://en.wikipedia.org/wiki/Hole.io" target="_blank" rel="noopener">Hole.io (Wikipedia)</a> · <a href="https://appsamurai.com/blog/mobile-app-success-story-hole-io/" target="_blank" rel="noopener">Hole.io success story (AppSamurai)</a></li>
+    <li><a href="https://www.gameanalytics.com/blog/voodoo-guide-mobile-game-design-keep-things-simple" target="_blank" rel="noopener">Voodoo's guide to mobile game design (GameAnalytics)</a> · <a href="https://gamedev.net/tutorials/game-design/game-design-and-theory/admiring-the-game-design-in-hyper-casuals-r5146" target="_blank" rel="noopener">The game design in hyper-casuals (gamedev.net)</a></li>
+    <li><a href="https://www.wayline.io/learn/game-feel/1" target="_blank" rel="noopener">Game feel and juice</a></li>
+    <li><a href="https://motionographer.com/2016/04/27/the-design-process-behind-toca-bocas-infectious-apps/" target="_blank" rel="noopener">Toca Boca's design process</a></li>
+    <li><a href="https://apple.co/2a6fTOg" target="_blank" rel="noopener">Lightbot</a> · <a href="https://www.codemonkey.com/" target="_blank" rel="noopener">CodeMonkey</a> · <a href="https://www.usbornefoundation.org.uk/teachyourmonstertoread" target="_blank" rel="noopener">Teach Your Monster to Read</a> · <a href="https://transum.org/Software/Game/2048/default.asp" target="_blank" rel="noopener">Double Take (2048 for powers of two)</a></li>
+    <li><a href="https://shura.shu.ac.uk/3556/" target="_blank" rel="noopener">Habgood &amp; Ainsworth 2011, intrinsic integration</a></li>
+    <li><a href="https://purl.stanford.edu/zm369yx3532" target="_blank" rel="noopener">Chase et al. 2009, the protégé effect</a></li>
+    <li><a href="https://digitalcommons.usf.edu/psy_facpub/1767/" target="_blank" rel="noopener">Rohrer &amp; Taylor 2007, shuffled practice</a></li>
+    <li><a href="https://home.ubalt.edu/ntygmitc/642/Articles%20syllabus/Deci%20Koestner%20Ryan%20meta%20IM%20psy%20bull%2099.pdf" target="_blank" rel="noopener">Deci, Koestner &amp; Ryan 1999</a></li>
+    <li><a href="https://www.axios.com/2021/02/19/prodigy-math-game-ftc-complaint" target="_blank" rel="noopener">Prodigy FTC complaint (Axios)</a></li>
+    <li><a href="https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits" target="_blank" rel="noopener">GitHub Pages limits</a></li>
+  </ul>
+</section>
+
+</div>
