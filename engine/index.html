@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Game Engine · Kingdom Quest (staging)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=Secular+One&display=swap">
+<style>
+:root{--bg:#efe2c6; --paper:#fffaf0; --ink:#2b1c10; --muted:#6b5643; --line:#dccaa5; --accent:#8e1f2f; --forest:#2f7a3f; --gold:#b8862b; --math:#2b5fa8}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink); font:16px/1.55 Rubik,"Secular One",system-ui,sans-serif}
+.wrap{max-width:1080px; margin:0 auto; padding-block:22px 64px; padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px)); display:grid; gap:34px}
+.bar{display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap}
+.tag{font-size:13px; font-weight:700; letter-spacing:.08em; color:var(--muted)}
+.lang{display:flex; gap:6px} .lang button{border:1.5px solid var(--line); background:var(--paper); color:var(--ink); border-radius:999px; padding:6px 14px; font:700 15px Rubik,system-ui,sans-serif; cursor:pointer}
+.lang button[aria-pressed=true]{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+h1{margin:0; font:400 clamp(34px,6vw,54px)/1.05 "Secular One",Rubik,sans-serif}
+h2{margin:0; font:400 clamp(22px,3.4vw,30px)/1.2 "Secular One",Rubik,sans-serif}
+p{margin:0; max-width:70ch}
+.lede{font-size:19px; color:var(--muted)}
+.formula{display:flex; flex-wrap:wrap; align-items:stretch; gap:8px}
+.part{flex:1 1 150px; background:var(--paper); border:1.5px solid var(--line); border-radius:16px; padding:12px 14px; display:grid; gap:2px}
+.part b{font-size:18px} .part span{font-size:14px; color:var(--muted)}
+.part.code{border-top:5px solid var(--accent)} .part.data{border-top:5px solid var(--forest)} .part.game{border-top:5px solid var(--gold); background:#fff3d1}
+.op{align-self:center; font-size:26px; font-weight:800; color:var(--muted)}
+.group{display:grid; gap:14px}
+.ghead{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.ghead .kq-i{font-size:42px} .ghead small{color:var(--muted); font-size:15px}
+.cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap:14px}
+.card{background:var(--paper); border:1.5px solid var(--line); border-radius:20px; padding:16px; display:grid; gap:10px; align-content:start; min-width:0}
+.card .pics{display:flex; align-items:center; gap:10px; font-size:54px}
+.card .pics .kqe-g{font-size:26px; color:var(--accent)}
+html[dir=rtl] .card .pics .kqe-g{transform:scaleX(-1)}
+.card h3{margin:0; font-size:20px} .card .meta{font-size:14px; color:var(--muted)}
+code,.line{font:13px/1.5 ui-monospace,"SF Mono",Menlo,monospace; direction:ltr; text-align:left; unicode-bidi:isolate}
+.line{display:block; background:#f3e7cc; border-radius:10px; padding:8px 10px; overflow-x:auto; white-space:pre}
+.ok{display:flex; align-items:center; gap:6px; font-size:14px; font-weight:700; color:var(--forest)} .ok .kqe-g{font-size:18px}
+.bad{display:grid; gap:4px; font-size:14px; font-weight:700; color:var(--accent)}
+.play{display:inline-flex; align-items:center; justify-content:center; gap:8px; height:52px; padding:0 22px; border-radius:16px; border:0; background:var(--forest); color:#fff; font:800 19px Rubik,system-ui,sans-serif; cursor:pointer; box-shadow:0 4px 0 #1f5a2c}
+.play:active{transform:translateY(3px); box-shadow:0 1px 0 #1f5a2c}
+.play.ghost{background:var(--paper); color:var(--accent); border:2px solid var(--accent); box-shadow:none}
+.play:focus-visible,.lang button:focus-visible,select:focus-visible{outline:3px solid var(--math); outline-offset:2px}
+.play .kqe-g{font-size:22px}
+.builder{background:var(--paper); border:1.5px solid var(--line); border-radius:22px; padding:18px; display:grid; gap:14px}
+.fields{display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap:12px}
+label{display:grid; gap:6px; font-weight:700; font-size:15px}
+select{height:50px; border-radius:14px; border:1.5px solid var(--line); background:#fff; color:var(--ink); font:500 17px Rubik,system-ui,sans-serif; padding:0 12px}
+.rules{display:grid; gap:8px; padding:0; margin:0; list-style:none; counter-reset:r}
+.rules li{counter-increment:r; display:grid; grid-template-columns:34px 1fr; gap:4px 12px; align-items:baseline; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; padding:10px 14px}
+.rules li::before{content:counter(r); font:400 22px "Secular One",Rubik,sans-serif; color:var(--accent); grid-row:span 2}
+.rules li code{color:var(--muted)}
+.broken{border:2px dashed var(--accent)}
+.foot{font-size:14px; color:var(--muted); display:flex; gap:14px; flex-wrap:wrap; justify-content:space-between}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div id="host"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js"></script>
+<script src="../shared/icons.js?v=3"></script>
+<script src="engine.js?v=1"></script>
+<script src="places.js?v=1"></script>
+<script src="skills.js?v=1"></script>
+<script src="actions/swallow.js?v=1"></script>
+<script src="actions/program.js?v=1"></script>
+<script src="recipes.js?v=1"></script>
+<script>
+/* The engine's page (staging only, never the kids' URL: Bible D1). It shows what the engine is: six games made from two actions,
+   a builder that turns a choice of action + place + skill into a game, the rules every game gets, and a recipe the engine refuses. */
+(function () {
+  'use strict';
+  const VERSION = 'Engine v1 · 2026-10-21';
+  const app = document.getElementById('app'), host = document.getElementById('host'), L = KQE.L, el = KQE.el, pic = KQE.pic, glyph = KQE.glyph;
+  const T = {
+    tag: { he: 'ממלכת המסע · סביבת בדיקה', en: 'Kingdom Quest · staging' },
+    h1: { he: 'מנוע המשחקים', en: 'The Game Engine' },
+    lede: { he: 'משחק הוא שורה אחת של מתכון. אותה פעולה עם מקום אחר, חיות אחרות ומשימה אחרת היא משחק חדש. הכללים של כל משחק שמורים במנוע, אז אף משחק לא יכול לדלג עליהם.', en: 'A game is one recipe line. The same action with a different place, animals and task is a new game. The rules live in the engine, so no game can skip them.' },
+    action: { he: 'פעולה', en: 'Action' }, actionS: { he: 'מה הידיים עושות. קוד, נבנה פעם אחת', en: 'What the hands do. Code, built once' },
+    skill: { he: 'מיומנות', en: 'Skill' }, skillS: { he: 'מה נכון ומה לא', en: 'What is right and what is not' },
+    place: { he: 'מקום', en: 'Place' }, placeS: { he: 'איפה ומי: חווה, ים, חיות', en: 'Where and who: a farm, a sea, animals' },
+    ladder: { he: 'סולם', en: 'Ladder' }, ladderS: { he: 'הרמה זזה למעלה ולמטה', en: 'Levels move up and down' },
+    game: { he: 'משחק', en: 'A game' }, gameS: { he: 'ששת השלבים של כל סיבוב', en: 'With the six steps of every round' },
+    six: { he: 'שישה משחקים משתי פעולות', en: 'Six games from two actions' },
+    play: { he: 'לשחק', en: 'Play' }, ages: { he: 'גילים', en: 'Ages' },
+    rulesOk: { he: 'עומד בכל 8 הכללים', en: 'Keeps all 8 rules' },
+    make: { he: 'בונים משחק', en: 'Make a game' },
+    makeP: { he: 'בוחרים פעולה, מקום ומיומנות. המנוע בונה את המשחק.', en: 'Pick an action, a place and a skill. The engine builds the game.' },
+    rules: { he: 'הכללים שהמנוע שומר', en: 'The rules the engine keeps' },
+    rulesP: { he: 'כל משחק מקבל אותם בחינם. כל כלל כתוב במקום אחד בקוד.', en: 'Every game gets them for free. Each rule is written in one place in the code.' },
+    broken: { he: 'מתכון שבור: המנוע מסרב', en: 'A broken recipe: the engine refuses' },
+    brokenP: { he: 'במתכון הזה אין תמונת מטרה. ילד שעוד לא קורא לא ידע מה לעשות, ולכן המנוע לא בונה אותו.', en: "This recipe has no goal picture. A child who can't read yet wouldn't know what to do, so the engine won't build it." },
+    tryIt: { he: 'לנסות בכל זאת', en: 'Try it anyway' },
+    foot: { he: 'סביבת בדיקה בלבד. הכתובת של הילדים לא השתנתה.', en: "Staging only. The kids' URL has not changed." }
+  };
+  const ACTION_LIKE = { swallow: { he: 'כמו Hole.io: כל דבר נכון שנבלע מגדיל את החור', en: 'Like Hole.io: everything right you swallow makes the hole bigger' }, program: { he: 'כמו CodeMonkey ו-Lightbot: מתכננים, לוחצים ורואים אם עבד', en: 'Like CodeMonkey and Lightbot: plan it, press play, see if it works' } };
+
+  const line = r => '{ action: "' + r.action + '", place: "' + r.place + '", skill: "' + r.skill + '" }';
+  function checkBox(r) { const p = KQE.check(r); if (!p.length) { const d = el('div', 'ok'); d.append(glyph('check'), L(T.rulesOk)); return d; } const d = el('div', 'bad'); p.forEach(x => d.appendChild(el('span', null, L(x.why) + (x.extra ? ' (' + x.extra + ')' : '')))); return d; }
+  function open(r) { document.body.style.overflow = 'hidden'; KQE.play(r, host, () => { document.body.style.overflow = ''; render(); }); }
+  function card(r, broken) {
+    const P = KQE.PLACES[r.place], S = KQE.SKILLS[r.skill], kit = P && P[r.action], g = KQE.goalOf(r, KQE.ladder(r).level), c = el('article', 'card' + (broken ? ' broken' : ''));
+    const pics = el('div', 'pics'); pics.append(pic(kit && kit.heroPic || 'question'), glyph('arrow'), pic(g.pic || 'question'));
+    const meta = el('div', 'meta', L(P.name) + ' · ' + L(S.name) + (r.ages ? ' · ' + L(T.ages) + ' ' + r.ages : ''));
+    const b = el('button', 'play' + (broken ? ' ghost' : '')); b.type = 'button'; b.append(glyph(broken ? 'stop' : 'play'), L(broken ? T.tryIt : T.play)); b.onclick = () => open(r);
+    c.append(pics, el('h3', null, L(g.say)), meta, el('code', 'line', line(r) + (broken ? '\n  goal: { pic: null }' : '')), checkBox(r), b); return c;
+  }
+  function render() {
+    app.replaceChildren();
+    const bar = el('div', 'bar'), lang = el('div', 'lang');
+    for (const [k, n] of [['he', 'עברית'], ['en', 'English']]) { const b = el('button', null, n); b.type = 'button'; b.setAttribute('aria-pressed', String(KQE.lang() === k)); b.onclick = () => { KQE.setLang(k); render(); }; lang.appendChild(b); }
+    bar.append(el('div', 'tag', L(T.tag)), lang); app.appendChild(bar);
+    const head = el('header', 'group'); head.append(el('h1', null, L(T.h1)), el('p', 'lede', L(T.lede))); app.appendChild(head);
+    const f = el('div', 'formula');
+    const part = (cls, a, b) => { const d = el('div', 'part ' + cls); d.append(el('b', null, L(a)), el('span', null, L(b))); return d; };
+    f.append(part('code', T.action, T.actionS), el('div', 'op', '+'), part('data', T.skill, T.skillS), el('div', 'op', '+'), part('data', T.place, T.placeS), el('div', 'op', '+'), part('data', T.ladder, T.ladderS), el('div', 'op', '='), part('game', T.game, T.gameS));
+    app.appendChild(f);
+
+    const sec = el('section', 'group'); sec.appendChild(el('h2', null, L(T.six)));
+    for (const a of ['swallow', 'program']) { const A = KQE.ACTIONS[a], gh = el('div', 'ghead'), txt = el('div'); txt.append(el('h3', null, L(A.name)), el('small', null, L(ACTION_LIKE[a]))); gh.append(pic(A.pic), txt); sec.appendChild(gh);
+      const cards = el('div', 'cards'); KQE_RECIPES.filter(r => r.action === a).forEach(r => cards.appendChild(card(r))); sec.appendChild(cards); }
+    app.appendChild(sec);
+
+    /* the builder: any action × any place that has a kit for it × any skill made for it */
+    const bsec = el('section', 'builder'); bsec.append(el('h2', null, L(T.make)), el('p', null, L(T.makeP)));
+    const fields = el('div', 'fields'), out = el('div', 'group');
+    const sel = (id, label) => { const l = el('label'); l.htmlFor = id; const s = el('select'); s.id = id; l.append(L(label), s); fields.appendChild(l); return s; };
+    const sA = sel('b-action', T.action), sP = sel('b-place', T.place), sS = sel('b-skill', T.skill);
+    const fill = (s, list, keep) => { const v = keep && s.value; s.replaceChildren(...list.map(([k, n]) => { const o = el('option', null, n); o.value = k; return o; })); if (v && list.some(x => x[0] === v)) s.value = v; };
+    function sync() { const a = sA.value; fill(sP, Object.values(KQE.PLACES).filter(p => p[a]).map(p => [p.id, L(p.name)]), true); fill(sS, Object.values(KQE.SKILLS).filter(s => s.actions.includes(a)).map(s => [s.id, L(s.name) + ' · ' + s.ages]), true); show(); }
+    function show() { const r = { action: sA.value, place: sP.value, skill: sS.value }; out.replaceChildren(el('code', 'line', line(r)), checkBox(r)); const b = el('button', 'play'); b.type = 'button'; b.append(glyph('play'), L(T.play)); b.onclick = () => open(r); out.appendChild(b); }
+    fill(sA, Object.values(KQE.ACTIONS).map(a => [a.id, L(a.name)])); sA.onchange = sync; sP.onchange = show; sS.onchange = show;
+    bsec.append(fields, out); app.appendChild(bsec); sync();
+
+    const rsec = el('section', 'group'); rsec.append(el('h2', null, L(T.rules)), el('p', null, L(T.rulesP)));
+    const ul = el('ol', 'rules'); KQE.RULES.forEach(r => { const li = el('li'); li.append(el('span', null, L(r)), el('code', null, r.where)); ul.appendChild(li); }); rsec.appendChild(ul);
+    const bh = el('div', 'group'); bh.append(el('h3', null, L(T.broken)), el('p', null, L(T.brokenP))); const bc = el('div', 'cards'); bc.appendChild(card(KQE_BROKEN, true)); bh.appendChild(bc); rsec.appendChild(bh);
+    app.appendChild(rsec);
+    const ft = el('footer', 'foot'); ft.append(el('span', null, L(T.foot)), el('span', null, VERSION)); app.appendChild(ft);
+  }
+  render();
+})();
+</script>
+</body>
+</html>
