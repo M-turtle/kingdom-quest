@@ -225,6 +225,11 @@ placement. When a reference is supplied (an image, a URL, code he gave), put the
 and list what is still below it. No screen is built from a prose description, and no partial set
 of screens is ever handed over as the design. (Yoni, 2026-10-18: the old "two or three" wording
 made every chat stop at three; "I'm getting limited design options." Removed.)
+One exception: a small addition inside a screen he already approved (a row, a button, a setting) is
+built in that screen's look and shown to him after, as a picture (phone and desktop, light and dark);
+a brand-new screen still starts with rendered options. (Yoni, 2026-10-22, on the call, confirmed in
+chat: asked "may I build it in that same look and show you a picture after, instead of drawing
+options first? Brand new screens would still start with options", he answered "yes".)
 How, step by step, from spread to handoff: `DESIGN.md` in the bible repo, copied into every repo as
 `docs/design/MECHANISM.md` with the `design-mechanism` skill in `.claude/skills/`, which loads it in every design
 chat, Mac or cloud (Yoni, 2026-10-20: "make sure that all future design chats are running on the same mechanism").
