@@ -56,6 +56,20 @@ that exists as a record. Execute via API, CLI or browser by default. Hand a step
 it is a prohibited class (a password, a payment, a legal signature, a government ID): say which
 class in one line, and prefill everything up to his final click.
 
+**A2a · Missing a tool or an access? Push the request to Yoni; never bury it in chat.**
+When a step needs something you don't have (a login that expired, a console or account you can't
+reach, a CLI not signed in, a key, a role, a page or artifact that won't open), don't just say so in
+chat and move around it. The same turn, push the request to Yoni: a card on his Desk (kind "do", with
+a "Done" option) plus the push to his phone (A1a's bump recipe), naming exactly what you need, where
+to grant it, and what it unblocks. If the Desk can't be reached, the push alone carries the request,
+and the unreachable Desk is itself a second missing tool to push. If granting it would expose something
+sensitive or is high risk (a password, a production key, an admin role, signing in to an account),
+still push it, and say in the push what it exposes and the safer option if there is one. Then keep
+working on the next unblocked item (A1). (Yoni, 2026-10-22: "If you're missing a tool to do your job,
+then you push that request to me in order to get that tool. Unless it exposes something sensitive,
+and it's a high risk, and then you have to mention it also in that push." and "Don't put it in the
+chat because it gets lost with other stuff.")
+
 **A3 · Restate the ask, verify the facts, invent nothing.**
 Before a long round, restate the ask in one sentence (what, where, which number) and build
 exactly that: never add a clause, charge, field or feature that was not asked for; never change a
