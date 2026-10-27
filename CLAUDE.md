@@ -49,6 +49,21 @@ card, my pick and the hour; the 24-hour rule never applies to live data, money, 
 people, or a design he has not confirmed as a picture. His answers are copied verbatim into the
 project's decisions log (A5) the same turn, and the card is closed.
 
+**A1b · Four kinds of question reach Yoni; everything else is decided and logged.**
+(Yoni, 2026-10-28 00:5x: "you have months of work with me - why do you need my approval to all those questions in the
+cockpit?" → "DO IT".) A card asks him only when it is one of four kinds: (1) money out: a payment, a price, a new
+recurring cost; (2) anything a tenant, owner, vendor, customer or child will see or receive, a message included;
+(3) legal wording: terms, a lease clause, a notice; (4) a design or a kids' asset he has not seen as a picture. A
+step only his hands can take (a password, a passkey, Touch ID, his phone, a store account, his own numbers) is a
+"do" card, grouped into one run per provider or device so one Start covers the chain. Every other decision (a
+library update, a setting on staging, a UI behaviour that is not one of the four, the order of work, what to build
+next from the plan) is made by Claude from the record (DECISIONS.md, the plan of record, the chats) and written
+down the same turn: on the card as a reply (`from: claude`, with the reason) and in DECISIONS.md, dated; he
+overrides on the card or in chat and the override wins. A card that chat or DECISIONS.md already answers is
+closed with that answer, never asked again. The 24-hour default (A1a) is applied by the loops every cycle: at 22
+hours a reminder, at 24 hours Claude's pick is written as the reply and acted on; the four kinds above never
+carry that clock. Kinds "later" and "update" are not questions and are not counted as open.
+
 **A2 · Observe and act yourself; hand off only what's forbidden.**
 If a tool can observe it (database, Stripe, logs, simulator, browser, files, a web search), look
 before answering. Never hand Yoni a console snippet, a "please check", or an estimate for a value
@@ -225,6 +240,11 @@ placement. When a reference is supplied (an image, a URL, code he gave), put the
 and list what is still below it. No screen is built from a prose description, and no partial set
 of screens is ever handed over as the design. (Yoni, 2026-10-18: the old "two or three" wording
 made every chat stop at three; "I'm getting limited design options." Removed.)
+One exception: a small addition inside a screen he already approved (a row, a button, a setting) is
+built in that screen's look and shown to him after, as a picture (phone and desktop, light and dark);
+a brand-new screen still starts with rendered options. (Yoni, 2026-10-22, on the call, confirmed in
+chat: asked "may I build it in that same look and show you a picture after, instead of drawing
+options first? Brand new screens would still start with options", he answered "yes".)
 How, step by step, from spread to handoff: `DESIGN.md` in the bible repo, copied into every repo as
 `docs/design/MECHANISM.md` with the `design-mechanism` skill in `.claude/skills/`, which loads it in every design
 chat, Mac or cloud (Yoni, 2026-10-20: "make sure that all future design chats are running on the same mechanism").
