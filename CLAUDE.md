@@ -182,7 +182,11 @@ has been reproduced on the user's device.
 User-facing timestamps show date and time in the business's time zone (tenants: Eastern), never
 the operator's or UTC; a date-only string is never parsed as UTC. The time zone is a setting read
 by every job, not a constant in code. Tests pin the clock and include a month boundary. Before
-writing any time for Yoni, run `TZ=Asia/Jerusalem date` and read it.
+telling Yoni a time in chat, run `TZ=Asia/Jerusalem date` and read it. Nothing written into a
+repo, commit message, PR, page, artifact or report names Israel or its time zone: no "Israel
+time", "IDT", "IST" or Asia/Jerusalem stamps. Times there are written in US Eastern (labeled ET)
+or UTC. (Yoni, 2026-10-29: "Don't put Israel time anywhere on the repos. Not in this project,
+not in any project. Okay, you wanna use a time zone, but don't put Israel in it.")
 
 **C6 · Secrets never reach chat, logs or the repo.**
 Never print any part of a key or token, not a prefix, not masked; check existence only. Never
