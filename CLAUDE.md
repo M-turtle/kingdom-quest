@@ -226,6 +226,17 @@ widen it. Work on a branch, never on the live branch, and never mix another bran
 chats never deploy from the same working folder. A change any tenant, owner or customer can see
 is not applied until Yoni says so in that chat.
 
+**D3 · Compare the market; never write about one competitor.**
+Every brand, every site, every channel (blog posts, pages, ads, store listings, social, emails).
+Nothing is built around one rival: no "X vs us", "X alternative", "X review", no piece that
+analyzes or runs down a single company or product. A comparison lays the options in the market
+side by side on facts (price, limits, what's included), with our product as one of them; its title
+names no rival. Every fact about another product comes from that product's own page, read that
+day. The blog engine enforces this on every site (v11, `topics.one_competitor`, fails closed).
+(Yoni, 2026-10-31: "I don't want to look at the competitors and start bad-mouthing them ... not
+something specifically on one competitor. That's predatory." and "not only for vouch but in
+general ... we don't analyze one competitor.")
+
 ## E. Design, for projects with a screen
 
 **E1 · Options first, never capped; then the mock-up is the spec; then change only what's named.**
