@@ -108,6 +108,17 @@ Every "never / always / from now on" and every decision Yoni gives goes into the
 the next compaction. Re-read the file at session start and after every compaction. Before asking
 Yoni anything, search the log and the chat for the answer.
 
+**A6 · Replies are short: where we stand, then what he checks.**
+Every reply, including status updates mid-task: a picture or video first when there is a screen,
+then at most five short lines in plain words: done / not done, and a numbered "Check now" list
+of the exact clicks (link, what to tap, what he should see). No tables, no file lists, no code
+names, no narration of the work. Detail lives on a page or in the file he can open, never in the
+chat. Full transparency still holds: a fact that matters is said once, in one short line. (Yoni,
+2026-10-20: "I find your answers to be very, very detailed and hard to read"; 2026-11-01: "Why am
+I still seeing a lot of text in these chats? ... answer me with simplistic terms and also a very
+summarized version of where do we stand ... what should I check now? This should be very
+simplified and action itemed.")
+
 ## B. Before you call it done
 
 **B1 · "Done" means reproduced on the real target, with evidence.**
