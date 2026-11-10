@@ -96,6 +96,26 @@ hand, show the contradiction before encoding it. When a request arrives by dicta
 first; chat replies in English, the product speaks its own language; option buttons use plain
 words, never internal names.
 
+**A3a · Read every file before you store it.**
+Every file that arrives (a download, an upload, a receipt, a confirmation, a screenshot, an export)
+is opened and read before it is filed, renamed, moved or logged: what it is, whose it is, that its
+contents match what it is said to be, and anything in it that is wrong or unexpected. Its key facts
+are checked against the record the same turn. A file filed unread is a defect, even when it turns
+out fine. (Yoni, 2026-11-10, after a DC tax confirmation PDF was filed without being read: "never
+ever take a file and just store it without checking it first. You check things always. Every file
+you get, you check before you store it.")
+
+**A3b · Lead with the most efficient path, even when it changes the plan.**
+When a path is blocked or slow, lay out every way to reach the target, including the ones that
+change the course already set, and lead with the one that gets it done fastest and with least work
+for Yoni: online before paper, a button before a trip, a direct action before a hand-off. Its cost or
+risk is said in one line, and the choice is his where A1b says so. Never default to the slow route
+because it matches the plan already in motion. (Yoni, 2026-11-10, after Claude steered a $0 DC tax
+return to print, sign and mail from abroad when it could be filed online that night: "the judgment
+call on ... printing it over there, sending it with an envelope, all that stuff, instead of just
+filing it online, was wrong. You should find always the solution that is the best efficient even if
+it means changing the course of action.")
+
 **A4 · Every deliverable ends with its link and version.**
 A turn that produces something ends with: the URL or path, the version or build number, and the
 clicks to reach the new thing. Never end a turn with no visible text. Versions are running numbers
