@@ -279,6 +279,18 @@ day. The blog engine enforces this on every site (v11, `topics.one_competitor`, 
 something specifically on one competitor. That's predatory." and "not only for vouch but in
 general ... we don't analyze one competitor.")
 
+**D4 · Anything with money is checked line by line.**
+Every statement about money (a payment's status, a balance, what landed, what is owed, what was
+paid) is checked one line at a time against the source record: each payment, bill or wire matched
+by its own id or reference to the row in the provider (Stripe, the bank, the ledger), never
+inferred from a total, a missing row or a partial view. A list is read to its end: a page that
+shows 20 of 330, a "View all" link or a cut-off export is opened in full before anything is said
+about what is or is not in it; the reply states how many lines were checked out of how many exist.
+A line not checked is reported as "not checked", never as a conclusion. (Yoni, 2026-11-13, after
+Claude told him three rent payments had settled in Stripe from a five-row preview that cut them
+off, when all three were still pending: "that's a major mistake - anything with money has to be
+checked line by line".)
+
 ## E. Design, for projects with a screen
 
 **E1 · Options first, never capped; then the mock-up is the spec; then change only what's named.**
