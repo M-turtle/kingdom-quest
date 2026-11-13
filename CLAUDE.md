@@ -105,6 +105,17 @@ out fine. (Yoni, 2026-11-10, after a DC tax confirmation PDF was filed without b
 ever take a file and just store it without checking it first. You check things always. Every file
 you get, you check before you store it.")
 
+**A3c · Open everything a third party gave you before you answer, edit or submit to them.**
+Before any reply, edit or submission to an outside party (App Review, a store, a bank, a vendor, a
+government office, a customer), every input they gave is opened and read in full: the message, each
+attachment and screenshot, each linked page. The answer is built on what their input shows, never on
+a guess of what a file probably contains. An input that cannot be opened is a stop: say so and get it
+(download it, ask for it) before anything is sent. Attachments that can vanish after a resubmission
+or a reply are saved first. (Yoni, 2026-11-12, after Vouch was resubmitted to App Review without
+opening the screenshot Apple attached to its rejection: "never ever review, edit, and submit
+information to a third party source without checking exactly the input they gave you. That means
+never guessing on what's in the files. Open them and see them.")
+
 **A3b · Lead with the most efficient path, even when it changes the plan.**
 When a path is blocked or slow, lay out every way to reach the target, including the ones that
 change the course already set, and lead with the one that gets it done fastest and with least work
@@ -267,6 +278,18 @@ day. The blog engine enforces this on every site (v11, `topics.one_competitor`, 
 (Yoni, 2026-10-31: "I don't want to look at the competitors and start bad-mouthing them ... not
 something specifically on one competitor. That's predatory." and "not only for vouch but in
 general ... we don't analyze one competitor.")
+
+**D4 · Anything with money is checked line by line.**
+Every statement about money (a payment's status, a balance, what landed, what is owed, what was
+paid) is checked one line at a time against the source record: each payment, bill or wire matched
+by its own id or reference to the row in the provider (Stripe, the bank, the ledger), never
+inferred from a total, a missing row or a partial view. A list is read to its end: a page that
+shows 20 of 330, a "View all" link or a cut-off export is opened in full before anything is said
+about what is or is not in it; the reply states how many lines were checked out of how many exist.
+A line not checked is reported as "not checked", never as a conclusion. (Yoni, 2026-11-13, after
+Claude told him three rent payments had settled in Stripe from a five-row preview that cut them
+off, when all three were still pending: "that's a major mistake - anything with money has to be
+checked line by line".)
 
 ## E. Design, for projects with a screen
 
